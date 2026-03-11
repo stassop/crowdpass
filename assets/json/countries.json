@@ -1,0 +1,3518 @@
+{
+  "countries": [
+    {
+      "name": "Afghanistan",
+      "nativeName": "افغانستان",
+      "isoAlpha2Code": "AF",
+      "locales": [
+        "fa_AF",
+        "ps_AF"
+      ],
+      "utcTimeZones": [
+        "UTC+04:30"
+      ],
+      "currencyCode": "AFN",
+      "isoAlpha3Code": "AFG"
+    },
+    {
+      "name": "Åland Islands",
+      "nativeName": "Åland",
+      "isoAlpha2Code": "AX",
+      "locales": [
+        "sv_AX"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "ALA"
+    },
+    {
+      "name": "Albania",
+      "nativeName": "Shqipëria",
+      "isoAlpha2Code": "AL",
+      "locales": [
+        "sq_AL"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "ALL",
+      "isoAlpha3Code": "ALB"
+    },
+    {
+      "name": "Algeria",
+      "nativeName": "الجزائر",
+      "isoAlpha2Code": "DZ",
+      "locales": [
+        "ar_DZ"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "DZD",
+      "isoAlpha3Code": "DZA"
+    },
+    {
+      "name": "American Samoa",
+      "nativeName": "American Samoa",
+      "isoAlpha2Code": "AS",
+      "locales": [
+        "en_AS",
+        "sm_AS"
+      ],
+      "utcTimeZones": [
+        "UTC-11:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "ASM"
+    },
+    {
+      "name": "Andorra",
+      "nativeName": "Andorra",
+      "isoAlpha2Code": "AD",
+      "locales": [
+        "ca_AD"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "AND"
+    },
+    {
+      "name": "Angola",
+      "nativeName": "Angola",
+      "isoAlpha2Code": "AO",
+      "locales": [
+        "pt_AO"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "AOA",
+      "isoAlpha3Code": "AGO"
+    },
+    {
+      "name": "Anguilla",
+      "nativeName": "Anguilla",
+      "isoAlpha2Code": "AI",
+      "locales": [
+        "en_AI"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "XCD",
+      "isoAlpha3Code": "AIA"
+    },
+    {
+      "name": "Antarctica",
+      "nativeName": "Antarctica",
+      "isoAlpha2Code": "AQ",
+      "locales": [
+        "en_AQ"
+      ],
+      "utcTimeZones": [
+        "UTC-03:00",
+        "UTC+03:00",
+        "UTC+05:00",
+        "UTC+06:00",
+        "UTC+07:00",
+        "UTC+08:00",
+        "UTC+10:00",
+        "UTC+12:00"
+      ],
+      "currencyCode": "",
+      "isoAlpha3Code": "ATA"
+    },
+    {
+      "name": "Antigua and Barbuda",
+      "nativeName": "Antigua and Barbuda",
+      "isoAlpha2Code": "AG",
+      "locales": [
+        "en_AG"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "XCD",
+      "isoAlpha3Code": "ATG"
+    },
+    {
+      "name": "Argentina",
+      "nativeName": "Argentina",
+      "isoAlpha2Code": "AR",
+      "locales": [
+        "es_AR"
+      ],
+      "utcTimeZones": [
+        "UTC-03:00"
+      ],
+      "currencyCode": "ARS",
+      "isoAlpha3Code": "ARG"
+    },
+    {
+      "name": "Armenia",
+      "nativeName": "Հայաստան",
+      "isoAlpha2Code": "AM",
+      "locales": [
+        "hy_AM"
+      ],
+      "utcTimeZones": [
+        "UTC+04:00"
+      ],
+      "currencyCode": "AMD",
+      "isoAlpha3Code": "ARM"
+    },
+    {
+      "name": "Aruba",
+      "nativeName": "Aruba",
+      "isoAlpha2Code": "AW",
+      "locales": [
+        "nl_AW",
+        "pap_AW"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "AWG",
+      "isoAlpha3Code": "ABW"
+    },
+    {
+      "name": "Australia",
+      "nativeName": "Australia",
+      "isoAlpha2Code": "AU",
+      "locales": [
+        "en_AU",
+        "en",
+        "en_GB"
+      ],
+      "utcTimeZones": [
+        "UTC+08:00",
+        "UTC+09:30",
+        "UTC+10:00",
+        "UTC+10:30",
+        "UTC+11:00"
+      ],
+      "currencyCode": "AUD",
+      "isoAlpha3Code": "AUS"
+    },
+    {
+      "name": "Austria",
+      "nativeName": "Österreich",
+      "isoAlpha2Code": "AT",
+      "locales": [
+        "de_AT",
+        "de"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "AUT"
+    },
+    {
+      "name": "Azerbaijan",
+      "nativeName": "Azərbaycan",
+      "isoAlpha2Code": "AZ",
+      "locales": [
+        "az_AZ",
+        "az_Cyrl_AZ",
+        "az_Latn_AZ",
+        "ru_AZ"
+      ],
+      "utcTimeZones": [
+        "UTC+04:00"
+      ],
+      "currencyCode": "AZN",
+      "isoAlpha3Code": "AZE"
+    },
+    {
+      "name": "Bahamas",
+      "nativeName": "Bahamas",
+      "isoAlpha2Code": "BS",
+      "locales": [
+        "en_BS",
+        "en"
+      ],
+      "utcTimeZones": [
+        "UTC-05:00"
+      ],
+      "currencyCode": "BSD",
+      "isoAlpha3Code": "BHS"
+    },
+    {
+      "name": "Bahrain",
+      "nativeName": "لبحرين",
+      "isoAlpha2Code": "BH",
+      "locales": [
+        "ar_BH",
+        "ar"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "BHD",
+      "isoAlpha3Code": "BHR"
+    },
+    {
+      "name": "Bangladesh",
+      "nativeName": "Bangladesh",
+      "isoAlpha2Code": "BD",
+      "locales": [
+        "bn_BD",
+        "bn"
+      ],
+      "utcTimeZones": [
+        "UTC+06:00"
+      ],
+      "currencyCode": "BDT",
+      "isoAlpha3Code": "BGD"
+    },
+    {
+      "name": "Barbados",
+      "nativeName": "Barbados",
+      "isoAlpha2Code": "BB",
+      "locales": [
+        "en_BB",
+        "en"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "BBD",
+      "isoAlpha3Code": "BRB"
+    },
+    {
+      "name": "Belarus",
+      "nativeName": "Белару́сь",
+      "isoAlpha2Code": "BY",
+      "locales": [
+        "be_BY",
+        "ru_BY"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "BYN",
+      "isoAlpha3Code": "BLR"
+    },
+    {
+      "name": "Belgium",
+      "nativeName": "België",
+      "isoAlpha2Code": "BE",
+      "locales": [
+        "nl_BE",
+        "fr_BE",
+        "de_BE"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "BEL"
+    },
+    {
+      "name": "Belize",
+      "nativeName": "Belize",
+      "isoAlpha2Code": "BZ",
+      "locales": [
+        "en_BZ"
+      ],
+      "utcTimeZones": [
+        "UTC-06:00"
+      ],
+      "currencyCode": "BZD",
+      "isoAlpha3Code": "BLZ"
+    },
+    {
+      "name": "Benin",
+      "nativeName": "Bénin",
+      "isoAlpha2Code": "BJ",
+      "locales": [
+        "fr_BJ"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "XOF",
+      "isoAlpha3Code": "BEN"
+    },
+    {
+      "name": "Bermuda",
+      "nativeName": "Bermuda",
+      "isoAlpha2Code": "BM",
+      "locales": [
+        "en_BM"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "BMD",
+      "isoAlpha3Code": "BMU"
+    },
+    {
+      "name": "Bhutan",
+      "nativeName": "ʼbrug-yul",
+      "isoAlpha2Code": "BT",
+      "locales": [
+        "dz_BT"
+      ],
+      "utcTimeZones": [
+        "UTC+06:00"
+      ],
+      "currencyCode": "BTN",
+      "isoAlpha3Code": "BTN"
+    },
+    {
+      "name": "Bolivia (Plurinational State of)",
+      "nativeName": "Bolivia",
+      "isoAlpha2Code": "BO",
+      "locales": [
+        "es_BO",
+        "ay_BO",
+        "qu_BO"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "BOB",
+      "isoAlpha3Code": "BOL"
+    },
+    {
+      "name": "Bonaire, Sint Eustatius and Saba",
+      "nativeName": "Bonaire",
+      "isoAlpha2Code": "BQ",
+      "locales": [
+        "nl_BQ"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "BES"
+    },
+    {
+      "name": "Bosnia and Herzegovina",
+      "nativeName": "Bosna i Hercegovina",
+      "isoAlpha2Code": "BA",
+      "locales": [
+        "bs_BA",
+        "hr_BA",
+        "sr_BA"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "BAM",
+      "isoAlpha3Code": "BIH"
+    },
+    {
+      "name": "Botswana",
+      "nativeName": "Botswana",
+      "isoAlpha2Code": "BW",
+      "locales": [
+        "en_BW",
+        "tn_BW"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "BWP",
+      "isoAlpha3Code": "BWA"
+    },
+    {
+      "name": "Bouvet Island",
+      "nativeName": "Bouvetøya",
+      "isoAlpha2Code": "BV",
+      "locales": [
+        "no"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "NOK",
+      "isoAlpha3Code": "BVT"
+    },
+    {
+      "name": "Brazil",
+      "nativeName": "Brasil",
+      "isoAlpha2Code": "BR",
+      "locales": [
+        "pt_BR"
+      ],
+      "utcTimeZones": [
+        "UTC-05:00",
+        "UTC-04:00",
+        "UTC-03:00",
+        "UTC-02:00"
+      ],
+      "currencyCode": "BRL",
+      "isoAlpha3Code": "BRA"
+    },
+    {
+      "name": "British Indian Ocean Territory",
+      "nativeName": "British Indian Ocean Territory",
+      "isoAlpha2Code": "IO",
+      "locales": [
+        "en_IO"
+      ],
+      "utcTimeZones": [
+        "UTC+06:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "IOT"
+    },
+    {
+      "name": "United States Minor Outlying Islands",
+      "nativeName": "United States Minor Outlying Islands",
+      "isoAlpha2Code": "UM",
+      "locales": [
+        "en_UM"
+      ],
+      "utcTimeZones": [
+        "UTC-11:00",
+        "UTC-10:00",
+        "UTC+12:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "UMI"
+    },
+    {
+      "name": "Virgin Islands (British)",
+      "nativeName": "British Virgin Islands",
+      "isoAlpha2Code": "VG",
+      "locales": [
+        "en_VG"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "VGB"
+    },
+    {
+      "name": "Virgin Islands (U.S.)",
+      "nativeName": "Virgin Islands of the United States",
+      "isoAlpha2Code": "VI",
+      "locales": [
+        "en_VI"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "VIR"
+    },
+    {
+      "name": "Brunei Darussalam",
+      "nativeName": "Negara Brunei Darussalam",
+      "isoAlpha2Code": "BN",
+      "locales": [
+        "ms_BN"
+      ],
+      "utcTimeZones": [
+        "UTC+08:00"
+      ],
+      "currencyCode": "BND",
+      "isoAlpha3Code": "BRN"
+    },
+    {
+      "name": "Bulgaria",
+      "nativeName": "България",
+      "isoAlpha2Code": "BG",
+      "locales": [
+        "bg_BG"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "BGN",
+      "isoAlpha3Code": "BGR"
+    },
+    {
+      "name": "Burkina Faso",
+      "nativeName": "Burkina Faso",
+      "isoAlpha2Code": "BF",
+      "locales": [
+        "fr_BF",
+        "mo_BF"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "XOF",
+      "isoAlpha3Code": "BFA"
+    },
+    {
+      "name": "Burundi",
+      "nativeName": "Burundi",
+      "isoAlpha2Code": "BI",
+      "locales": [
+        "fr_BI",
+        "rn_BI"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "BIF",
+      "isoAlpha3Code": "BDI"
+    },
+    {
+      "name": "Cambodia",
+      "nativeName": "Kâmpŭchéa",
+      "isoAlpha2Code": "KH",
+      "locales": [
+        "km_KH"
+      ],
+      "utcTimeZones": [
+        "UTC+07:00"
+      ],
+      "currencyCode": "KHR",
+      "isoAlpha3Code": "KHM"
+    },
+    {
+      "name": "Cameroon",
+      "nativeName": "Cameroon",
+      "isoAlpha2Code": "CM",
+      "locales": [
+        "en_CM",
+        "fr_CM"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "XAF",
+      "isoAlpha3Code": "CMR"
+    },
+    {
+      "name": "Canada",
+      "nativeName": "Canada",
+      "isoAlpha2Code": "CA",
+      "locales": [
+        "en_CA",
+        "fr_CA"
+      ],
+      "utcTimeZones": [
+        "UTC-08:00",
+        "UTC-07:00",
+        "UTC-06:00",
+        "UTC-05:00",
+        "UTC-04:00",
+        "UTC-03:30",
+        "UTC-03:00",
+        "UTC-02:30",
+        "UTC"
+      ],
+      "currencyCode": "CAD",
+      "isoAlpha3Code": "CAN"
+    },
+    {
+      "name": "Cabo Verde",
+      "nativeName": "Cabo Verde",
+      "isoAlpha2Code": "CV",
+      "locales": [
+        "pt_CV"
+      ],
+      "utcTimeZones": [
+        "UTC-01:00"
+      ],
+      "currencyCode": "CVE",
+      "isoAlpha3Code": "CPV"
+    },
+    {
+      "name": "Cayman Islands",
+      "nativeName": "Cayman Islands",
+      "isoAlpha2Code": "KY",
+      "locales": [
+        "en_KY"
+      ],
+      "utcTimeZones": [
+        "UTC-05:00"
+      ],
+      "currencyCode": "KYD",
+      "isoAlpha3Code": "CYM"
+    },
+    {
+      "name": "Central African Republic",
+      "nativeName": "République Centrafricaine",
+      "isoAlpha2Code": "CF",
+      "locales": [
+        "fr_CF",
+        "sg_CF"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "XAF",
+      "isoAlpha3Code": "CAF"
+    },
+    {
+      "name": "Chad",
+      "nativeName": "Tchad",
+      "isoAlpha2Code": "TD",
+      "locales": [
+        "fr_TD",
+        "ar_TD"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "XAF",
+      "isoAlpha3Code": "TCD"
+    },
+    {
+      "name": "Chile",
+      "nativeName": "Chile",
+      "isoAlpha2Code": "CL",
+      "locales": [
+        "es_CL"
+      ],
+      "utcTimeZones": [
+        "UTC-06:00",
+        "UTC-04:00"
+      ],
+      "currencyCode": "CLP",
+      "isoAlpha3Code": "CHL"
+    },
+    {
+      "name": "China",
+      "nativeName": "中国",
+      "isoAlpha2Code": "CN",
+      "locales": [
+        "zh_CN"
+      ],
+      "utcTimeZones": [
+        "UTC+08:00"
+      ],
+      "currencyCode": "CNY",
+      "isoAlpha3Code": "CHN"
+    },
+    {
+      "name": "Christmas Island",
+      "nativeName": "Christmas Island",
+      "isoAlpha2Code": "CX",
+      "locales": [
+        "en_CX"
+      ],
+      "utcTimeZones": [
+        "UTC+07:00"
+      ],
+      "currencyCode": "AUD",
+      "isoAlpha3Code": "CXR"
+    },
+    {
+      "name": "Cocos (Keeling) Islands",
+      "nativeName": "Cocos (Keeling) Islands",
+      "isoAlpha2Code": "CC",
+      "locales": [
+        "en_CC"
+      ],
+      "utcTimeZones": [
+        "UTC+06:30"
+      ],
+      "currencyCode": "AUD",
+      "isoAlpha3Code": "CCK"
+    },
+    {
+      "name": "Colombia",
+      "nativeName": "Colombia",
+      "isoAlpha2Code": "CO",
+      "locales": [
+        "es_CO"
+      ],
+      "utcTimeZones": [
+        "UTC-05:00"
+      ],
+      "currencyCode": "COP",
+      "isoAlpha3Code": "COL"
+    },
+    {
+      "name": "Comoros",
+      "nativeName": "Komori",
+      "isoAlpha2Code": "KM",
+      "locales": [
+        "ar_KM",
+        "fr_KM"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "KMF",
+      "isoAlpha3Code": "COM"
+    },
+    {
+      "name": "Congo",
+      "nativeName": "République du Congo",
+      "isoAlpha2Code": "CG",
+      "locales": [
+        "fr_CG",
+        "ln_CG"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "XAF",
+      "isoAlpha3Code": "COG"
+    },
+    {
+      "name": "Congo (Democratic Republic of the)",
+      "nativeName": "République démocratique du Congo",
+      "isoAlpha2Code": "CD",
+      "locales": [
+        "fr_CD",
+        "ln_CD",
+        "kg_CD",
+        "sw_CD"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00",
+        "UTC+02:00"
+      ],
+      "currencyCode": "CDF",
+      "isoAlpha3Code": "COD"
+    },
+    {
+      "name": "Cook Islands",
+      "nativeName": "Cook Islands",
+      "isoAlpha2Code": "CK",
+      "locales": [
+        "en_CK",
+        "mi_CK"
+      ],
+      "utcTimeZones": [
+        "UTC-10:00"
+      ],
+      "currencyCode": "NZD",
+      "isoAlpha3Code": "COK"
+    },
+    {
+      "name": "Costa Rica",
+      "nativeName": "Costa Rica",
+      "isoAlpha2Code": "CR",
+      "locales": [
+        "es_CR"
+      ],
+      "utcTimeZones": [
+        "UTC-06:00"
+      ],
+      "currencyCode": "CRC",
+      "isoAlpha3Code": "CRI"
+    },
+    {
+      "name": "Croatia",
+      "nativeName": "Hrvatska",
+      "isoAlpha2Code": "HR",
+      "locales": [
+        "hr_HR"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "HRK",
+      "isoAlpha3Code": "HRV"
+    },
+    {
+      "name": "Cuba",
+      "nativeName": "Cuba",
+      "isoAlpha2Code": "CU",
+      "locales": [
+        "es_CU"
+      ],
+      "utcTimeZones": [
+        "UTC-05:00"
+      ],
+      "currencyCode": "CUP",
+      "isoAlpha3Code": "CUB"
+    },
+    {
+      "name": "Curaçao",
+      "nativeName": "Curaçao",
+      "isoAlpha2Code": "CW",
+      "locales": [
+        "nl_CW",
+        "pap_CW"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "ANG",
+      "isoAlpha3Code": "CUW"
+    },
+    {
+      "name": "Cyprus",
+      "nativeName": "Κύπρος",
+      "isoAlpha2Code": "CY",
+      "locales": [
+        "el_CY",
+        "tr_CY"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "CYP"
+    },
+    {
+      "name": "Czech Republic",
+      "nativeName": "Česká republika",
+      "isoAlpha2Code": "CZ",
+      "locales": [
+        "cs_CZ",
+        "sk_CZ"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "CZK",
+      "isoAlpha3Code": "CZE"
+    },
+    {
+      "name": "Denmark",
+      "nativeName": "Danmark",
+      "isoAlpha2Code": "DK",
+      "locales": [
+        "da_DK"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00",
+        "UTC-03:00",
+        "UTC-01:00",
+        "UTC",
+        "UTC+01:00"
+      ],
+      "currencyCode": "DKK",
+      "isoAlpha3Code": "DNK"
+    },
+    {
+      "name": "Djibouti",
+      "nativeName": "Djibouti",
+      "isoAlpha2Code": "DJ",
+      "locales": [
+        "fr_DJ",
+        "ar_DJ",
+        "so_DJ",
+        "aa_DJ"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "DJF",
+      "isoAlpha3Code": "DJI"
+    },
+    {
+      "name": "Dominica",
+      "nativeName": "Dominica",
+      "isoAlpha2Code": "DM",
+      "locales": [
+        "en_DM"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "XCD",
+      "isoAlpha3Code": "DMA"
+    },
+    {
+      "name": "Dominican Republic",
+      "nativeName": "República Dominicana",
+      "isoAlpha2Code": "DO",
+      "locales": [
+        "es_DO"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "DOP",
+      "isoAlpha3Code": "DOM"
+    },
+    {
+      "name": "Ecuador",
+      "nativeName": "Ecuador",
+      "isoAlpha2Code": "EC",
+      "locales": [
+        "es_EC"
+      ],
+      "utcTimeZones": [
+        "UTC-06:00",
+        "UTC-05:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "ECU"
+    },
+    {
+      "name": "Egypt",
+      "nativeName": "مصر",
+      "isoAlpha2Code": "EG",
+      "locales": [
+        "ar_EG"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "EGP",
+      "isoAlpha3Code": "EGY"
+    },
+    {
+      "name": "El Salvador",
+      "nativeName": "El Salvador",
+      "isoAlpha2Code": "SV",
+      "locales": [
+        "es_SV"
+      ],
+      "utcTimeZones": [
+        "UTC-06:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "SLV"
+    },
+    {
+      "name": "Equatorial Guinea",
+      "nativeName": "Guinea Ecuatorial",
+      "isoAlpha2Code": "GQ",
+      "locales": [
+        "es_GQ",
+        "fr_GQ",
+        "pt_GQ"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "XAF",
+      "isoAlpha3Code": "GNQ"
+    },
+    {
+      "name": "Eritrea",
+      "nativeName": "ኤርትራ",
+      "isoAlpha2Code": "ER",
+      "locales": [
+        "ti_ER",
+        "ar_ER",
+        "en_ER"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "ERN",
+      "isoAlpha3Code": "ERI"
+    },
+    {
+      "name": "Estonia",
+      "nativeName": "Eesti",
+      "isoAlpha2Code": "EE",
+      "locales": [
+        "et_EE"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "EST"
+    },
+    {
+      "name": "Ethiopia",
+      "nativeName": "ኢትዮጵያ",
+      "isoAlpha2Code": "ET",
+      "locales": [
+        "am_ET",
+        "en_ET",
+        "om_ET",
+        "ti_ET",
+        "so_ET",
+        "sid_ET"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "ETB",
+      "isoAlpha3Code": "ETH"
+    },
+    {
+      "name": "Falkland Islands (Malvinas)",
+      "nativeName": "Falkland Islands",
+      "isoAlpha2Code": "FK",
+      "locales": [
+        "en_FK"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "FKP",
+      "isoAlpha3Code": "FLK"
+    },
+    {
+      "name": "Faroe Islands",
+      "nativeName": "Føroyar",
+      "isoAlpha2Code": "FO",
+      "locales": [
+        "fo_FO"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "DKK",
+      "isoAlpha3Code": "FRO"
+    },
+    {
+      "name": "Fiji",
+      "nativeName": "Fiji",
+      "isoAlpha2Code": "FJ",
+      "locales": [
+        "en_FJ",
+        "fj_FJ",
+        "hi_FJ",
+        "ur_FJ"
+      ],
+      "utcTimeZones": [
+        "UTC+12:00"
+      ],
+      "currencyCode": "FJD",
+      "isoAlpha3Code": "FJI"
+    },
+    {
+      "name": "Finland",
+      "nativeName": "Suomi",
+      "isoAlpha2Code": "FI",
+      "locales": [
+        "fi_FI",
+        "sv_FI",
+        "smn_FI"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00",
+        "UTC+03:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "FIN"
+    },
+    {
+      "name": "France",
+      "nativeName": "France",
+      "isoAlpha2Code": "FR",
+      "locales": [
+        "fr_FR"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00",
+        "UTC-10:00",
+        "UTC-09:30",
+        "UTC-09:00",
+        "UTC-08:00",
+        "UTC-04:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "FRA"
+    },
+    {
+      "name": "French Guiana",
+      "nativeName": "Guyane",
+      "isoAlpha2Code": "GF",
+      "locales": [
+        "fr_GF"
+      ],
+      "utcTimeZones": [
+        "UTC-03:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "GUF"
+    },
+    {
+      "name": "French Polynesia",
+      "nativeName": "Polynésie française",
+      "isoAlpha2Code": "PF",
+      "locales": [
+        "fr_PF"
+      ],
+      "utcTimeZones": [
+        "UTC-10:00",
+        "UTC-09:30",
+        "UTC-09:00"
+      ],
+      "currencyCode": "XPF",
+      "isoAlpha3Code": "PYF"
+    },
+    {
+      "name": "French Southern Territories",
+      "nativeName": "Territoire des Terres australes et antarctiques françaises",
+      "isoAlpha2Code": "TF",
+      "locales": [
+        "fr_TF"
+      ],
+      "utcTimeZones": [
+        "UTC+05:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "ATF"
+    },
+    {
+      "name": "Gabon",
+      "nativeName": "Gabon",
+      "isoAlpha2Code": "GA",
+      "locales": [
+        "fr_GA"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "XAF",
+      "isoAlpha3Code": "GAB"
+    },
+    {
+      "name": "Gambia",
+      "nativeName": "Gambia",
+      "isoAlpha2Code": "GM",
+      "locales": [
+        "en_GM"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "GMD",
+      "isoAlpha3Code": "GMB"
+    },
+    {
+      "name": "Georgia",
+      "nativeName": "საქართველო",
+      "isoAlpha2Code": "GE",
+      "locales": [
+        "ka_GE"
+      ],
+      "utcTimeZones": [
+        "UTC+04:00"
+      ],
+      "currencyCode": "GEL",
+      "isoAlpha3Code": "GEO"
+    },
+    {
+      "name": "Germany",
+      "nativeName": "Deutschland",
+      "isoAlpha2Code": "DE",
+      "locales": [
+        "de_DE"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "DEU"
+    },
+    {
+      "name": "Ghana",
+      "nativeName": "Ghana",
+      "isoAlpha2Code": "GH",
+      "locales": [
+        "en_GH"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "GHS",
+      "isoAlpha3Code": "GHA"
+    },
+    {
+      "name": "Gibraltar",
+      "nativeName": "Gibraltar",
+      "isoAlpha2Code": "GI",
+      "locales": [
+        "en_GI"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "GIP",
+      "isoAlpha3Code": "GIB"
+    },
+    {
+      "name": "Greece",
+      "nativeName": "Ελλάδα",
+      "isoAlpha2Code": "GR",
+      "locales": [
+        "el_GR"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "GRC"
+    },
+    {
+      "name": "Greenland",
+      "nativeName": "Kalaallit Nunaat",
+      "isoAlpha2Code": "GL",
+      "locales": [
+        "kl_GL"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00",
+        "UTC-03:00",
+        "UTC-01:00",
+        "UTC+00:00"
+      ],
+      "currencyCode": "DKK",
+      "isoAlpha3Code": "GRL"
+    },
+    {
+      "name": "Grenada",
+      "nativeName": "Grenada",
+      "isoAlpha2Code": "GD",
+      "locales": [
+        "en_GD"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "XCD",
+      "isoAlpha3Code": "GRD"
+    },
+    {
+      "name": "Guadeloupe",
+      "nativeName": "Guadeloupe",
+      "isoAlpha2Code": "GP",
+      "locales": [
+        "fr_GP"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "GLP"
+    },
+    {
+      "name": "Guam",
+      "nativeName": "Guam",
+      "isoAlpha2Code": "GU",
+      "locales": [
+        "en_GU",
+        "ch_GU"
+      ],
+      "utcTimeZones": [
+        "UTC+10:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "GUM"
+    },
+    {
+      "name": "Guatemala",
+      "nativeName": "Guatemala",
+      "isoAlpha2Code": "GT",
+      "locales": [
+        "es_GT"
+      ],
+      "utcTimeZones": [
+        "UTC-06:00"
+      ],
+      "currencyCode": "GTQ",
+      "isoAlpha3Code": "GTM"
+    },
+    {
+      "name": "Guernsey",
+      "nativeName": "Guernsey",
+      "isoAlpha2Code": "GG",
+      "locales": [
+        "en_GG",
+        "fr_GG"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "GBP",
+      "isoAlpha3Code": "GGY"
+    },
+    {
+      "name": "Guinea",
+      "nativeName": "Guinée",
+      "isoAlpha2Code": "GN",
+      "locales": [
+        "fr_GN",
+        "ff_GN"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "GNF",
+      "isoAlpha3Code": "GIN"
+    },
+    {
+      "name": "Guinea-Bissau",
+      "nativeName": "Guiné-Bissau",
+      "isoAlpha2Code": "GW",
+      "locales": [
+        "pt_GW",
+        "pov_GW"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "XOF",
+      "isoAlpha3Code": "GNB"
+    },
+    {
+      "name": "Guyana",
+      "nativeName": "Guyana",
+      "isoAlpha2Code": "GY",
+      "locales": [
+        "en_GY"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "GYD",
+      "isoAlpha3Code": "GUY"
+    },
+    {
+      "name": "Haiti",
+      "nativeName": "Haïti",
+      "isoAlpha2Code": "HT",
+      "locales": [
+        "fr_HT",
+        "ht_HT"
+      ],
+      "utcTimeZones": [
+        "UTC-05:00"
+      ],
+      "currencyCode": "HTG",
+      "isoAlpha3Code": "HTI"
+    },
+    {
+      "name": "Heard Island and McDonald Islands",
+      "nativeName": "Heard Island and McDonald Islands",
+      "isoAlpha2Code": "HM",
+      "locales": [
+        "en"
+      ],
+      "utcTimeZones": [
+        "UTC+05:00"
+      ],
+      "currencyCode": "AUD",
+      "isoAlpha3Code": "HMD"
+    },
+    {
+      "name": "Holy See",
+      "nativeName": "Sancta Sedes",
+      "isoAlpha2Code": "VA",
+      "locales": [
+        "la",
+        "it",
+        "fr"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "VAT"
+    },
+    {
+      "name": "Honduras",
+      "nativeName": "Honduras",
+      "isoAlpha2Code": "HN",
+      "locales": [
+        "es_HN"
+      ],
+      "utcTimeZones": [
+        "UTC-06:00"
+      ],
+      "currencyCode": "HNL",
+      "isoAlpha3Code": "HND"
+    },
+    {
+      "name": "Hong Kong",
+      "nativeName": "香港",
+      "isoAlpha2Code": "HK",
+      "locales": [
+        "en_HK",
+        "zh_HK"
+      ],
+      "utcTimeZones": [
+        "UTC+08:00"
+      ],
+      "currencyCode": "HKD",
+      "isoAlpha3Code": "HKG"
+    },
+    {
+      "name": "Hungary",
+      "nativeName": "Magyarország",
+      "isoAlpha2Code": "HU",
+      "locales": [
+        "hu_HU"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "HUF",
+      "isoAlpha3Code": "HUN"
+    },
+    {
+      "name": "Iceland",
+      "nativeName": "Ísland",
+      "isoAlpha2Code": "IS",
+      "locales": [
+        "is_IS"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "ISK",
+      "isoAlpha3Code": "ISL"
+    },
+    {
+      "name": "India",
+      "nativeName": "भारत",
+      "isoAlpha2Code": "IN",
+      "locales": [
+        "en_IN",
+        "hi_IN"
+      ],
+      "utcTimeZones": [
+        "UTC+05:30"
+      ],
+      "currencyCode": "INR",
+      "isoAlpha3Code": "IND"
+    },
+    {
+      "name": "Indonesia",
+      "nativeName": "Indonesia",
+      "isoAlpha2Code": "ID",
+      "locales": [
+        "id_ID"
+      ],
+      "utcTimeZones": [
+        "UTC+07:00",
+        "UTC+08:00",
+        "UTC+09:00"
+      ],
+      "currencyCode": "IDR",
+      "isoAlpha3Code": "IDN"
+    },
+    {
+      "name": "Côte d'Ivoire",
+      "nativeName": "Côte d'Ivoire",
+      "isoAlpha2Code": "CI",
+      "locales": [
+        "fr_CI"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "XOF",
+      "isoAlpha3Code": "CIV"
+    },
+    {
+      "name": "Iran (Islamic Republic of)",
+      "nativeName": "ایران",
+      "isoAlpha2Code": "IR",
+      "locales": [
+        "fa_IR"
+      ],
+      "utcTimeZones": [
+        "UTC+03:30"
+      ],
+      "currencyCode": "IRR",
+      "isoAlpha3Code": "IRN"
+    },
+    {
+      "name": "Iraq",
+      "nativeName": "العراق",
+      "isoAlpha2Code": "IQ",
+      "locales": [
+        "ar_IQ",
+        "ku_IQ"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "IQD",
+      "isoAlpha3Code": "IRQ"
+    },
+    {
+      "name": "Ireland",
+      "nativeName": "Éire",
+      "isoAlpha2Code": "IE",
+      "locales": [
+        "ga_IE",
+        "en_IE"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "IRL"
+    },
+    {
+      "name": "Isle of Man",
+      "nativeName": "Isle of Man",
+      "isoAlpha2Code": "IM",
+      "locales": [
+        "en_IM",
+        "gv_IM"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "GBP",
+      "isoAlpha3Code": "IMN"
+    },
+    {
+      "name": "Israel",
+      "nativeName": "יִשְׂרָאֵל",
+      "isoAlpha2Code": "IL",
+      "locales": [
+        "he_IL",
+        "ar_IL"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "ILS",
+      "isoAlpha3Code": "ISR"
+    },
+    {
+      "name": "Italy",
+      "nativeName": "Italia",
+      "isoAlpha2Code": "IT",
+      "locales": [
+        "it_IT"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "ITA"
+    },
+    {
+      "name": "Jamaica",
+      "nativeName": "Jamaica",
+      "isoAlpha2Code": "JM",
+      "locales": [
+        "en_JM"
+      ],
+      "utcTimeZones": [
+        "UTC-05:00"
+      ],
+      "currencyCode": "JMD",
+      "isoAlpha3Code": "JAM"
+    },
+    {
+      "name": "Japan",
+      "nativeName": "日本",
+      "isoAlpha2Code": "JP",
+      "locales": [
+        "ja_JP"
+      ],
+      "utcTimeZones": [
+        "UTC+09:00"
+      ],
+      "currencyCode": "JPY",
+      "isoAlpha3Code": "JPN"
+    },
+    {
+      "name": "Jersey",
+      "nativeName": "Jersey",
+      "isoAlpha2Code": "JE",
+      "locales": [
+        "en_JE",
+        "fr_JE"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "GBP",
+      "isoAlpha3Code": "JEY"
+    },
+    {
+      "name": "Jordan",
+      "nativeName": "الأردن",
+      "isoAlpha2Code": "JO",
+      "locales": [
+        "ar_JO"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "JOD",
+      "isoAlpha3Code": "JOR"
+    },
+    {
+      "name": "Kazakhstan",
+      "nativeName": "Қазақстан",
+      "isoAlpha2Code": "KZ",
+      "locales": [
+        "kk_KZ",
+        "ru_KZ"
+      ],
+      "utcTimeZones": [
+        "UTC+05:00",
+        "UTC+06:00"
+      ],
+      "currencyCode": "KZT",
+      "isoAlpha3Code": "KAZ"
+    },
+    {
+      "name": "Kenya",
+      "nativeName": "Kenya",
+      "isoAlpha2Code": "KE",
+      "locales": [
+        "en_KE",
+        "sw_KE"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "KES",
+      "isoAlpha3Code": "KEN"
+    },
+    {
+      "name": "Kiribati",
+      "nativeName": "Kiribati",
+      "isoAlpha2Code": "KI",
+      "locales": [
+        "en_KI",
+        "gil_KI"
+      ],
+      "utcTimeZones": [
+        "UTC+12:00",
+        "UTC+13:00"
+      ],
+      "currencyCode": "AUD",
+      "isoAlpha3Code": "KIR"
+    },
+    {
+      "name": "Kuwait",
+      "nativeName": "الكويت",
+      "isoAlpha2Code": "KW",
+      "locales": [
+        "ar_KW"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "KWD",
+      "isoAlpha3Code": "KWT"
+    },
+    {
+      "name": "Kyrgyzstan",
+      "nativeName": "Кыргызстан",
+      "isoAlpha2Code": "KG",
+      "locales": [
+        "ky_KG",
+        "ru_KG"
+      ],
+      "utcTimeZones": [
+        "UTC+06:00"
+      ],
+      "currencyCode": "KGS",
+      "isoAlpha3Code": "KGZ"
+    },
+    {
+      "name": "Lao People's Democratic Republic",
+      "nativeName": "ສປປລາວ",
+      "isoAlpha2Code": "LA",
+      "locales": [
+        "lo_LA"
+      ],
+      "utcTimeZones": [
+        "UTC+07:00"
+      ],
+      "currencyCode": "LAK",
+      "isoAlpha3Code": "LAO"
+    },
+    {
+      "name": "Latvia",
+      "nativeName": "Latvija",
+      "isoAlpha2Code": "LV",
+      "locales": [
+        "lv_LV"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "LVA"
+    },
+    {
+      "name": "Lebanon",
+      "nativeName": "لبنان",
+      "isoAlpha2Code": "LB",
+      "locales": [
+        "ar_LB",
+        "fr_LB"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "LBP",
+      "isoAlpha3Code": "LBN"
+    },
+    {
+      "name": "Lesotho",
+      "nativeName": "Lesotho",
+      "isoAlpha2Code": "LS",
+      "locales": [
+        "en_LS",
+        "st_LS"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "LSL",
+      "isoAlpha3Code": "LSO"
+    },
+    {
+      "name": "Liberia",
+      "nativeName": "Liberia",
+      "isoAlpha2Code": "LR",
+      "locales": [
+        "en_LR"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "LRD",
+      "isoAlpha3Code": "LBR"
+    },
+    {
+      "name": "Libya",
+      "nativeName": "ليبيا",
+      "isoAlpha2Code": "LY",
+      "locales": [
+        "ar_LY"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "LYD",
+      "isoAlpha3Code": "LBY"
+    },
+    {
+      "name": "Liechtenstein",
+      "nativeName": "Liechtenstein",
+      "isoAlpha2Code": "LI",
+      "locales": [
+        "de_LI"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "CHF",
+      "isoAlpha3Code": "LIE"
+    },
+    {
+      "name": "Lithuania",
+      "nativeName": "Lietuva",
+      "isoAlpha2Code": "LT",
+      "locales": [
+        "lt_LT"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "LTU"
+    },
+    {
+      "name": "Luxembourg",
+      "nativeName": "Luxembourg",
+      "isoAlpha2Code": "LU",
+      "locales": [
+        "fr_LU",
+        "de_LU",
+        "lb_LU"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "LUX"
+    },
+    {
+      "name": "Macao",
+      "nativeName": "澳門",
+      "isoAlpha2Code": "MO",
+      "locales": [
+        "zh_MO",
+        "pt_MO"
+      ],
+      "utcTimeZones": [
+        "UTC+08:00"
+      ],
+      "currencyCode": "MOP",
+      "isoAlpha3Code": "MAC"
+    },
+    {
+      "name": "Macedonia (the former Yugoslav Republic of)",
+      "nativeName": "Македонија",
+      "isoAlpha2Code": "MK",
+      "locales": [
+        "mk_MK"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "MKD",
+      "isoAlpha3Code": "MKD"
+    },
+    {
+      "name": "Madagascar",
+      "nativeName": "Madagasikara",
+      "isoAlpha2Code": "MG",
+      "locales": [
+        "fr_MG",
+        "mg_MG"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "MGA",
+      "isoAlpha3Code": "MDG"
+    },
+    {
+      "name": "Malawi",
+      "nativeName": "Malawi",
+      "isoAlpha2Code": "MW",
+      "locales": [
+        "en_MW",
+        "ny_MW"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "MWK",
+      "isoAlpha3Code": "MWI"
+    },
+    {
+      "name": "Malaysia",
+      "nativeName": "Malaysia",
+      "isoAlpha2Code": "MY",
+      "locales": [
+        "ms_MY",
+        "en_MY",
+        "ta_MY",
+        "zh_MY",
+        "te_MY",
+        "ml_MY",
+        "pa_MY"
+      ],
+      "utcTimeZones": [
+        "UTC+08:00"
+      ],
+      "currencyCode": "MYR",
+      "isoAlpha3Code": "MYS"
+    },
+    {
+      "name": "Maldives",
+      "nativeName": "Maldives",
+      "isoAlpha2Code": "MV",
+      "locales": [
+        "dv_MV"
+      ],
+      "utcTimeZones": [
+        "UTC+05:00"
+      ],
+      "currencyCode": "MVR",
+      "isoAlpha3Code": "MDV"
+    },
+    {
+      "name": "Mali",
+      "nativeName": "Mali",
+      "isoAlpha2Code": "ML",
+      "locales": [
+        "fr_ML",
+        "bm_ML"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "XOF",
+      "isoAlpha3Code": "MLI"
+    },
+    {
+      "name": "Malta",
+      "nativeName": "Malta",
+      "isoAlpha2Code": "MT",
+      "locales": [
+        "mt_MT",
+        "en_MT"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "MLT"
+    },
+    {
+      "name": "Marshall Islands",
+      "nativeName": "M̧ajeļ",
+      "isoAlpha2Code": "MH",
+      "locales": [
+        "en_MH",
+        "mh_MH"
+      ],
+      "utcTimeZones": [
+        "UTC+12:00"
+      ],
+      "currencyCode": "AUD",
+      "isoAlpha3Code": "MHL"
+    },
+    {
+      "name": "Martinique",
+      "nativeName": "Martinique",
+      "isoAlpha2Code": "MQ",
+      "locales": [
+        "fr_MQ"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "MTQ"
+    },
+    {
+      "name": "Mauritania",
+      "nativeName": "موريتانيا",
+      "isoAlpha2Code": "MR",
+      "locales": [
+        "ar_MR",
+        "fuc_MR",
+        "snk_MR",
+        "fr_MR",
+        "ff_MR",
+        "wo_MR"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "MRU",
+      "isoAlpha3Code": "MRT"
+    },
+    {
+      "name": "Mauritius",
+      "nativeName": "Maurice",
+      "isoAlpha2Code": "MU",
+      "locales": [
+        "en_MU"
+      ],
+      "utcTimeZones": [
+        "UTC+04:00"
+      ],
+      "currencyCode": "MUR",
+      "isoAlpha3Code": "MUS"
+    },
+    {
+      "name": "Mayotte",
+      "nativeName": "Mayotte",
+      "isoAlpha2Code": "YT",
+      "locales": [
+        "fr_YT"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "MYT"
+    },
+    {
+      "name": "Mexico",
+      "nativeName": "México",
+      "isoAlpha2Code": "MX",
+      "locales": [
+        "es_MX"
+      ],
+      "utcTimeZones": [
+        "UTC-08:00",
+        "UTC-07:00",
+        "UTC-06:00",
+        "UTC-05:00"
+      ],
+      "currencyCode": "MXN",
+      "isoAlpha3Code": "MEX"
+    },
+    {
+      "name": "Micronesia (Federated States of)",
+      "nativeName": "Micronesia",
+      "isoAlpha2Code": "FM",
+      "locales": [
+        "en_FM"
+      ],
+      "utcTimeZones": [
+        "UTC+10:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "FSM"
+    },
+    {
+      "name": "Moldova (Republic of)",
+      "nativeName": "Moldova",
+      "isoAlpha2Code": "MD",
+      "locales": [
+        "ro_MD"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "MDL",
+      "isoAlpha3Code": "MDA"
+    },
+    {
+      "name": "Monaco",
+      "nativeName": "Monaco",
+      "isoAlpha2Code": "MC",
+      "locales": [
+        "fr_MC"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "MCO"
+    },
+    {
+      "name": "Mongolia",
+      "nativeName": "Монгол улс",
+      "isoAlpha2Code": "MN",
+      "locales": [
+        "mn_MN"
+      ],
+      "utcTimeZones": [
+        "UTC+07:00",
+        "UTC+08:00"
+      ],
+      "currencyCode": "MNT",
+      "isoAlpha3Code": "MNG"
+    },
+    {
+      "name": "Montenegro",
+      "nativeName": "Црна Гора",
+      "isoAlpha2Code": "ME",
+      "locales": [
+        "sr_ME"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "MNE"
+    },
+    {
+      "name": "Montserrat",
+      "nativeName": "Montserrat",
+      "isoAlpha2Code": "MS",
+      "locales": [
+        "en_MS"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "XCD",
+      "isoAlpha3Code": "MSR"
+    },
+    {
+      "name": "Morocco",
+      "nativeName": "المغرب",
+      "isoAlpha2Code": "MA",
+      "locales": [
+        "ar_MA"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "MAD",
+      "isoAlpha3Code": "MAR"
+    },
+    {
+      "name": "Mozambique",
+      "nativeName": "Moçambique",
+      "isoAlpha2Code": "MZ",
+      "locales": [
+        "pt_MZ"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "MZN",
+      "isoAlpha3Code": "MOZ"
+    },
+    {
+      "name": "Myanmar",
+      "nativeName": "Myanma",
+      "isoAlpha2Code": "MM",
+      "locales": [
+        "my_MM"
+      ],
+      "utcTimeZones": [
+        "UTC+06:30"
+      ],
+      "currencyCode": "MMK",
+      "isoAlpha3Code": "MMR"
+    },
+    {
+      "name": "Namibia",
+      "nativeName": "Namibia",
+      "isoAlpha2Code": "NA",
+      "locales": [
+        "en_NA",
+        "af_NA",
+        "de_NA"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00",
+        "UTC+02:00"
+      ],
+      "currencyCode": "NAD",
+      "isoAlpha3Code": "NAM"
+    },
+    {
+      "name": "Nauru",
+      "nativeName": "Nauru",
+      "isoAlpha2Code": "NR",
+      "locales": [
+        "en_NR",
+        "na_NR"
+      ],
+      "utcTimeZones": [
+        "UTC+12:00"
+      ],
+      "currencyCode": "AUD",
+      "isoAlpha3Code": "NRU"
+    },
+    {
+      "name": "Nepal",
+      "nativeName": "नेपाल",
+      "isoAlpha2Code": "NP",
+      "locales": [
+        "ne_NP"
+      ],
+      "utcTimeZones": [
+        "UTC+05:45"
+      ],
+      "currencyCode": "NPR",
+      "isoAlpha3Code": "NPL"
+    },
+    {
+      "name": "Netherlands",
+      "nativeName": "Nederland",
+      "isoAlpha2Code": "NL",
+      "locales": [
+        "nl_NL"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00",
+        "UTC-03:00",
+        "UTC-01:00",
+        "UTC",
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "NLD"
+    },
+    {
+      "name": "New Caledonia",
+      "nativeName": "Nouvelle-Calédonie",
+      "isoAlpha2Code": "NC",
+      "locales": [
+        "fr_NC"
+      ],
+      "utcTimeZones": [
+        "UTC+11:00"
+      ],
+      "currencyCode": "XPF",
+      "isoAlpha3Code": "NCL"
+    },
+    {
+      "name": "New Zealand",
+      "nativeName": "New Zealand",
+      "isoAlpha2Code": "NZ",
+      "locales": [
+        "en_NZ",
+        "mi_NZ"
+      ],
+      "utcTimeZones": [
+        "UTC+12:00",
+        "UTC+12:45",
+        "UTC+13:00",
+        "UTC-11:00",
+        "UTC-10:00"
+      ],
+      "currencyCode": "NZD",
+      "isoAlpha3Code": "NZL"
+    },
+    {
+      "name": "Nicaragua",
+      "nativeName": "Nicaragua",
+      "isoAlpha2Code": "NI",
+      "locales": [
+        "es_NI"
+      ],
+      "utcTimeZones": [
+        "UTC-06:00"
+      ],
+      "currencyCode": "NIO",
+      "isoAlpha3Code": "NIC"
+    },
+    {
+      "name": "Niger",
+      "nativeName": "Niger",
+      "isoAlpha2Code": "NE",
+      "locales": [
+        "fr_NE",
+        "ha_NE"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "XOF",
+      "isoAlpha3Code": "NER"
+    },
+    {
+      "name": "Nigeria",
+      "nativeName": "Nigeria",
+      "isoAlpha2Code": "NG",
+      "locales": [
+        "en_NG"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "NGN",
+      "isoAlpha3Code": "NGA"
+    },
+    {
+      "name": "Niue",
+      "nativeName": "Niue",
+      "isoAlpha2Code": "NU",
+      "locales": [
+        "en_NU"
+      ],
+      "utcTimeZones": [
+        "UTC-11:00"
+      ],
+      "currencyCode": "NZD",
+      "isoAlpha3Code": "NIU"
+    },
+    {
+      "name": "Norfolk Island",
+      "nativeName": "Norfolk Island",
+      "isoAlpha2Code": "NF",
+      "locales": [
+        "en_NF"
+      ],
+      "utcTimeZones": [
+        "UTC+11:00"
+      ],
+      "currencyCode": "AUD",
+      "isoAlpha3Code": "NFK"
+    },
+    {
+      "name": "Korea (Democratic People's Republic of)",
+      "nativeName": "북한",
+      "isoAlpha2Code": "KP",
+      "locales": [
+        "ko_KP"
+      ],
+      "utcTimeZones": [
+        "UTC+09:00"
+      ],
+      "currencyCode": "KPW",
+      "isoAlpha3Code": "PRK"
+    },
+    {
+      "name": "Northern Mariana Islands",
+      "nativeName": "Northern Mariana Islands",
+      "isoAlpha2Code": "MP",
+      "locales": [
+        "en_MP",
+        "ch_MP"
+      ],
+      "utcTimeZones": [
+        "UTC+10:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "MNP"
+    },
+    {
+      "name": "Norway",
+      "nativeName": "Norge",
+      "isoAlpha2Code": "NO",
+      "locales": [
+        "no_NO",
+        "nb_NO",
+        "nn_NO",
+        "se_NO"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00",
+        "UTC+02:00"
+      ],
+      "currencyCode": "NOK",
+      "isoAlpha3Code": "NOR"
+    },
+    {
+      "name": "Oman",
+      "nativeName": "عمان",
+      "isoAlpha2Code": "OM",
+      "locales": [
+        "ar_OM"
+      ],
+      "utcTimeZones": [
+        "UTC+04:00"
+      ],
+      "currencyCode": "OMR",
+      "isoAlpha3Code": "OMN"
+    },
+    {
+      "name": "Pakistan",
+      "nativeName": "Pakistan",
+      "isoAlpha2Code": "PK",
+      "locales": [
+        "en_PK",
+        "ur_PK"
+      ],
+      "utcTimeZones": [
+        "UTC+05:00"
+      ],
+      "currencyCode": "PKR",
+      "isoAlpha3Code": "PAK"
+    },
+    {
+      "name": "Palau",
+      "nativeName": "Palau",
+      "isoAlpha2Code": "PW",
+      "locales": [
+        "en_PW"
+      ],
+      "utcTimeZones": [
+        "UTC+09:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "PLW"
+    },
+    {
+      "name": "Palestine, State of",
+      "nativeName": "فلسطين",
+      "isoAlpha2Code": "PS",
+      "locales": [
+        "ar_PS"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "ILS",
+      "isoAlpha3Code": "PSE"
+    },
+    {
+      "name": "Panama",
+      "nativeName": "Panamá",
+      "isoAlpha2Code": "PA",
+      "locales": [
+        "es_PA"
+      ],
+      "utcTimeZones": [
+        "UTC-05:00"
+      ],
+      "currencyCode": "PAB",
+      "isoAlpha3Code": "PAN"
+    },
+    {
+      "name": "Papua New Guinea",
+      "nativeName": "Papua Niugini",
+      "isoAlpha2Code": "PG",
+      "locales": [
+        "en_PG",
+        "ho_PG",
+        "tpi_PG"
+      ],
+      "utcTimeZones": [
+        "UTC+10:00",
+        "UTC+11:00"
+      ],
+      "currencyCode": "PGK",
+      "isoAlpha3Code": "PNG"
+    },
+    {
+      "name": "Paraguay",
+      "nativeName": "Paraguay",
+      "isoAlpha2Code": "PY",
+      "locales": [
+        "es_PY",
+        "gn_PY"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "PYG",
+      "isoAlpha3Code": "PRY"
+    },
+    {
+      "name": "Peru",
+      "nativeName": "Perú",
+      "isoAlpha2Code": "PE",
+      "locales": [
+        "es_PE",
+        "qu_PE"
+      ],
+      "utcTimeZones": [
+        "UTC-05:00"
+      ],
+      "currencyCode": "PEN",
+      "isoAlpha3Code": "PER"
+    },
+    {
+      "name": "Philippines",
+      "nativeName": "Pilipinas",
+      "isoAlpha2Code": "PH",
+      "locales": [
+        "en_PH",
+        "fil_PH"
+      ],
+      "utcTimeZones": [
+        "UTC+08:00"
+      ],
+      "currencyCode": "PHP",
+      "isoAlpha3Code": "PHL"
+    },
+    {
+      "name": "Pitcairn",
+      "nativeName": "Pitcairn Islands",
+      "isoAlpha2Code": "PN",
+      "locales": [
+        "en_PN"
+      ],
+      "utcTimeZones": [
+        "UTC-08:00"
+      ],
+      "currencyCode": "NZD",
+      "isoAlpha3Code": "PCN"
+    },
+    {
+      "name": "Poland",
+      "nativeName": "Polska",
+      "isoAlpha2Code": "PL",
+      "locales": [
+        "pl_PL"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "PLN",
+      "isoAlpha3Code": "POL"
+    },
+    {
+      "name": "Portugal",
+      "nativeName": "Portugal",
+      "isoAlpha2Code": "PT",
+      "locales": [
+        "pt_PT"
+      ],
+      "utcTimeZones": [
+        "UTC-01:00",
+        "UTC"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "PRT"
+    },
+    {
+      "name": "Puerto Rico",
+      "nativeName": "Puerto Rico",
+      "isoAlpha2Code": "PR",
+      "locales": [
+        "es_PR",
+        "en_PR"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "PRI"
+    },
+    {
+      "name": "Qatar",
+      "nativeName": "قطر",
+      "isoAlpha2Code": "QA",
+      "locales": [
+        "ar_QA"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "QAR",
+      "isoAlpha3Code": "QAT"
+    },
+    {
+      "name": "Republic of Kosovo",
+      "nativeName": "Republika e Kosovës",
+      "isoAlpha2Code": "XK",
+      "locales": [
+        "sq_XK",
+        "sr_XK"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "XKX"
+    },
+    {
+      "name": "Réunion",
+      "nativeName": "La Réunion",
+      "isoAlpha2Code": "RE",
+      "locales": [
+        "fr_RE"
+      ],
+      "utcTimeZones": [
+        "UTC+04:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "REU"
+    },
+    {
+      "name": "Romania",
+      "nativeName": "România",
+      "isoAlpha2Code": "RO",
+      "locales": [
+        "ro_RO"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "RON",
+      "isoAlpha3Code": "ROU"
+    },
+    {
+      "name": "Russian Federation",
+      "nativeName": "Россия",
+      "isoAlpha2Code": "RU",
+      "locales": [
+        "ru_RU",
+        "tt_RU",
+        "ba_RU",
+        "cv_RU",
+        "sah_RU",
+        "ce_RU",
+        "udm_RU",
+        "mhr_RU",
+        "myv_RU",
+        "mdf_RU",
+        "ady_RU",
+        "kbd_RU",
+        "os_RU",
+        "av_RU",
+        "dar_RU",
+        "inh_RU",
+        "lez_RU",
+        "tyv_RU",
+        "xal_RU",
+        "nog_RU"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00",
+        "UTC+03:00",
+        "UTC+04:00",
+        "UTC+05:00",
+        "UTC+06:00",
+        "UTC+07:00",
+        "UTC+08:00",
+        "UTC+09:00",
+        "UTC+10:00",
+        "UTC+11:00",
+        "UTC+12:00"
+      ],
+      "currencyCode": "RUB",
+      "isoAlpha3Code": "RUS"
+    },
+    {
+      "name": "Rwanda",
+      "nativeName": "Rwanda",
+      "isoAlpha2Code": "RW",
+      "locales": [
+        "rw_RW",
+        "en_RW",
+        "fr_RW",
+        "sw_RW"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "RWF",
+      "isoAlpha3Code": "RWA"
+    },
+    {
+      "name": "Saint Barthélemy",
+      "nativeName": "Saint-Barthélemy",
+      "isoAlpha2Code": "BL",
+      "locales": [
+        "fr_BL"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "BLM"
+    },
+    {
+      "name": "Saint Helena, Ascension and Tristan da Cunha",
+      "nativeName": "Saint Helena",
+      "isoAlpha2Code": "SH",
+      "locales": [
+        "en_SH"
+      ],
+      "utcTimeZones": [
+        "UTC+00:00"
+      ],
+      "currencyCode": "SHP",
+      "isoAlpha3Code": "SHN"
+    },
+    {
+      "name": "Saint Kitts and Nevis",
+      "nativeName": "Saint Kitts and Nevis",
+      "isoAlpha2Code": "KN",
+      "locales": [
+        "en_KN"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "XCD",
+      "isoAlpha3Code": "KNA"
+    },
+    {
+      "name": "Saint Lucia",
+      "nativeName": "Saint Lucia",
+      "isoAlpha2Code": "LC",
+      "locales": [
+        "en_LC"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "XCD",
+      "isoAlpha3Code": "LCA"
+    },
+    {
+      "name": "Saint Martin (French part)",
+      "nativeName": "Saint-Martin",
+      "isoAlpha2Code": "MF",
+      "locales": [
+        "en_MF",
+        "fr_MF",
+        "nl_MF"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "MAF"
+    },
+    {
+      "name": "Saint Pierre and Miquelon",
+      "nativeName": "Saint-Pierre-et-Miquelon",
+      "isoAlpha2Code": "PM",
+      "locales": [
+        "fr_PM"
+      ],
+      "utcTimeZones": [
+        "UTC-03:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "SPM"
+    },
+    {
+      "name": "Saint Vincent and the Grenadines",
+      "nativeName": "Saint Vincent and the Grenadines",
+      "isoAlpha2Code": "VC",
+      "locales": [
+        "en_VC"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "XCD",
+      "isoAlpha3Code": "VCT"
+    },
+    {
+      "name": "Samoa",
+      "nativeName": "Samoa",
+      "isoAlpha2Code": "WS",
+      "locales": [
+        "sm_WS",
+        "en_WS"
+      ],
+      "utcTimeZones": [
+        "UTC+13:00"
+      ],
+      "currencyCode": "WST",
+      "isoAlpha3Code": "WSM"
+    },
+    {
+      "name": "San Marino",
+      "nativeName": "San Marino",
+      "isoAlpha2Code": "SM",
+      "locales": [
+        "it_SM"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "SMR"
+    },
+    {
+      "name": "Sao Tome and Principe",
+      "nativeName": "São Tomé e Príncipe",
+      "isoAlpha2Code": "ST",
+      "locales": [
+        "pt_ST"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "STN",
+      "isoAlpha3Code": "STP"
+    },
+    {
+      "name": "Saudi Arabia",
+      "nativeName": "العربية السعودية",
+      "isoAlpha2Code": "SA",
+      "locales": [
+        "ar_SA"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "SAR",
+      "isoAlpha3Code": "SAU"
+    },
+    {
+      "name": "Senegal",
+      "nativeName": "Sénégal",
+      "isoAlpha2Code": "SN",
+      "locales": [
+        "fr_SN",
+        "wo_SN"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "XOF",
+      "isoAlpha3Code": "SEN"
+    },
+    {
+      "name": "Serbia",
+      "nativeName": "Србија",
+      "isoAlpha2Code": "RS",
+      "locales": [
+        "sr_RS"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "RSD",
+      "isoAlpha3Code": "SRB"
+    },
+    {
+      "name": "Seychelles",
+      "nativeName": "Seychelles",
+      "isoAlpha2Code": "SC",
+      "locales": [
+        "en_SC",
+        "fr_SC"
+      ],
+      "utcTimeZones": [
+        "UTC+04:00"
+      ],
+      "currencyCode": "SCR",
+      "isoAlpha3Code": "SYC"
+    },
+    {
+      "name": "Sierra Leone",
+      "nativeName": "Sierra Leone",
+      "isoAlpha2Code": "SL",
+      "locales": [
+        "en_SL"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "SLL",
+      "isoAlpha3Code": "SLE"
+    },
+    {
+      "name": "Singapore",
+      "nativeName": "Singapore",
+      "isoAlpha2Code": "SG",
+      "locales": [
+        "en_SG",
+        "ms_SG",
+        "ta_SG",
+        "zh_SG"
+      ],
+      "utcTimeZones": [
+        "UTC+08:00"
+      ],
+      "currencyCode": "SGD",
+      "isoAlpha3Code": "SGP"
+    },
+    {
+      "name": "Sint Maarten (Dutch part)",
+      "nativeName": "Sint Maarten",
+      "isoAlpha2Code": "SX",
+      "locales": [
+        "nl_SX",
+        "en_SX"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "ANG",
+      "isoAlpha3Code": "SXM"
+    },
+    {
+      "name": "Slovakia",
+      "nativeName": "Slovensko",
+      "isoAlpha2Code": "SK",
+      "locales": [
+        "sk_SK"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "SVK"
+    },
+    {
+      "name": "Slovenia",
+      "nativeName": "Slovenija",
+      "isoAlpha2Code": "SI",
+      "locales": [
+        "sl_SI"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "SVN"
+    },
+    {
+      "name": "Solomon Islands",
+      "nativeName": "Solomon Islands",
+      "isoAlpha2Code": "SB",
+      "locales": [
+        "en_SB"
+      ],
+      "utcTimeZones": [
+        "UTC+11:00"
+      ],
+      "currencyCode": "AUD",
+      "isoAlpha3Code": "SLB"
+    },
+    {
+      "name": "Somalia",
+      "nativeName": "Soomaaliya",
+      "isoAlpha2Code": "SO",
+      "locales": [
+        "so_SO",
+        "ar_SO"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "SOS",
+      "isoAlpha3Code": "SOM"
+    },
+    {
+      "name": "South Africa",
+      "nativeName": "South Africa",
+      "isoAlpha2Code": "ZA",
+      "locales": [
+        "af_ZA",
+        "en_ZA",
+        "nr_ZA",
+        "st_ZA",
+        "ss_ZA",
+        "tn_ZA",
+        "ts_ZA",
+        "ve_ZA",
+        "xh_ZA",
+        "zu_ZA"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "ZAR",
+      "isoAlpha3Code": "ZAF"
+    },
+    {
+      "name": "South Georgia and the South Sandwich Islands",
+      "nativeName": "South Georgia",
+      "isoAlpha2Code": "GS",
+      "locales": [
+        "en_GS"
+      ],
+      "utcTimeZones": [
+        "UTC-02:00"
+      ],
+      "currencyCode": "GBP",
+      "isoAlpha3Code": "SGS"
+    },
+    {
+      "name": "Korea (Republic of)",
+      "nativeName": "대한민국",
+      "isoAlpha2Code": "KR",
+      "locales": [
+        "ko_KR"
+      ],
+      "utcTimeZones": [
+        "UTC+09:00"
+      ],
+      "currencyCode": "KRW",
+      "isoAlpha3Code": "KOR"
+    },
+    {
+      "name": "South Sudan",
+      "nativeName": "South Sudan",
+      "isoAlpha2Code": "SS",
+      "locales": [
+        "en_SS"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "SSP",
+      "isoAlpha3Code": "SSD"
+    },
+    {
+      "name": "Spain",
+      "nativeName": "España",
+      "isoAlpha2Code": "ES",
+      "locales": [
+        "es_ES",
+        "eu_ES",
+        "ca_ES",
+        "gl_ES",
+        "ast_ES"
+      ],
+      "utcTimeZones": [
+        "UTC",
+        "UTC+01:00"
+      ],
+      "currencyCode": "EUR",
+      "isoAlpha3Code": "ESP"
+    },
+    {
+      "name": "Sri Lanka",
+      "nativeName": "ශ්‍රී ලංකාව",
+      "isoAlpha2Code": "LK",
+      "locales": [
+        "si_LK",
+        "ta_LK",
+        "en_LK"
+      ],
+      "utcTimeZones": [
+        "UTC+05:30"
+      ],
+      "currencyCode": "LKR",
+      "isoAlpha3Code": "LKA"
+    },
+    {
+      "name": "Sudan",
+      "nativeName": "السودان",
+      "isoAlpha2Code": "SD",
+      "locales": [
+        "ar_SD",
+        "en_SD"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "SDG",
+      "isoAlpha3Code": "SDN"
+    },
+    {
+      "name": "Suriname",
+      "nativeName": "Suriname",
+      "isoAlpha2Code": "SR",
+      "locales": [
+        "nl_SR",
+        "en_SR"
+      ],
+      "utcTimeZones": [
+        "UTC-03:00"
+      ],
+      "currencyCode": "SRD",
+      "isoAlpha3Code": "SUR"
+    },
+    {
+      "name": "Svalbard and Jan Mayen",
+      "nativeName": "Svalbard og Jan Mayen",
+      "isoAlpha2Code": "SJ",
+      "locales": [
+        "no_SJ",
+        "nb_SJ",
+        "nn_SJ"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00",
+        "UTC+02:00"
+      ],
+      "currencyCode": "NOK",
+      "isoAlpha3Code": "SJM"
+    },
+    {
+      "name": "Sweden",
+      "nativeName": "Sverige",
+      "isoAlpha2Code": "SE",
+      "locales": [
+        "sv_SE"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00",
+        "UTC+02:00"
+      ],
+      "currencyCode": "SEK",
+      "isoAlpha3Code": "SWE"
+    },
+    {
+      "name": "Switzerland",
+      "nativeName": "Schweiz",
+      "isoAlpha2Code": "CH",
+      "locales": [
+        "de_CH",
+        "fr_CH",
+        "it_CH",
+        "rm_CH"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "CHF",
+      "isoAlpha3Code": "CHE"
+    },
+    {
+      "name": "Syrian Arab Republic",
+      "nativeName": "سوريا",
+      "isoAlpha2Code": "SY",
+      "locales": [
+        "ar_SY"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "SYP",
+      "isoAlpha3Code": "SYR"
+    },
+    {
+      "name": "Taiwan",
+      "nativeName": "臺灣",
+      "isoAlpha2Code": "TW",
+      "locales": [
+        "zh_TW",
+        "zh_Hant_TW"
+      ],
+      "utcTimeZones": [
+        "UTC+08:00"
+      ],
+      "currencyCode": "TWD",
+      "isoAlpha3Code": "TWN"
+    },
+    {
+      "name": "Tajikistan",
+      "nativeName": "Тоҷикистон",
+      "isoAlpha2Code": "TJ",
+      "locales": [
+        "tg_TJ",
+        "ru_TJ"
+      ],
+      "utcTimeZones": [
+        "UTC+05:00"
+      ],
+      "currencyCode": "TJS",
+      "isoAlpha3Code": "TJK"
+    },
+    {
+      "name": "Tanzania, United Republic of",
+      "nativeName": "Tanzania",
+      "isoAlpha2Code": "TZ",
+      "locales": [
+        "sw_TZ",
+        "en_TZ"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "TZS",
+      "isoAlpha3Code": "TZA"
+    },
+    {
+      "name": "Thailand",
+      "nativeName": "ประเทศไทย",
+      "isoAlpha2Code": "TH",
+      "locales": [
+        "th_TH"
+      ],
+      "utcTimeZones": [
+        "UTC+07:00"
+      ],
+      "currencyCode": "THB",
+      "isoAlpha3Code": "THA"
+    },
+    {
+      "name": "Timor-Leste",
+      "nativeName": "Timor-Leste",
+      "isoAlpha2Code": "TL",
+      "locales": [
+        "pt_TL",
+        "tet_TL"
+      ],
+      "utcTimeZones": [
+        "UTC+09:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "TLS"
+    },
+    {
+      "name": "Togo",
+      "nativeName": "Togo",
+      "isoAlpha2Code": "TG",
+      "locales": [
+        "fr_TG",
+        "ee_TG",
+        "ak_TG"
+      ],
+      "utcTimeZones": [
+        "UTC"
+      ],
+      "currencyCode": "XOF",
+      "isoAlpha3Code": "TGO"
+    },
+    {
+      "name": "Tokelau",
+      "nativeName": "Tokelau",
+      "isoAlpha2Code": "TK",
+      "locales": [
+        "en_TK",
+        "sm_TK"
+      ],
+      "utcTimeZones": [
+        "UTC+13:00"
+      ],
+      "currencyCode": "NZD",
+      "isoAlpha3Code": "TKL"
+    },
+    {
+      "name": "Tonga",
+      "nativeName": "Puleʻanga Fakatuʻi ʻo Tonga",
+      "isoAlpha2Code": "TO",
+      "locales": [
+        "to_TO",
+        "en_TO"
+      ],
+      "utcTimeZones": [
+        "UTC+13:00"
+      ],
+      "currencyCode": "TOP",
+      "isoAlpha3Code": "TON"
+    },
+    {
+      "name": "Trinidad and Tobago",
+      "nativeName": "Trinidad and Tobago",
+      "isoAlpha2Code": "TT",
+      "locales": [
+        "en_TT"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "TTD",
+      "isoAlpha3Code": "TTO"
+    },
+    {
+      "name": "Tunisia",
+      "nativeName": "تونس",
+      "isoAlpha2Code": "TN",
+      "locales": [
+        "ar_TN",
+        "fr_TN"
+      ],
+      "utcTimeZones": [
+        "UTC+01:00"
+      ],
+      "currencyCode": "TND",
+      "isoAlpha3Code": "TUN"
+    },
+    {
+      "name": "Turkey",
+      "nativeName": "Türkiye",
+      "isoAlpha2Code": "TR",
+      "locales": [
+        "tr_TR"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "TRY",
+      "isoAlpha3Code": "TUR"
+    },
+    {
+      "name": "Turkmenistan",
+      "nativeName": "Türkmenistan",
+      "isoAlpha2Code": "TM",
+      "locales": [
+        "tk_TM",
+        "ru_TM"
+      ],
+      "utcTimeZones": [
+        "UTC+05:00"
+      ],
+      "currencyCode": "TMT",
+      "isoAlpha3Code": "TKM"
+    },
+    {
+      "name": "Turks and Caicos Islands",
+      "nativeName": "Turks and Caicos Islands",
+      "isoAlpha2Code": "TC",
+      "locales": [
+        "en_TC"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "TCA"
+    },
+    {
+      "name": "Tuvalu",
+      "nativeName": "Tuvalu",
+      "isoAlpha2Code": "TV",
+      "locales": [
+        "en_TV",
+        "sm_TV"
+      ],
+      "utcTimeZones": [
+        "UTC+12:00"
+      ],
+      "currencyCode": "AUD",
+      "isoAlpha3Code": "TUV"
+    },
+    {
+      "name": "Uganda",
+      "nativeName": "Uganda",
+      "isoAlpha2Code": "UG",
+      "locales": [
+        "en_UG",
+        "sw_UG"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "UGX",
+      "isoAlpha3Code": "UGA"
+    },
+    {
+      "name": "Ukraine",
+      "nativeName": "Україна",
+      "isoAlpha2Code": "UA",
+      "locales": [
+        "uk_UA",
+        "ru_UA",
+        "pl_UA",
+        "ro_UA",
+        "hu_UA",
+        "sk_UA",
+        "bg_UA",
+        "cs_UA"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00",
+        "UTC+03:00"
+      ],
+      "currencyCode": "UAH",
+      "isoAlpha3Code": "UKR"
+    },
+    {
+      "name": "United Arab Emirates",
+      "nativeName": "الإمارات العربية المتحدة",
+      "isoAlpha2Code": "AE",
+      "locales": [
+        "ar_AE"
+      ],
+      "utcTimeZones": [
+        "UTC+04:00"
+      ],
+      "currencyCode": "AED",
+      "isoAlpha3Code": "ARE"
+    },
+    {
+      "name": "United Kingdom of Great Britain and Northern Ireland",
+      "nativeName": "United Kingdom",
+      "isoAlpha2Code": "GB",
+      "locales": [
+        "en_GB",
+        "cy_GB",
+        "gd_GB",
+        "kw_GB"
+      ],
+      "utcTimeZones": [
+        "UTC+00:00",
+        "UTC+01:00"
+      ],
+      "currencyCode": "GBP",
+      "isoAlpha3Code": "GBR"
+    },
+    {
+      "name": "United States of America",
+      "nativeName": "United States",
+      "isoAlpha2Code": "US",
+      "locales": [
+        "en_US"
+      ],
+      "utcTimeZones": [
+        "UTC-12:00",
+        "UTC-11:00",
+        "UTC-10:00",
+        "UTC-09:00",
+        "UTC-08:00",
+        "UTC-07:00",
+        "UTC-06:00",
+        "UTC-05:00",
+        "UTC-04:00"
+      ],
+      "currencyCode": "USD",
+      "isoAlpha3Code": "USA"
+    },
+    {
+      "name": "Uruguay",
+      "nativeName": "Uruguay",
+      "isoAlpha2Code": "UY",
+      "locales": [
+        "es_UY"
+      ],
+      "utcTimeZones": [
+        "UTC-03:00"
+      ],
+      "currencyCode": "UYU",
+      "isoAlpha3Code": "URY"
+    },
+    {
+      "name": "Uzbekistan",
+      "nativeName": "Ўзбекистон",
+      "isoAlpha2Code": "UZ",
+      "locales": [
+        "uz_UZ",
+        "ru_UZ"
+      ],
+      "utcTimeZones": [
+        "UTC+05:00",
+        "UTC+06:00"
+      ],
+      "currencyCode": "UZS",
+      "isoAlpha3Code": "UZB"
+    },
+    {
+      "name": "Vanuatu",
+      "nativeName": "Vanuatu",
+      "isoAlpha2Code": "VU",
+      "locales": [
+        "bi_VU",
+        "en_VU",
+        "fr_VU"
+      ],
+      "utcTimeZones": [
+        "UTC+11:00"
+      ],
+      "currencyCode": "VUV",
+      "isoAlpha3Code": "VUT"
+    },
+    {
+      "name": "Venezuela (Bolivarian Republic of)",
+      "nativeName": "Venezuela",
+      "isoAlpha2Code": "VE",
+      "locales": [
+        "es_VE"
+      ],
+      "utcTimeZones": [
+        "UTC-04:00"
+      ],
+      "currencyCode": "VES",
+      "isoAlpha3Code": "VEN"
+    },
+    {
+      "name": "Viet Nam",
+      "nativeName": "Việt Nam",
+      "isoAlpha2Code": "VN",
+      "locales": [
+        "vi_VN"
+      ],
+      "utcTimeZones": [
+        "UTC+07:00"
+      ],
+      "currencyCode": "VND",
+      "isoAlpha3Code": "VNM"
+    },
+    {
+      "name": "Wallis and Futuna",
+      "nativeName": "Wallis-et-Futuna",
+      "isoAlpha2Code": "WF",
+      "locales": [
+        "fr_WF"
+      ],
+      "utcTimeZones": [
+        "UTC+12:00"
+      ],
+      "currencyCode": "XPF",
+      "isoAlpha3Code": "WLF"
+    },
+    {
+      "name": "Western Sahara",
+      "nativeName": "الصحراء الغربية",
+      "isoAlpha2Code": "EH",
+      "locales": [
+        "ar_EH",
+        "es_EH"
+      ],
+      "utcTimeZones": [
+        "UTC+00:00"
+      ],
+      "currencyCode": "MAD",
+      "isoAlpha3Code": "ESH"
+    },
+    {
+      "name": "Yemen",
+      "nativeName": "اليمن",
+      "isoAlpha2Code": "YE",
+      "locales": [
+        "ar_YE"
+      ],
+      "utcTimeZones": [
+        "UTC+03:00"
+      ],
+      "currencyCode": "YER",
+      "isoAlpha3Code": "YEM"
+    },
+    {
+      "name": "Zambia",
+      "nativeName": "Zambia",
+      "isoAlpha2Code": "ZM",
+      "locales": [
+        "en_ZM"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "ZMW",
+      "isoAlpha3Code": "ZMB"
+    },
+    {
+      "name": "Zimbabwe",
+      "nativeName": "Zimbabwe",
+      "isoAlpha2Code": "ZW",
+      "locales": [
+        "en_ZW",
+        "sn_ZW",
+        "nd_ZW"
+      ],
+      "utcTimeZones": [
+        "UTC+02:00"
+      ],
+      "currencyCode": "ZWL",
+      "isoAlpha3Code": "ZWE"
+    }
+  ]
+}

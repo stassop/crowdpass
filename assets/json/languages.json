@@ -1,0 +1,621 @@
+{
+  "languages": [
+    {
+      "isoCode": "af",
+      "name": "Afrikaans",
+      "nativeName": "Afrikaans",
+      "locales": ["af_ZA"]
+    },
+    {
+      "isoCode": "sq",
+      "name": "Albanian",
+      "nativeName": "Shqip",
+      "locales": ["sq_AL"]
+    },
+    {
+      "isoCode": "am",
+      "name": "Amharic",
+      "nativeName": "አማርኛ",
+      "locales": ["am_ET"]
+    },
+    {
+      "isoCode": "ar",
+      "name": "Arabic",
+      "nativeName": "العربية",
+      "locales": [
+        "ar_AE", "ar_BH", "ar_DZ", "ar_EG", "ar_IQ", "ar_JO", "ar_KW",
+        "ar_LB", "ar_LY", "ar_MA", "ar_OM", "ar_QA", "ar_SA", "ar_SD",
+        "ar_SY", "ar_TN", "ar_YE"
+      ]
+    },
+    {
+      "isoCode": "hy",
+      "name": "Armenian",
+      "nativeName": "Հայերեն",
+      "locales": ["hy_AM"]
+    },
+    {
+      "isoCode": "as",
+      "name": "Assamese",
+      "nativeName": "অসমীয়া",
+      "locales": ["as_IN"]
+    },
+    {
+      "isoCode": "az",
+      "name": "Azerbaijani",
+      "nativeName": "Azərbaycanca",
+      "locales": ["az_AZ"]
+    },
+    {
+      "isoCode": "eu",
+      "name": "Basque",
+      "nativeName": "Euskara",
+      "locales": ["eu_ES"]
+    },
+    {
+      "isoCode": "be",
+      "name": "Belarusian",
+      "nativeName": "Беларуская",
+      "locales": ["be_BY"]
+    },
+    {
+      "isoCode": "bn",
+      "name": "Bengali",
+      "nativeName": "বাংলা",
+      "locales": ["bn_BD", "bn_IN"]
+    },
+    {
+      "isoCode": "bs",
+      "name": "Bosnian",
+      "nativeName": "Bosanski",
+      "locales": ["bs_BA"]
+    },
+    {
+      "isoCode": "bg",
+      "name": "Bulgarian",
+      "nativeName": "Български",
+      "locales": ["bg_BG"]
+    },
+    {
+      "isoCode": "my",
+      "name": "Burmese",
+      "nativeName": "မြန်မာ",
+      "locales": ["my_MM"]
+    },
+    {
+      "isoCode": "ca",
+      "name": "Catalan",
+      "nativeName": "Català",
+      "locales": ["ca_ES"]
+    },
+    {
+      "isoCode": "zh",
+      "name": "Chinese",
+      "nativeName": "中文",
+      "locales": ["zh_CN", "zh_TW", "zh_HK", "zh_SG"]
+    },
+    {
+      "isoCode": "hr",
+      "name": "Croatian",
+      "nativeName": "Hrvatski",
+      "locales": ["hr_HR"]
+    },
+    {
+      "isoCode": "cs",
+      "name": "Czech",
+      "nativeName": "Čeština",
+      "locales": ["cs_CZ"]
+    },
+    {
+      "isoCode": "da",
+      "name": "Danish",
+      "nativeName": "Dansk",
+      "locales": ["da_DK"]
+    },
+    {
+      "isoCode": "dv",
+      "name": "Divehi",
+      "nativeName": "ދިވެހި",
+      "locales": ["dv_MV"]
+    },
+    {
+      "isoCode": "nl",
+      "name": "Dutch",
+      "nativeName": "Nederlands",
+      "locales": ["nl_NL", "nl_BE"]
+    },
+    {
+      "isoCode": "en",
+      "name": "English",
+      "nativeName": "English",
+      "locales": [
+        "en_US", "en_GB", "en_CA", "en_AU", "en_NZ", "en_IE", "en_ZA", "en_JM",
+        "en_BZ", "en_TT", "en_ZW", "en_PH", "en_IN", "en_MY", "en_SG", "en_HK",
+        "en_BN", "en_AE", "en_IL", "en_CY", "en_MT", "en_PK", "en_LK", "en_BD",
+        "en_NP", "en_VU", "en_WS", "en_TO", "en_TV", "en_TK", "en_SB", "en_PG",
+        "en_PW", "en_NR", "en_FM", "en_FJ", "en_KI", "en_CC", "en_CX", "en_CK",
+        "en_NU", "en_NF", "en_SH", "en_GG", "en_IM", "en_JE", "en_AI", "en_BM",
+        "en_IO", "en_KY", "en_MS", "en_PN", "en_TC", "en_VG", "en_VI", "en_AS",
+        "en_GU", "en_MP", "en_PR"
+      ]
+    },
+    {
+      "isoCode": "et",
+      "name": "Estonian",
+      "nativeName": "Eesti",
+      "locales": ["et_EE"]
+    },
+    {
+      "isoCode": "fo",
+      "name": "Faroese",
+      "nativeName": "Føroyskt",
+      "locales": ["fo_FO"]
+    },
+    {
+      "isoCode": "fil",
+      "name": "Filipino",
+      "nativeName": "Filipino",
+      "locales": ["fil_PH"]
+    },
+    {
+      "isoCode": "fi",
+      "name": "Finnish",
+      "nativeName": "Suomi",
+      "locales": ["fi_FI"]
+    },
+    {
+      "isoCode": "fr",
+      "name": "French",
+      "nativeName": "Français",
+      "locales": ["fr_FR", "fr_BE", "fr_CA", "fr_CH", "fr_LU", "fr_MC"]
+    },
+    {
+      "isoCode": "gl",
+      "name": "Galician",
+      "nativeName": "Galego",
+      "locales": ["gl_ES"]
+    },
+    {
+      "isoCode": "ka",
+      "name": "Georgian",
+      "nativeName": "ქართული",
+      "locales": ["ka_GE"]
+    },
+    {
+      "isoCode": "de",
+      "name": "German",
+      "nativeName": "Deutsch",
+      "locales": ["de_DE", "de_AT", "de_CH", "de_LU", "de_LI"]
+    },
+    {
+      "isoCode": "el",
+      "name": "Greek",
+      "nativeName": "Ελληνικά",
+      "locales": ["el_GR"]
+    },
+    {
+      "isoCode": "kl",
+      "name": "Greenlandic",
+      "nativeName": "Kalaallisut",
+      "locales": ["kl_GL"]
+    },
+    {
+      "isoCode": "gu",
+      "name": "Gujarati",
+      "nativeName": "ગુજરાતી",
+      "locales": ["gu_IN"]
+    },
+    {
+      "isoCode": "ha",
+      "name": "Hausa",
+      "nativeName": "Hausa",
+      "locales": ["ha_NG", "ha_NE", "ha_GH"]
+    },
+    {
+      "isoCode": "he",
+      "name": "Hebrew",
+      "nativeName": "עברית",
+      "locales": ["he_IL"]
+    },
+    {
+      "isoCode": "hi",
+      "name": "Hindi",
+      "nativeName": "हिन्दी",
+      "locales": ["hi_IN"]
+    },
+    {
+      "isoCode": "hu",
+      "name": "Hungarian",
+      "nativeName": "Magyar",
+      "locales": ["hu_HU"]
+    },
+    {
+      "isoCode": "is",
+      "name": "Icelandic",
+      "nativeName": "Íslenska",
+      "locales": ["is_IS"]
+    },
+    {
+      "isoCode": "ig",
+      "name": "Igbo",
+      "nativeName": "Igbo",
+      "locales": ["ig_NG"]
+    },
+    {
+      "isoCode": "id",
+      "name": "Indonesian",
+      "nativeName": "Bahasa Indonesia",
+      "locales": ["id_ID"]
+    },
+    {
+      "isoCode": "ga",
+      "name": "Irish",
+      "nativeName": "Gaeilge",
+      "locales": ["ga_IE"]
+    },
+    {
+      "isoCode": "it",
+      "name": "Italian",
+      "nativeName": "Italiano",
+      "locales": ["it_IT", "it_CH"]
+    },
+    {
+      "isoCode": "ja",
+      "name": "Japanese",
+      "nativeName": "日本語",
+      "locales": ["ja_JP"]
+    },
+    {
+      "isoCode": "kn",
+      "name": "Kannada",
+      "nativeName": "ಕನ್ನಡ",
+      "locales": ["kn_IN"]
+    },
+    {
+      "isoCode": "kk",
+      "name": "Kazakh",
+      "nativeName": "Қазақша",
+      "locales": ["kk_KZ"]
+    },
+    {
+      "isoCode": "km",
+      "name": "Khmer",
+      "nativeName": "ភាសាខ្មែរ",
+      "locales": ["km_KH"]
+    },
+    {
+      "isoCode": "ko",
+      "name": "Korean",
+      "nativeName": "한국어",
+      "locales": ["ko_KR"]
+    },
+    {
+      "isoCode": "ku",
+      "name": "Kurdish",
+      "nativeName": "Kurdî",
+      "locales": ["ku_TR"]
+    },
+    {
+      "isoCode": "ky",
+      "name": "Kyrgyz",
+      "nativeName": "Кыргызча",
+      "locales": ["ky_KG"]
+    },
+    {
+      "isoCode": "lo",
+      "name": "Lao",
+      "nativeName": "ລາວ",
+      "locales": ["lo_LA"]
+    },
+    {
+      "isoCode": "lv",
+      "name": "Latvian",
+      "nativeName": "Latviešu",
+      "locales": ["lv_LV"]
+    },
+    {
+      "isoCode": "lt",
+      "name": "Lithuanian",
+      "nativeName": "Lietuvių",
+      "locales": ["lt_LT"]
+    },
+    {
+      "isoCode": "lb",
+      "name": "Luxembourgish",
+      "nativeName": "Lëtzebuergesch",
+      "locales": ["lb_LU"]
+    },
+    {
+      "isoCode": "mk",
+      "name": "Macedonian",
+      "nativeName": "Македонски",
+      "locales": ["mk_MK"]
+    },
+    {
+      "isoCode": "ms",
+      "name": "Malay",
+      "nativeName": "Bahasa Melayu",
+      "locales": ["ms_MY"]
+    },
+    {
+      "isoCode": "ml",
+      "name": "Malayalam",
+      "nativeName": "മലയാളം",
+      "locales": ["ml_IN"]
+    },
+    {
+      "isoCode": "mt",
+      "name": "Maltese",
+      "nativeName": "Malti",
+      "locales": ["mt_MT"]
+    },
+    {
+      "isoCode": "mi",
+      "name": "Maori",
+      "nativeName": "Māori",
+      "locales": ["mi_NZ"]
+    },
+    {
+      "isoCode": "mr",
+      "name": "Marathi",
+      "nativeName": "मराठी",
+      "locales": ["mr_IN"]
+    },
+    {
+      "isoCode": "mn",
+      "name": "Mongolian",
+      "nativeName": "Монгол",
+      "locales": ["mn_MN"]
+    },
+    {
+      "isoCode": "ne",
+      "name": "Nepali",
+      "nativeName": "नेपाली",
+      "locales": ["ne_NP"]
+    },
+    {
+      "isoCode": "no",
+      "name": "Norwegian",
+      "nativeName": "Norsk",
+      "locales": ["no_NO", "no_NO_NY"]
+    },
+    {
+      "isoCode": "or",
+      "name": "Oriya",
+      "nativeName": "ଓଡ଼ିଆ",
+      "locales": ["or_IN"]
+    },
+    {
+      "isoCode": "ps",
+      "name": "Pashto",
+      "nativeName": "پښت",
+      "locales": ["ps_AF"]
+    },
+    {
+      "isoCode": "fa",
+      "name": "Persian",
+      "nativeName": "فارسی",
+      "locales": ["fa_IR"]
+    },
+    {
+      "isoCode": "pl",
+      "name": "Polish",
+      "nativeName": "Polski",
+      "locales": ["pl_PL"]
+    },
+    {
+      "isoCode": "pt",
+      "name": "Portuguese",
+      "nativeName": "Português",
+      "locales": ["pt_PT", "pt_BR"]
+    },
+    {
+      "isoCode": "pa",
+      "name": "Punjabi",
+      "nativeName": "ਪੰਜਾਬੀ",
+      "locales": ["pa_IN"]
+    },
+    {
+      "isoCode": "ro",
+      "name": "Romanian",
+      "nativeName": "Română",
+      "locales": ["ro_RO"]
+    },
+    {
+      "isoCode": "ru",
+      "name": "Russian",
+      "nativeName": "Русский",
+      "locales": ["ru_RU"]
+    },
+    {
+      "isoCode": "sa",
+      "name": "Sanskrit",
+      "nativeName": "संस्कृत",
+      "locales": ["sa_IN"]
+    },
+    {
+      "isoCode": "gd",
+      "name": "Scottish Gaelic",
+      "nativeName": "Gàidhlig",
+      "locales": ["gd_GB"]
+    },
+    {
+      "isoCode": "sr",
+      "name": "Serbian",
+      "nativeName": "Српски",
+      "locales": ["sr_RS"]
+    },
+    {
+      "isoCode": "sn",
+      "name": "Shona",
+      "nativeName": "chiShona",
+      "locales": ["sn_ZW"]
+    },
+    {
+      "isoCode": "sd",
+      "name": "Sindhi",
+      "nativeName": "سنڌي",
+      "locales": ["sd_IN"]
+    },
+    {
+      "isoCode": "si",
+      "name": "Sinhala",
+      "nativeName": "සිංහල",
+      "locales": ["si_LK"]
+    },
+    {
+      "isoCode": "sk",
+      "name": "Slovak",
+      "nativeName": "Slovenčina",
+      "locales": ["sk_SK"]
+    },
+    {
+      "isoCode": "sl",
+      "name": "Slovenian",
+      "nativeName": "Slovenščina",
+      "locales": ["sl_SI"]
+    },
+    {
+      "isoCode": "so",
+      "name": "Somali",
+      "nativeName": "Soomaaliga",
+      "locales": ["so_SO"]
+    },
+    {
+      "isoCode": "st",
+      "name": "Southern Sotho",
+      "nativeName": "Sesotho",
+      "locales": ["st_LS"]
+    },
+    {
+      "isoCode": "es",
+      "name": "Spanish",
+      "nativeName": "Español",
+      "locales": [
+        "es_ES", "es_AR", "es_BO", "es_CL", "es_CO", "es_CR", "es_CU",
+        "es_DO", "es_EC", "es_SV", "es_GQ", "es_GT", "es_HN", "es_MX",
+        "es_NI", "es_PA", "es_PY", "es_PE", "es_PR", "es_UY", "es_VE"
+      ]
+    },
+    {
+      "isoCode": "sw",
+      "name": "Swahili",
+      "nativeName": "Kiswahili",
+      "locales": ["sw_KE"]
+    },
+    {
+      "isoCode": "sv",
+      "name": "Swedish",
+      "nativeName": "Svenska",
+      "locales": ["sv_SE", "sv_FI"]
+    },
+    {
+      "isoCode": "tg",
+      "name": "Tajik",
+      "nativeName": "Тоҷикӣ",
+      "locales": ["tg_TJ"]
+    },
+    {
+      "isoCode": "ta",
+      "name": "Tamil",
+      "nativeName": "தமிழ்",
+      "locales": ["ta_IN"]
+    },
+    {
+      "isoCode": "te",
+      "name": "Telugu",
+      "nativeName": "తెలుగు",
+      "locales": ["te_IN"]
+    },
+    {
+      "isoCode": "th",
+      "name": "Thai",
+      "nativeName": "ไทย",
+      "locales": ["th_TH"]
+    },
+    {
+      "isoCode": "ts",
+      "name": "Tsonga",
+      "nativeName": "Xitsonga",
+      "locales": ["ts_ZA"]
+    },
+    {
+      "isoCode": "tn",
+      "name": "Tswana",
+      "nativeName": "Setswana",
+      "locales": ["tn_ZA"]
+    },
+    {
+      "isoCode": "tr",
+      "name": "Turkish",
+      "nativeName": "Türkçe",
+      "locales": ["tr_TR"]
+    },
+    {
+      "isoCode": "tk",
+      "name": "Turkmen",
+      "nativeName": "Türkmençe",
+      "locales": ["tk_TM"]
+    },
+    {
+      "isoCode": "uk",
+      "name": "Ukrainian",
+      "nativeName": "Українська",
+      "locales": ["uk_UA"]
+    },
+    {
+      "isoCode": "ur",
+      "name": "Urdu",
+      "nativeName": "اردو",
+      "locales": ["ur_PK"]
+    },
+    {
+      "isoCode": "uz",
+      "name": "Uzbek",
+      "nativeName": "Oʻzbek",
+      "locales": ["uz_UZ"]
+    },
+    {
+      "isoCode": "ve",
+      "name": "Venda",
+      "nativeName": "Tshivenḓa",
+      "locales": ["ve_ZA"]
+    },
+    {
+      "isoCode": "vi",
+      "name": "Vietnamese",
+      "nativeName": "Tiếng Việt",
+      "locales": ["vi_VN"]
+    },
+    {
+      "isoCode": "cy",
+      "name": "Welsh",
+      "nativeName": "Cymraeg",
+      "locales": ["cy_GB"]
+    },
+    {
+      "isoCode": "xh",
+      "name": "Xhosa",
+      "nativeName": "isiXhosa",
+      "locales": ["xh_ZA"]
+    },
+    {
+      "isoCode": "yi",
+      "name": "Yiddish",
+      "nativeName": "ייִדיש",
+      "locales": ["yi_DE"]
+    },
+    {
+      "isoCode": "yo",
+      "name": "Yoruba",
+      "nativeName": "Yorùbá",
+      "locales": ["yo_NG"]
+    },
+    {
+      "isoCode": "zu",
+      "name": "Zulu",
+      "nativeName": "isiZulu",
+      "locales": ["zu_ZA"]
+    }
+  ]
+}

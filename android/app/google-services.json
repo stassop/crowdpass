@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "475749652471",
+    "project_id": "crowdpass-app",
+    "storage_bucket": "crowdpass-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:475749652471:android:92f254409e7ccd040a80f2",
+        "android_client_info": {
+          "package_name": "com.example.crowdpass"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQT5LigkeHr4w0thB6EkXS1k-ZD-TU5J0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

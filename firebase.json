@@ -1,0 +1,41 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "crowdpass-app",
+          "appId": "1:475749652471:android:92f254409e7ccd040a80f2",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "crowdpass-app",
+          "appId": "1:475749652471:ios:c9248f7a691b23ef0a80f2",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "crowdpass-app",
+          "appId": "1:475749652471:ios:c9248f7a691b23ef0a80f2",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "crowdpass-app",
+          "configurations": {
+            "android": "1:475749652471:android:92f254409e7ccd040a80f2",
+            "ios": "1:475749652471:ios:c9248f7a691b23ef0a80f2",
+            "macos": "1:475749652471:ios:c9248f7a691b23ef0a80f2",
+            "web": "1:475749652471:web:5977c041426c7c4c0a80f2",
+            "windows": "1:475749652471:web:3a65c11ff3e73acf0a80f2"
+          }
+        }
+      }
+    }
+  }
+}

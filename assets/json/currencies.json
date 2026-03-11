@@ -1,0 +1,564 @@
+{
+  "currencies": [
+    {
+      "isoCode": "AED",
+      "name": "United Arab Emirates Dirham",
+      "nativeName": "درهم إماراتي",
+      "countries": ["AE"],
+      "symbol": "د.إ"
+    },
+    {
+      "isoCode": "AFN",
+      "name": "Afghan Afghani",
+      "nativeName": "افغانی",
+      "countries": ["AF"],
+      "symbol": "؋"
+    },
+    {
+      "isoCode": "ALL",
+      "name": "Albanian Lek",
+      "nativeName": "Lek",
+      "countries": ["AL"],
+      "symbol": "L"
+    },
+    {
+      "isoCode": "AMD",
+      "name": "Armenian Dram",
+      "nativeName": "Դրամ",
+      "countries": ["AM"],
+      "symbol": "֏"
+    },
+    {
+      "isoCode": "AOA",
+      "name": "Angolan Kwanza",
+      "nativeName": "Kwanza",
+      "countries": ["AO"],
+      "symbol": "Kz"
+    },
+    {
+      "isoCode": "ARS",
+      "name": "Argentine Peso",
+      "nativeName": "Peso argentino",
+      "countries": ["AR"],
+      "symbol": "$"
+    },
+    {
+      "isoCode": "AUD",
+      "name": "Australian Dollar",
+      "nativeName": "Australian Dollar",
+      "countries": ["AU", "CX", "CC", "HM", "KI", "NR", "NF", "TV"],
+      "symbol": "$"
+    },
+    {
+      "isoCode": "AZN",
+      "name": "Azerbaijani Manat",
+      "nativeName": "Azərbaycan manatı",
+      "countries": ["AZ"],
+      "symbol": "₼"
+    },
+    {
+      "isoCode": "BAM",
+      "name": "Bosnia and Herzegovina Convertible Mark",
+      "nativeName": "Konvertibilna marka",
+      "countries": ["BA"],
+      "symbol": "KM"
+    },
+    {
+      "isoCode": "BDT",
+      "name": "Bangladeshi Taka",
+      "nativeName": "টাকা",
+      "countries": ["BD"],
+      "symbol": "৳"
+    },
+    {
+      "isoCode": "BHD",
+      "name": "Bahraini Dinar",
+      "nativeName": "دينار بحريني",
+      "countries": ["BH"],
+      "symbol": "د.ب"
+    },
+    {
+      "isoCode": "BND",
+      "name": "Brunei Dollar",
+      "nativeName": "Dollar Brunei",
+      "countries": ["BN"],
+      "symbol": "$"
+    },
+    {
+      "isoCode": "BRL",
+      "name": "Brazilian Real",
+      "nativeName": "Real brasileiro",
+      "countries": ["BR"],
+      "symbol": "R$"
+    },
+    {
+      "isoCode": "CAD",
+      "name": "Canadian Dollar",
+      "nativeName": "Dollar canadien",
+      "countries": ["CA"],
+      "symbol": "$"
+    },
+    {
+      "isoCode": "CHF",
+      "name": "Swiss Franc",
+      "nativeName": "Schweizer Franken",
+      "countries": ["CH", "LI"],
+      "symbol": "CHF"
+    },
+    {
+      "isoCode": "CNY",
+      "name": "Chinese Yuan",
+      "nativeName": "人民币",
+      "countries": ["CN"],
+      "symbol": "¥"
+    },
+    {
+      "isoCode": "CUP",
+      "name": "Cuban Peso",
+      "nativeName": "Peso cubano",
+      "countries": ["CU"],
+      "symbol": "₱"
+    },
+    {
+      "isoCode": "CZK",
+      "name": "Czech Koruna",
+      "nativeName": "Česká koruna",
+      "countries": ["CZ"],
+      "symbol": "Kč"
+    },
+    {
+      "isoCode": "DKK",
+      "name": "Danish Krone",
+      "nativeName": "Dansk krone",
+      "countries": ["DK", "FO", "GL"],
+      "symbol": "kr"
+    },
+    {
+      "isoCode": "EGP",
+      "name": "Egyptian Pound",
+      "nativeName": "جنيه مصري",
+      "countries": ["EG"],
+      "symbol": "ج.م"
+    },
+    {
+      "isoCode": "ETB",
+      "name": "Ethiopian Birr",
+      "nativeName": "ብር",
+      "countries": ["ET"],
+      "symbol": "Br"
+    },
+    {
+      "isoCode": "EUR",
+      "name": "Euro",
+      "nativeName": "Euro",
+      "countries": ["AD", "AT", "BE", "CY", "EE", "FI", "FR", "DE", "GR", "IE", "IT", "LV", "LT", "LU", "MT", "MC", "NL", "PT", "SM", "SK", "SI", "ES", "VA", "ME"],
+      "symbol": "€"
+    },
+    {
+      "isoCode": "FJD",
+      "name": "Fijian Dollar",
+      "nativeName": "Fijian Dollar",
+      "countries": ["FJ"],
+      "symbol": "$"
+    },
+    {
+      "isoCode": "GBP",
+      "name": "British Pound",
+      "nativeName": "Pound sterling",
+      "countries": ["GB", "IM", "JE", "GG", "GS", "FK", "SH"],
+      "symbol": "£"
+    },
+    {
+      "isoCode": "GHS",
+      "name": "Ghanaian Cedi",
+      "nativeName": "Cedi",
+      "countries": ["GH"],
+      "symbol": "₵"
+    },
+    {
+      "isoCode": "HKD",
+      "name": "Hong Kong Dollar",
+      "nativeName": "港元",
+      "countries": ["HK"],
+      "symbol": "$"
+    },
+    {
+      "isoCode": "HNL",
+      "name": "Honduran Lempira",
+      "nativeName": "Lempira",
+      "countries": ["HN"],
+      "symbol": "L"
+    },
+    {
+      "isoCode": "HUF",
+      "name": "Hungarian Forint",
+      "nativeName": "Forint",
+      "countries": ["HU"],
+      "symbol": "Ft"
+    },
+    {
+      "isoCode": "IDR",
+      "name": "Indonesian Rupiah",
+      "nativeName": "Rupiah",
+      "countries": ["ID"],
+      "symbol": "Rp"
+    },
+    {
+      "isoCode": "ILS",
+      "name": "Israeli New Shekel",
+      "nativeName": "שקל חדש",
+      "countries": ["IL"],
+      "symbol": "₪"
+    },
+    {
+      "isoCode": "INR",
+      "name": "Indian Rupee",
+      "nativeName": "भारतीय रुपया",
+      "countries": ["IN"],
+      "symbol": "₹"
+    },
+    {
+      "isoCode": "ISK",
+      "name": "Icelandic Krona",
+      "nativeName": "Íslensk króna",
+      "countries": ["IS"],
+      "symbol": "kr"
+    },
+    {
+      "isoCode": "JPY",
+      "name": "Japanese Yen",
+      "nativeName": "円",
+      "countries": ["JP"],
+      "symbol": "¥"
+    },
+    {
+      "isoCode": "KES",
+      "name": "Kenyan Shilling",
+      "nativeName": "Shillingi",
+      "countries": ["KE"],
+      "symbol": "Sh"
+    },
+    {
+      "isoCode": "KHR",
+      "name": "Cambodian Riel",
+      "nativeName": "រៀល",
+      "countries": ["KH"],
+      "symbol": "៛"
+    },
+    {
+      "isoCode": "KRW",
+      "name": "South Korean Won",
+      "nativeName": "원",
+      "countries": ["KR"],
+      "symbol": "₩"
+    },
+    {
+      "isoCode": "KWD",
+      "name": "Kuwaiti Dinar",
+      "nativeName": "دينار كويتي",
+      "countries": ["KW"],
+      "symbol": "د.ك"
+    },
+    {
+      "isoCode": "KZT",
+      "name": "Kazakhstani Tenge",
+      "nativeName": "Қазақстан теңгесі",
+      "countries": ["KZ"],
+      "symbol": "₸"
+    },
+    {
+      "isoCode": "LAK",
+      "name": "Lao Kip",
+      "nativeName": "ກີບ",
+      "countries": ["LA"],
+      "symbol": "₭"
+    },
+    {
+      "isoCode": "LBP",
+      "name": "Lebanese Pound",
+      "nativeName": "ليرة لبنانية",
+      "countries": ["LB"],
+      "symbol": "ل.ل"
+    },
+    {
+      "isoCode": "LKR",
+      "name": "Sri Lankan Rupee",
+      "nativeName": "රුපියල්",
+      "countries": ["LK"],
+      "symbol": "Rs"
+    },
+    {
+      "isoCode": "LYD",
+      "name": "Libyan Dinar",
+      "nativeName": "دينار ليبي",
+      "countries": ["LY"],
+      "symbol": "د.ل"
+    },
+    {
+      "isoCode": "MAD",
+      "name": "Moroccan Dirham",
+      "nativeName": "درهم مغربي",
+      "countries": ["MA"],
+      "symbol": "د.م."
+    },
+    {
+      "isoCode": "MDL",
+      "name": "Moldovan Leu",
+      "nativeName": "Leu moldovenesc",
+      "countries": ["MD"],
+      "symbol": "lei"
+    },
+    {
+      "isoCode": "MGA",
+      "name": "Malagasy Ariary",
+      "nativeName": "Ariary",
+      "countries": ["MG"],
+      "symbol": "Ar"
+    },
+    {
+      "isoCode": "MKD",
+      "name": "Macedonian Denar",
+      "nativeName": "Македонски денар",
+      "countries": ["MK"],
+      "symbol": "ден."
+    },
+    {
+      "isoCode": "MMK",
+      "name": "Myanmar Kyat",
+      "nativeName": "ကျပ်",
+      "countries": ["MM"],
+      "symbol": "K"
+    },
+    {
+      "isoCode": "MOP",
+      "name": "Macanese Pataca",
+      "nativeName": "澳门元",
+      "countries": ["MO"],
+      "symbol": "MOP$"
+    },
+    {
+      "isoCode": "MRU",
+      "name": "Mauritanian Ouguiya",
+      "nativeName": "أوقية",
+      "countries": ["MR"],
+      "symbol": "UM"
+    },
+    {
+      "isoCode": "MUR",
+      "name": "Mauritian Rupee",
+      "nativeName": "Roupie mauricienne",
+      "countries": ["MU"],
+      "symbol": "₨"
+    },
+    {
+      "isoCode": "MXN",
+      "name": "Mexican Peso",
+      "nativeName": "Peso mexicano",
+      "countries": ["MX"],
+      "symbol": "$"
+    },
+    {
+      "isoCode": "MYR",
+      "name": "Malaysian Ringgit",
+      "nativeName": "Ringgit Malaysia",
+      "countries": ["MY"],
+      "symbol": "RM"
+    },
+    {
+      "isoCode": "NAD",
+      "name": "Namibian Dollar",
+      "nativeName": "Namibian Dollar",
+      "countries": ["NA"],
+      "symbol": "$"
+    },
+    {
+      "isoCode": "NGN",
+      "name": "Nigerian Naira",
+      "nativeName": "Naira",
+      "countries": ["NG"],
+      "symbol": "₦"
+    },
+    {
+      "isoCode": "NOK",
+      "name": "Norwegian Krone",
+      "nativeName": "Norsk krone",
+      "countries": ["NO", "SJ"],
+      "symbol": "kr"
+    },
+    {
+      "isoCode": "NPR",
+      "name": "Nepalese Rupee",
+      "nativeName": "नेपाली रुपैया",
+      "countries": ["NP"],
+      "symbol": "Rs"
+    },
+    {
+      "isoCode": "NZD",
+      "name": "New Zealand Dollar",
+      "nativeName": "New Zealand Dollar",
+      "countries": ["NZ", "CK", "NU", "PN", "TK"],
+      "symbol": "$"
+    },
+    {
+      "isoCode": "OMR",
+      "name": "Omani Rial",
+      "nativeName": " rial عماني",
+      "countries": ["OM"],
+      "symbol": "ر.ع."
+    },
+    {
+      "isoCode": "PEN",
+      "name": "Peruvian Sol",
+      "nativeName": "Sol",
+      "countries": ["PE"],
+      "symbol": "S/"
+    },
+    {
+      "isoCode": "PHP",
+      "name": "Philippine Peso",
+      "nativeName": "Piso",
+      "countries": ["PH"],
+      "symbol": "₱"
+    },
+    {
+      "isoCode": "PKR",
+      "name": "Pakistani Rupee",
+      "nativeName": "پاکستانی روپیہ",
+      "countries": ["PK"],
+      "symbol": "₨"
+    },
+    {
+      "isoCode": "PLN",
+      "name": "Polish Złoty",
+      "nativeName": "Złoty",
+      "countries": ["PL"],
+      "symbol": "zł"
+    },
+    {
+      "isoCode": "QAR",
+      "name": "Qatari Riyal",
+      "nativeName": "الريال القطري",
+      "countries": ["QA"],
+      "symbol": "ر.ق"
+    },
+    {
+      "isoCode": "RON",
+      "name": "Romanian Leu",
+      "nativeName": "Leu românesc",
+      "countries": ["RO"],
+      "symbol": "lei"
+    },
+    {
+      "isoCode": "RSD",
+      "name": "Serbian Dinar",
+      "nativeName": "Динар",
+      "countries": ["RS"],
+      "symbol": "дин."
+    },
+    {
+      "isoCode": "RUB",
+      "name": "Russian Ruble",
+      "nativeName": "Российский рубль",
+      "countries": ["RU"],
+      "symbol": "₽"
+    },
+    {
+      "isoCode": "SAR",
+      "name": "Saudi Riyal",
+      "nativeName": "الريال السعودي",
+      "countries": ["SA"],
+      "symbol": "ر.س"
+    },
+    {
+      "isoCode": "SEK",
+      "name": "Swedish Krona",
+      "nativeName": "Svensk krona",
+      "countries": ["SE"],
+      "symbol": "kr"
+    },
+    {
+      "isoCode": "SGD",
+      "name": "Singapore Dollar",
+      "nativeName": "Singapore Dollar",
+      "countries": ["SG"],
+      "symbol": "$"
+    },
+    {
+      "isoCode": "SHP",
+      "name": "Saint Helena Pound",
+      "nativeName": "Saint Helena pound",
+      "countries": ["SH"],
+      "symbol": "£"
+    },
+    {
+      "isoCode": "SOS",
+      "name": "Somali Shilling",
+      "nativeName": "Shillingi",
+      "countries": ["SO"],
+      "symbol": "Sh"
+    },
+    {
+      "isoCode": "THB",
+      "name": "Thai Baht",
+      "nativeName": "บาท",
+      "countries": ["TH"],
+      "symbol": "฿"
+    },
+    {
+      "isoCode": "TND",
+      "name": "Tunisian Dinar",
+      "nativeName": "دينار تونسي",
+      "countries": ["TN"],
+      "symbol": "د.ت"
+    },
+    {
+      "isoCode": "TRY",
+      "name": "Turkish Lira",
+      "nativeName": "Türk Lirası",
+      "countries": ["TR"],
+      "symbol": "₺"
+    },
+    {
+      "isoCode": "UAH",
+      "name": "Ukrainian Hryvnia",
+      "nativeName": "Гривня",
+      "countries": ["UA"],
+      "symbol": "₴"
+    },
+    {
+      "isoCode": "USD",
+      "name": "United States Dollar",
+      "nativeName": "United States Dollar",
+      "countries": ["US", "AS", "EC", "SV", "GU", "IO", "MH", "FM", "MP", "PW", "PA", "PR", "TL", "TC", "VG", "VI"],
+      "symbol": "$"
+    },
+    {
+      "isoCode": "UZS",
+      "name": "Uzbekistani Som",
+      "nativeName": "O'zbek somi",
+      "countries": ["UZ"],
+      "symbol": "сўм"
+    },
+    {
+      "isoCode": "VND",
+      "name": "Vietnamese Đồng",
+      "nativeName": "Đồng Việt Nam",
+      "countries": ["VN"],
+      "symbol": "₫"
+    },
+    {
+      "isoCode": "ZAR",
+      "name": "South African Rand",
+      "nativeName": "Rand",
+      "countries": ["ZA"],
+      "symbol": "R"
+    },
+    {
+      "isoCode": "ZWL",
+      "name": "Zimbabwean Dollar",
+      "nativeName": "Zimbabwe Dollar",
+      "countries": ["ZW"],
+      "symbol": "$"
+    }
+  ]
+}
