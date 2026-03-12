@@ -33,7 +33,7 @@ enum PaymentMethod implements Comparable<PaymentMethod> {
 }
 
 class Payment implements Comparable<Payment> {
-  final Money amount;
+  final Money value;
   final DateTime date;
   final String eventId;
   final String id;
@@ -44,7 +44,7 @@ class Payment implements Comparable<Payment> {
   final String reference;
 
   const Payment({
-    required this.amount,
+    required this.value,
     required this.date,
     required this.eventId,
     required this.id,
@@ -56,7 +56,7 @@ class Payment implements Comparable<Payment> {
   });
 
   factory Payment.fromJson(Map<String, dynamic> json) => Payment(
-        amount: Money.fromJson(json['amount'] as Map<String, dynamic>),
+        value: Money.fromJson(json['value'] as Map<String, dynamic>),
         date: DateTime.parse(json['date'] as String),
         eventId: json['eventId'] as String,
         id: json['id'] as String,
@@ -68,7 +68,7 @@ class Payment implements Comparable<Payment> {
       );
 
   Map<String, dynamic> toJson() => {
-        'amount': amount.toJson(),
+        'value': value.toJson(),
         'date': date.toIso8601String(),
         'eventId': eventId,
         'id': id,
@@ -80,7 +80,6 @@ class Payment implements Comparable<Payment> {
       };
 
   Payment copyWith({
-    Money? amount,
     DateTime? date,
     String? eventId,
     String? id,
@@ -89,9 +88,9 @@ class Payment implements Comparable<Payment> {
     String? payeeId,
     String? payerId,
     String? reference,
+    Money? value,
   }) {
     return Payment(
-      amount: amount ?? this.amount,
       date: date ?? this.date,
       eventId: eventId ?? this.eventId,
       id: id ?? this.id,
@@ -100,6 +99,7 @@ class Payment implements Comparable<Payment> {
       payeeId: payeeId ?? this.payeeId,
       payerId: payerId ?? this.payerId,
       reference: reference ?? this.reference,
+      value: value ?? this.value,
     );
   }
 
@@ -107,18 +107,17 @@ class Payment implements Comparable<Payment> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is Payment &&
-          amount == other.amount &&
           date == other.date &&
           id == other.id &&
           isCompleted == other.isCompleted &&
           method == other.method &&
           payeeId == other.payeeId &&
           payerId == other.payerId &&
-          reference == other.reference;
+          reference == other.reference &&
+          value == other.value;
 
   @override
   int get hashCode => Object.hash(
-        amount,
         date,
         id,
         isCompleted,
@@ -126,6 +125,7 @@ class Payment implements Comparable<Payment> {
         payeeId,
         payerId,
         reference,
+        value,
       );
 
   @override

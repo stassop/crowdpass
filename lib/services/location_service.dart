@@ -39,7 +39,7 @@ class LocationService {
       )..headers.addAll({
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'User-Agent': 'KleenerApp/1.0 (contact@kleener.com)', // Update to real contact
+          'User-Agent': 'CrowdPass/1.0 (support@crowdpass.app)', // Update to real contact
         });
 
       final streamedResponse = await request.send().timeout(

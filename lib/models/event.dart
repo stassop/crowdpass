@@ -4,37 +4,88 @@ import 'package:crowdpass/models/location.dart';
 import 'package:crowdpass/models/time_range.dart';
 
 enum EventCategory {
-  music('Music'),
-  art('Art'),
-  sports('Sports'),
-  food('Food'),
-  education('Education'),
-  networking('Networking'),
-  social('Social'),
-  other('Other');
+  music('Music', Icons.music_note),
+  art('Art', Icons.palette),
+  performance('Performance', Icons.theater_comedy),
+  film('Film', Icons.movie),
+  sports('Sports', Icons.sports_soccer),
+  foodDrink('Food & Drink', Icons.restaurant),
+  education('Education & Workshops', Icons.school),
+  business('Business & Conferences', Icons.business_center),
+  nightlife('Nightlife', Icons.nightlife),
+  wellness('Wellness', Icons.spa),
+  festivals('Festivals', Icons.celebration),
+  family('Family & Kids', Icons.family_restroom),
+  other('Other', Icons.category);
 
   final String label;
+  final IconData icon;
 
-  /// Get event category from a string label (case-insensitive)
-  static EventCategory? fromString(String value) {
+  const EventCategory(this.label, this.icon);
+
+  static EventCategory fromString(String value) {
+    final normalized = value.trim().toLowerCase();
+
     return EventCategory.values.firstWhere(
-      (category) => category.name == value.trim().toLowerCase(),
-      orElse: () => other,
+      (category) =>
+          category.name.toLowerCase() == normalized ||
+          category.label.toLowerCase() == normalized,
+      orElse: () => EventCategory.other,
     );
   }
-
-  const EventCategory(this.label);
 }
 
 enum EventType {
+  // MUSIC
   concert('Concert', EventCategory.music),
-  festival('Festival', EventCategory.music),
+  liveMusic('Live Music', EventCategory.music),
+  djSet('DJ Set', EventCategory.nightlife),
+
+  // FESTIVALS
+  musicFestival('Music Festival', EventCategory.festivals),
+  foodFestival('Food Festival', EventCategory.festivals),
+  filmFestival('Film Festival', EventCategory.festivals),
+
+  // ART
   exhibition('Exhibition', EventCategory.art),
-  workshop('Workshop', EventCategory.education),
-  meetup('Meetup', EventCategory.networking),
-  party('Party', EventCategory.social),
+  artFair('Art Fair', EventCategory.art),
+
+  // PERFORMANCE
+  theater('Theater', EventCategory.performance),
+  comedyShow('Comedy Show', EventCategory.performance),
+  dancePerformance('Dance Performance', EventCategory.performance),
+
+  // FILM
+  filmScreening('Film Screening', EventCategory.film),
+
+  // SPORTS
   sportsGame('Sports Game', EventCategory.sports),
-  foodTasting('Food Tasting', EventCategory.food),
+  tournament('Tournament', EventCategory.sports),
+
+  // FOOD & DRINK
+  foodTasting('Food Tasting', EventCategory.foodDrink),
+  wineTasting('Wine Tasting', EventCategory.foodDrink),
+  diningExperience('Dining Experience', EventCategory.foodDrink),
+
+  // EDUCATION
+  workshop('Workshop', EventCategory.education),
+  masterclass('Masterclass', EventCategory.education),
+  cookingClass('Cooking Class', EventCategory.education),
+
+  // BUSINESS
+  conference('Conference', EventCategory.business),
+  summit('Summit', EventCategory.business),
+
+  // NIGHTLIFE
+  party('Party', EventCategory.nightlife),
+  clubNight('Club Night', EventCategory.nightlife),
+
+  // WELLNESS
+  yogaClass('Yoga Class', EventCategory.wellness),
+
+  // FAMILY
+  kidsShow('Kids Show', EventCategory.family),
+
   other('Other', EventCategory.other);
 
   final String label;
@@ -42,145 +93,212 @@ enum EventType {
 
   const EventType(this.label, this.category);
 
-  static EventType? fromString(String value) {
+  static EventType fromString(String value) {
+    final normalized = value.trim().toLowerCase();
+
     return EventType.values.firstWhere(
-      (type) => type.name == value.trim().toLowerCase(),
-      orElse: () => other,
+      (type) =>
+          type.name.toLowerCase() == normalized ||
+          type.label.toLowerCase() == normalized,
+      orElse: () => EventType.other,
     );
   }
 
-  static Map<EventCategory, Set<EventType>> get byCategory {
-    final Map<EventCategory, Set<EventType>> map = {};
-    for (var type in EventType.values) {
-      map.putIfAbsent(type.category, () => {}).add(type);
-    }
-    return map;
-  }
+  static final Map<EventCategory, Set<EventType>> byCategory = {
+    for (var category in EventCategory.values)
+      category: EventType.values
+          .where((type) => type.category == category)
+          .toSet()
+  };
 }
 
 @immutable
 class Event implements Comparable<Event> {
-  final DateTimeRange dates;
-  final String description;
-  final bool isFamilyFriendly;
-  final bool isFree;
-  final bool isWheelChairAccessible;
-  final String? imageUrl;
-  final Location location;
-  final String name;
+  final String? createdBy;
+  final DateTimeRange? dates;
+  final String? description;
+  final String? id;
+  final Location? location;
+  final String? title;
   final EventType? type;
-  final TimeRange times;
-  final String id;
+  final TimeRange? times;
+  final DateTime? admissionStart;
+  final bool? isEpilepsyFriendly;
+  final bool? isFamilyFriendly;
+  final bool? isFree;
+  final bool? isHearingAidCompatible;
+  final bool? isLowSensoryFriendly;
+  final bool? isOutdoor;
+  final bool? isPetFriendly;
+  final bool? isWheelchairAccessible;
+  final String? imageUrl;
 
   const Event({
-    required this.dates,
-    required this.description,
-    this.isFamilyFriendly = false,
-    this.isFree = false,
-    this.isWheelChairAccessible = false,
+    this.createdBy,
+    this.dates,
+    this.description,
+    this.id,
+    this.location,
+    this.title,
+    this.type,
+    this.times,
+    this.admissionStart,
+    this.isEpilepsyFriendly,
+    this.isFamilyFriendly,
+    this.isFree,
+    this.isHearingAidCompatible,
+    this.isLowSensoryFriendly,
+    this.isOutdoor,
+    this.isPetFriendly,
+    this.isWheelchairAccessible,
     this.imageUrl,
-    required this.location,
-    required this.name,
-    required this.type,
-    required this.times,
-    required this.id,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) => Event(
-        dates: DateTimeRange(
-          start: DateTime.parse(json['dates']['start'] as String),
-          end: DateTime.parse(json['dates']['end'] as String),
-        ),
-        description: json['description'] as String,
-        isFamilyFriendly: json['isFamilyFriendly'] ?? false,
-        isFree: json['isFree'] ?? false,
-        isWheelChairAccessible: json['isWheelChairAccessible'] ?? false,
-        imageUrl: json['imageUrl'],
-        location: Location.fromJson(json['location'] as Map<String, dynamic>),
-        name: json['name'] as String,
-        type: EventType.fromString(json['type'] as String? ?? ''),
-        times: TimeRange.fromJson(json['times'] as Map<String, dynamic>),
-        id: json['id'] as String,
+        createdBy: json['createdBy'] as String?,
+        dates: json['dates'] != null && json['dates']['start'] != null && json['dates']['end'] != null
+            ? DateTimeRange(
+                start: DateTime.tryParse(json['dates']['start']) ?? DateTime.now(),
+                end: DateTime.tryParse(json['dates']['end']) ?? DateTime.now(),
+              )
+            : null,
+        description: json['description'] as String?,
+        id: json['id'] as String?,
+        location: json['location'] != null ? Location.fromJson(json['location'] as Map<String, dynamic>) : null,
+        title: json['title'] as String?,
+        type: json['type'] != null ? EventType.fromString(json['type'] as String) : null,
+        times: json['times'] != null ? TimeRange.fromJson(json['times'] as Map<String, dynamic>) : null,
+        admissionStart: json['admissionStart'] != null ? DateTime.tryParse(json['admissionStart']) : null,
+        isEpilepsyFriendly: json['isEpilepsyFriendly'] as bool?,
+        isFamilyFriendly: json['isFamilyFriendly'] as bool?,
+        isFree: json['isFree'] as bool?,
+        isHearingAidCompatible: json['isHearingAidCompatible'] as bool?,
+        isLowSensoryFriendly: json['isLowSensoryFriendly'] as bool?,
+        isOutdoor: json['isOutdoor'] as bool?,
+        isPetFriendly: json['isPetFriendly'] as bool?,
+        isWheelchairAccessible: json['isWheelchairAccessible'] as bool?,
+        imageUrl: json['imageUrl'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
-        'dates': {
-          'start': dates.start.toIso8601String(),
-          'end': dates.end.toIso8601String(),
-        },
-        'description': description,
-        'isFamilyFriendly': isFamilyFriendly,
-        'isFree': isFree,
-        'isWheelChairAccessible': isWheelChairAccessible,
-        'imageUrl': imageUrl,
-        'location': location,
-        'name': name,
-        'type': type?.name,
-        'times': times.toJson(),
-        'id': id,
+        if (createdBy != null) 'createdBy': createdBy,
+        if (dates != null)
+          'dates': {
+            'start': dates!.start.toIso8601String(),
+            'end': dates!.end.toIso8601String(),
+          },
+        if (description != null) 'description': description,
+        if (id != null) 'id': id,
+        if (location != null) 'location': location,
+        if (title != null) 'title': title,
+        if (type != null) 'type': type.toString(),
+        if (times != null) 'times': times!.toJson(),
+        if (admissionStart != null) 'admissionStart': admissionStart!.toIso8601String(),
+        if (isEpilepsyFriendly != null) 'isEpilepsyFriendly': isEpilepsyFriendly,
+        if (isFamilyFriendly != null) 'isFamilyFriendly': isFamilyFriendly,
+        if (isFree != null) 'isFree': isFree,
+        if (isHearingAidCompatible != null) 'isHearingAidCompatible': isHearingAidCompatible,
+        if (isLowSensoryFriendly != null) 'isLowSensoryFriendly': isLowSensoryFriendly,
+        if (isOutdoor != null) 'isOutdoor': isOutdoor,
+        if (isPetFriendly != null) 'isPetFriendly': isPetFriendly,
+        if (isWheelchairAccessible != null) 'isWheelchairAccessible': isWheelchairAccessible,
+        if (imageUrl != null) 'imageUrl': imageUrl,
       };
 
   Event copyWith({
+    String? createdBy,
     DateTimeRange? dates,
     String? description,
+    String? id,
+    DateTime? admissionStart,
+    bool? isEpilepsyFriendly,
     bool? isFamilyFriendly,
     bool? isFree,
-    bool? isWheelChairAccessible,
+    bool? isHearingAidCompatible,
+    bool? isLowSensoryFriendly,
+    bool? isOutdoor,
+    bool? isPetFriendly,
+    bool? isWheelchairAccessible,
     String? imageUrl,
     Location? location,
-    String? name,
+    String? title,
     EventType? type,
     TimeRange? times,
-    String? id,
   }) {
     return Event(
-      dates: dates ?? this.dates,
-      description: description ?? this.description,
-      isFamilyFriendly: isFamilyFriendly ?? this.isFamilyFriendly,
-      isFree: isFree ?? this.isFree,
-      isWheelChairAccessible: isWheelChairAccessible ?? this.isWheelChairAccessible,
-      imageUrl: imageUrl ?? this.imageUrl,
+      createdBy: createdBy ?? this.createdBy,
+      id: id ?? this.id,
       location: location ?? this.location,
-      name: name ?? this.name,
+      title: title ?? this.title,
       type: type ?? this.type,
       times: times ?? this.times,
-      id: id ?? this.id,
+      dates: dates ?? this.dates,
+      description: description ?? this.description,
+      admissionStart: admissionStart ?? this.admissionStart,
+      isEpilepsyFriendly: isEpilepsyFriendly ?? this.isEpilepsyFriendly,
+      isFamilyFriendly: isFamilyFriendly ?? this.isFamilyFriendly,
+      isFree: isFree ?? this.isFree,
+      isHearingAidCompatible: isHearingAidCompatible ?? this.isHearingAidCompatible,
+      isLowSensoryFriendly: isLowSensoryFriendly ?? this.isLowSensoryFriendly,
+      isOutdoor: isOutdoor ?? this.isOutdoor,
+      isPetFriendly: isPetFriendly ?? this.isPetFriendly,
+      isWheelchairAccessible: isWheelchairAccessible ?? this.isWheelchairAccessible,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 
   @override
-    bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Event &&
-        dates == other.dates &&
-        description == other.description &&
-        isFamilyFriendly == other.isFamilyFriendly &&
-        isFree == other.isFree &&
-        isWheelChairAccessible == other.isWheelChairAccessible &&
-        imageUrl == other.imageUrl &&
-        location == other.location &&
-        name == other.name &&
-        type == other.type &&
-        times == other.times &&
-        id == other.id;
+      bool operator ==(Object other) =>
+        identical(this, other) ||
+        other is Event &&
+          createdBy == other.createdBy &&
+          dates == other.dates &&
+          description == other.description &&
+          id == other.id &&
+          imageUrl == other.imageUrl &&
+          admissionStart == other.admissionStart &&
+          isEpilepsyFriendly == other.isEpilepsyFriendly &&
+          isFamilyFriendly == other.isFamilyFriendly &&
+          isFree == other.isFree &&
+          isHearingAidCompatible == other.isHearingAidCompatible &&
+          isLowSensoryFriendly == other.isLowSensoryFriendly &&
+          isOutdoor == other.isOutdoor &&
+          isPetFriendly == other.isPetFriendly &&
+          isWheelchairAccessible == other.isWheelchairAccessible &&
+          location == other.location &&
+          title == other.title &&
+          times == other.times &&
+          type == other.type;
 
   @override
   int get hashCode => Object.hash(
+        createdBy,
         dates,
         description,
+        id,
+        imageUrl,
+        admissionStart,
+        isEpilepsyFriendly,
         isFamilyFriendly,
         isFree,
-        isWheelChairAccessible,
-        imageUrl,
+        isHearingAidCompatible,
+        isLowSensoryFriendly,
+        isOutdoor,
+        isPetFriendly,
+        isWheelchairAccessible,
         location,
-        name,
-        type,
+        title,
         times,
-        id,
+        type,
       );
 
   @override
-    int compareTo(Event other) => dates.start.compareTo(other.dates.start);
+  int compareTo(Event other) {
+    if (dates == null && other.dates == null) return 0;
+    if (dates == null) return -1;
+    if (other.dates == null) return 1;
+    return dates!.start.compareTo(other.dates!.start);
+  }
 
   @override
   String toString() => toJson().toString();

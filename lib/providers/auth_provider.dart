@@ -1,80 +1,146 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// 1. The Raw Stream Provider
-/// Good for simple "is logged in?" checks across the app.
-final authProvider = StreamProvider<User?>((ref) {
-  return FirebaseAuth.instance.userChanges();
+/// FirebaseAuth provider for dependency injection and easier testing
+final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
+  return FirebaseAuth.instance;
 });
 
-/// 2. The AuthNotifier
-/// Manages the logic, loading states, and error handling.
-/// Now simply returns User? (or null if not logged in).
+/// Raw Firebase auth stream provider
+/// Useful for simple "is logged in?" checks across the app
+final authProvider = StreamProvider<User?>((ref) {
+  final auth = ref.watch(firebaseAuthProvider);
+  return auth.userChanges();
+});
+
+/// AuthNotifier
+/// Handles authentication actions, loading states, error handling,
+/// and syncing with the Firebase auth stream
 class AuthNotifier extends AsyncNotifier<User?> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  late final FirebaseAuth _auth;
 
   @override
   Future<User?> build() async {
-    // We listen to the authProvider. When the stream emits a new user, 
-    // we update this notifier's state, but ONLY if we aren't busy.
-    ref.listen(authProvider, (previous, next) {
+    // Initialize FirebaseAuth from provider
+    _auth = ref.read(firebaseAuthProvider);
+
+    // Listen to the auth stream and sync notifier state
+    ref.listen<AsyncValue<User?>>(authProvider, (previous, next) {
       next.whenData((user) {
-        // This check is the "secret sauce" to prevent UI flickering.
-        // It ensures a manual Error or Loading state isn't overwritten 
-        // by the background stream immediately.
+        // Prevent overwriting manual loading or error states
         if (!state.isLoading && !state.hasError) {
           state = AsyncData(user);
         }
       });
     });
 
-    // Initial value for the notifier
+    // Return initial auth state
     return await ref.watch(authProvider.future);
   }
 
+  /// Converts FirebaseAuthException codes into user-friendly messages
   String _handleError(dynamic error) {
     if (error is FirebaseAuthException) {
       switch (error.code) {
-        case 'user-not-found': return 'No user found for this email.';
-        case 'wrong-password': return 'Incorrect password provided.';
-        case 'invalid-credential': return 'Invalid email or password.';
-        case 'too-many-requests': return 'Too many attempts. Try again later.';
-        default: return error.message ?? 'Authentication failed.';
+        case 'user-not-found':
+          return 'No user found for this email.';
+        case 'wrong-password':
+          return 'Incorrect password provided.';
+        case 'invalid-credential':
+          return 'Invalid email or password.';
+        case 'email-already-in-use':
+          return 'This email is already registered.';
+        case 'invalid-email':
+          return 'Invalid email address.';
+        case 'weak-password':
+          return 'Password is too weak.';
+        case 'too-many-requests':
+          return 'Too many attempts. Try again later.';
+        default:
+          return error.message ?? 'Authentication failed.';
       }
     }
+
     return 'An unexpected error occurred.';
   }
 
-  Future<void> signIn({required String email, required String password}) async {
+  /// Create a new user account
+  Future<void> signUp({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
     state = const AsyncLoading();
+
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
-      // We don't need to manually set AsyncData here; the ref.listen 
-      // will pick up the success event from authProvider.
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (displayName.isNotEmpty) {
+        await credential.user?.updateDisplayName(displayName);
+      }
+      // Auth stream will update state automatically
     } catch (e, stackTrace) {
       state = AsyncError(_handleError(e), stackTrace);
     }
   }
 
+  /// Sign in an existing user
+  Future<void> signIn({
+    required String email,
+    required String password,
+  }) async {
+    state = const AsyncLoading();
+
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Auth stream will update state automatically
+    } catch (e, stackTrace) {
+      state = AsyncError(_handleError(e), stackTrace);
+    }
+  }
+
+  /// Sign out the current user
   Future<void> signOut() async {
     state = const AsyncLoading();
+
     try {
       await _auth.signOut();
+
+      // Auth stream will emit null user automatically
     } catch (e, stackTrace) {
       state = AsyncError(_handleError(e), stackTrace);
     }
   }
 
-  Future<void> updateUser({String? displayName, String? photoURL}) async {
+  /// Update user profile information
+  Future<void> updateUser({
+    String? displayName,
+    String? photoURL,
+  }) async {
     final user = _auth.currentUser;
     if (user == null) return;
 
     state = const AsyncLoading();
+
     try {
-      await user.updateProfile(displayName: displayName, photoURL: photoURL);
+      if (displayName != null) {
+        await user.updateDisplayName(displayName);
+      }
+
+      if (photoURL != null) {
+        await user.updatePhotoURL(photoURL);
+      }
+
       await user.reload();
-      // Manual sync here because reload() doesn't always trigger userChanges() immediately.
+
+      // Force refresh because reload() may not immediately trigger userChanges()
       state = AsyncData(_auth.currentUser);
     } catch (e, stackTrace) {
       state = AsyncError(_handleError(e), stackTrace);
@@ -82,7 +148,6 @@ class AuthNotifier extends AsyncNotifier<User?> {
   }
 }
 
-/// Global provider for the AuthNotifier.
-final authNotifierProvider = AsyncNotifierProvider<AuthNotifier, User?>(() {
-  return AuthNotifier();
-});
+/// Global provider for AuthNotifier
+final authNotifier =
+    AsyncNotifierProvider<AuthNotifier, User?>(AuthNotifier.new);

@@ -71,18 +71,18 @@ class DrawerMenu extends ConsumerWidget {
                   if (user != null) ...[
                     ListTile(
                       leading: const Icon(Icons.person),
-                      title: const Text('My Profile'),
+                      title: const Text('Organizer Profile'),
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/user_profile/');
+                         Navigator.pushNamed(context, '/organizer/');
                       },
                     ),
                     ListTile(
                       leading: const Icon(Icons.format_list_bulleted),
-                      title: const Text('My Jobs'),
+                      title: const Text('My Events'),
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/user_jobs/');
+                         Navigator.pushNamed(context, '/events/');
                       },
                     ),
                     ListTile(
@@ -90,23 +90,23 @@ class DrawerMenu extends ConsumerWidget {
                       title: const Text('Calendar'),
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/job_calendar/');
+                         Navigator.pushNamed(context, '/calendar/');
                       },
                     ),
                     ListTile(
                       leading: const Icon(Icons.search),
-                      title: const Text('Search Jobs'),
+                      title: const Text('Search Events'),
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/job_search/');
+                         Navigator.pushNamed(context, '/search_events/');
                       },
                     ),
                     ListTile(
                       leading: const Icon(Icons.add),
-                      title: const Text('Create Job'),
+                      title: const Text('Create Event'),
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/job_create/');
+                         Navigator.pushNamed(context, '/create_event/');
                       },
                     ),
                   ],

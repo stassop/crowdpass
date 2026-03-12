@@ -101,6 +101,17 @@ flutter:
         - asset: fonts/Unbounded/static/Unbounded-Medium.ttf
         - asset: fonts/Unbounded/static/Unbounded-Regular.ttf
         - asset: fonts/Unbounded/static/Unbounded-SemiBold.ttf
+    - family: GoogleSans
+      fonts:
+        - asset: fonts/Google_Sans/static/GoogleSans-Bold.ttf
+        - asset: fonts/Google_Sans/static/GoogleSans-BoldItalic.ttf
+        - asset: fonts/Google_Sans/static/GoogleSans-Italic.ttf
+        - asset: fonts/Google_Sans/static/GoogleSans-Light.ttf
+        - asset: fonts/Google_Sans/static/GoogleSans-Medium.ttf
+        - asset: fonts/Google_Sans/static/GoogleSans-MediumItalic.ttf
+        - asset: fonts/Google_Sans/static/GoogleSans-Regular.ttf
+        - asset: fonts/Google_Sans/static/GoogleSans-SemiBold.ttf
+        - asset: fonts/Google_Sans/static/GoogleSans-SemiBoldItalic.ttf
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

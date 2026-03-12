@@ -22,7 +22,7 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
 			floatingActionButton: FloatingActionButton.extended(
-				onPressed: () => Navigator.pushNamed(context, '/create_event/'),
+				onPressed: () => Navigator.pushNamed(context, '/event/'),
 				label: const Text('Create Event'),
 				tooltip: 'Create Event',
 				icon: const Icon(Icons.add),
@@ -34,19 +34,20 @@ class HomeScreen extends StatelessWidget {
 					crossAxisAlignment: CrossAxisAlignment.center,
 					children: [
 						Text(
-							'Crowd\nPass',
-							style: theme.textTheme.displayLarge?.copyWith(
+							'CrowdPass',
+							style: theme.textTheme.displayMedium?.copyWith(
 								color: Colors.white,
 								fontWeight: FontWeight.bold,
 							),
 							textAlign: TextAlign.center,
 						),
-						const SizedBox(height: 24),
+						const SizedBox(height: 16),
 						Text(
 							'Be There!',
 							style: theme.textTheme.headlineSmall?.copyWith(
 								color: Colors.white70,
 								fontWeight: FontWeight.w500,
+                fontFamily: 'Unbounded',
 							),
 							textAlign: TextAlign.center,
 						),

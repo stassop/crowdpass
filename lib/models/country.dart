@@ -6,6 +6,7 @@ class Country implements Comparable<Country> {
   final List<String> locales;
   final List<String> utcTimeZones;
   final String currencyCode;
+  final String phoneCode;
 
   Country({
     required this.name,
@@ -15,6 +16,7 @@ class Country implements Comparable<Country> {
     required this.locales,
     required this.utcTimeZones,
     required this.currencyCode,
+    required this.phoneCode,
   });
 
   factory Country.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class Country implements Comparable<Country> {
       locales: List<String>.from(json['locales'] ?? []),
       utcTimeZones: List<String>.from(json['utcTimeZones'] ?? []),
       currencyCode: json['currencyCode'] as String,
+      phoneCode: json['phoneCode'] as String? ?? '',
     );
   }
 
@@ -38,6 +41,7 @@ class Country implements Comparable<Country> {
       'locales': locales,
       'utcTimeZones': utcTimeZones,
       'currencyCode': currencyCode,
+      'phoneCode': phoneCode,
     };
   }
 
@@ -51,14 +55,12 @@ class Country implements Comparable<Country> {
     if (identical(this, other)) return true;
     if (other.runtimeType != runtimeType) return false;
     final Country otherCountry = other as Country;
-    return isoAlpha2Code == otherCountry.isoAlpha2Code;
+    return isoAlpha2Code == otherCountry.isoAlpha2Code && phoneCode == otherCountry.phoneCode;
   }
   
   @override
-  int get hashCode => isoAlpha2Code.hashCode;
+  int get hashCode => Object.hash(isoAlpha2Code, phoneCode);
 
   @override
-  int compareTo(Country other) {
-    return isoAlpha2Code.compareTo(other.isoAlpha2Code);
-  }
+  int compareTo(Country other) => name.compareTo(other.name);
 }

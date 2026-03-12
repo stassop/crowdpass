@@ -14,14 +14,13 @@ import 'package:crowdpass/providers/auth_provider.dart';
 
 // Import your screens
 import 'package:crowdpass/screens/home_screen.dart';
-// import 'package:crowdpass/screens/create_event_screen.dart';
-// import 'package:crowdpass/screens/event_screen.dart';
+import 'package:crowdpass/screens/event_screen.dart';
 import 'package:crowdpass/screens/privacy_screen.dart';
-// import 'package:crowdpass/screens/sign_in_screen.dart';
-// import 'package:crowdpass/screens/sign_up_screen.dart';
+import 'package:crowdpass/screens/sign_in_screen.dart';
+import 'package:crowdpass/screens/sign_up_screen.dart';
 import 'package:crowdpass/screens/splash_screen.dart';
 import 'package:crowdpass/screens/terms_screen.dart';
-// import 'package:crowdpass/screens/organizer_screen.dart';
+import 'package:crowdpass/screens/organizer_screen.dart';
 // import 'package:crowdpass/screens/calendar_screen.dart';
 
 void main() async {
@@ -55,6 +54,7 @@ class App extends ConsumerWidget {
       title: 'CrowdPass',
       theme: ThemeData(
         useMaterial3: true,
+        fontFamily: 'GoogleSans',
         primarySwatch: Colors.indigo,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.indigo,
@@ -73,23 +73,15 @@ class App extends ConsumerWidget {
           displayLarge: TextStyle(fontFamily: 'Unbounded'),
           displayMedium: TextStyle(fontFamily: 'Unbounded'),
           displaySmall: TextStyle(fontFamily: 'Unbounded'),
-          headlineLarge: TextStyle(fontFamily: 'Unbounded'),
-          headlineMedium: TextStyle(fontFamily: 'Unbounded'),
-          headlineSmall: TextStyle(fontFamily: 'Unbounded'),
-          titleLarge: TextStyle(fontFamily: 'Unbounded'),
-          titleMedium: TextStyle(fontFamily: 'Unbounded'),
-          titleSmall: TextStyle(fontFamily: 'Unbounded'),
-          bodyLarge: TextStyle(fontFamily: 'Roboto'), 
         ),
       ),
       home: const SplashScreen(),
       routes: {
         '/home/': (context) => const HomeScreen(),
-        // '/sign_in/': (context) => const SignInScreen(),
-        // '/sign_up/': (context) => const SignUpScreen(),
-        // '/organizer/': (context) => const OrganizerScreen(),
-        // '/event/': (context) => const EventScreen(),
-        // '/create_event/': (context) => const CreateEventScreen(),
+        '/sign_in/': (context) => const SignInScreen(),
+        '/sign_up/': (context) => const SignUpScreen(),
+        '/organizer/': (context) => const OrganizerScreen(),
+        '/event/': (context) => const EventScreen(),
         '/terms/': (context) => TermsScreen(),
         '/privacy/': (context) => PrivacyScreen(),
         // '/calendar/': (context) => const CalendarScreen(),
