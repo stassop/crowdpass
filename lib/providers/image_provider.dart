@@ -1,20 +1,15 @@
 import 'dart:io';
-
 import 'package:firebase_storage/firebase_storage.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:path/path.dart' as path;
-
 import 'package:crowdpass/services/image_service.dart';
 
-/// A notifier that manages image uploads and returns the download URL.
 final imageNotifier = AsyncNotifierProvider<ImageNotifier, String?>(
   ImageNotifier.new,
 );
 
 class ImageNotifier extends AsyncNotifier<String?> {
-  static const int _maxFileSize = 5 * 1024 * 1024;
+  static const int _maxFileSize = 5 * 1024 * 1024; // 5MB
   
   static const Map<String, String> _supportedFormats = {
     '.jpg': 'image/jpeg',
@@ -25,19 +20,19 @@ class ImageNotifier extends AsyncNotifier<String?> {
   @override
   Future<String?> build() async => null;
 
-  /// Validates and uploads an image directly to Firebase Storage.
   Future<String> uploadImage(String filePath, [String storageDir = '']) async {
-    
+    // Only update state if we aren't doing a bulk upload 
+    // to avoid UI "flicker" between multiple images.
     state = const AsyncValue.loading();
 
     try {
       final file = File(filePath);
 
-      // 1. Basic Validations
       if (!await file.exists()) throw Exception('File not found.');
       
       final extension = path.extension(filePath).toLowerCase();
-      if (!_supportedFormats.containsKey(extension)) {
+      final contentType = _supportedFormats[extension];
+      if (contentType == null) {
         throw Exception('Unsupported format (use JPG/PNG).');
       }
 
@@ -45,33 +40,29 @@ class ImageNotifier extends AsyncNotifier<String?> {
         throw Exception('File exceeds 5MB limit.');
       }
 
-      // 2. Generate Storage Reference
       final hash = await ImageFileService.hashImageFile(filePath);
-      // Make sure storageDir ends with a slash
-      if (storageDir.isNotEmpty && !storageDir.endsWith('/')) storageDir += '/';
-      final storagePath = '$storageDir$hash$extension';
+      final normalizedDir = storageDir.isNotEmpty && !storageDir.endsWith('/') 
+          ? '$storageDir/' 
+          : storageDir;
       
-      // Directly calling the instance
+      final storagePath = '$normalizedDir$hash$extension';
       final refStorage = FirebaseStorage.instance.ref().child(storagePath);
 
-      // 3. Deduplication Check
-      // Using getDownloadURL is the most stable way to check existence in the emulator.
+      // Check existence
       try {
         final existingUrl = await refStorage.getDownloadURL();
         state = AsyncValue.data(existingUrl);
         return existingUrl;
-      } catch (_) {
-        // If it throws, the file doesn't exist yet. Proceed to upload.
+      } on FirebaseException catch (e) {
+        if (e.code != 'object-not-found') rethrow;
       }
 
-      // 4. Upload Task
-      // Awaiting the task directly prevents the 'hang' often seen in emulators.
+      // Upload with metadata
       await refStorage.putFile(
         file,
-        SettableMetadata(contentType: _supportedFormats[extension]),
+        SettableMetadata(contentType: contentType),
       );
 
-      // 5. Finalize
       final url = await refStorage.getDownloadURL();
       state = AsyncValue.data(url);
       return url;
@@ -82,17 +73,18 @@ class ImageNotifier extends AsyncNotifier<String?> {
     }
   }
 
-  // Optimized Parallel Upload
+  /// Bulk upload: Note that this will currently result in the 
+  /// LAST image URL being the final state of the notifier.
   Future<List<String>> uploadImages(List<String> filePaths, [String storageDir = '']) async {
-    // Use Future.wait for parallel execution
-    final uploadTasks = filePaths.map((path) => uploadImage(path, storageDir)).toList();
-    
     try {
-      final urls = await Future.wait(uploadTasks);
-      // Return the full list (duplicates preserved, order maintained)
+      final urls = await Future.wait(
+        filePaths.map((p) => uploadImage(p, storageDir))
+      );
+      // Explicitly set state to the last URL or handle as a list
+      state = AsyncValue.data(urls.isNotEmpty ? urls.last : null);
       return urls;
-    } catch (e) {
-      // Handle partial failures or rethrow
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
       rethrow;
     }
   }
