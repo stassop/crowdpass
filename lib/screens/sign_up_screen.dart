@@ -12,6 +12,7 @@ import 'package:crowdpass/widgets/editable_email_field.dart';
 import 'package:crowdpass/widgets/editable_password_field.dart';
 import 'package:crowdpass/widgets/editable_country_field.dart';
 import 'package:crowdpass/widgets/editable_phone_field.dart';
+import 'package:crowdpass/widgets/user_avatar.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -84,17 +85,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Display Name',
-                      border: OutlineInputBorder(),
+                  Center(
+                    child: UserAvatar.medium(
+                      isEditable: true,
+                      photoURL: _photoURL,
+                      onNameChanged: (value) => setState(() => _displayName = value),
+                      onPhotoChanged: (value) => setState(() => _photoURL = value),
+                      validator: (value) => (value == null || value.isEmpty)
+                          ? 'Display name required'
+                          : null,
                     ),
-                    onChanged: (value) => _displayName = value.trim(),
-                    validator: (value) => (value == null || value.isEmpty)
-                        ? 'Display name required'
-                        : null,
                   ),
-                  
+
                   const SizedBox(height: 16),
 
                   EditableEmailField(
@@ -126,6 +128,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     isRequired: true,
                     onChanged: (value) => _phone = value.trim(),
                   ),
+
+                  const SizedBox(height: 32),
 
                   ElevatedButton(
                     onPressed: isLoading ? null : _signUp,

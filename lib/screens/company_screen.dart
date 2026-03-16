@@ -63,13 +63,17 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
     final isLoading = ref.watch(companyNotifier).isLoading;
 
     return authAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, _) => Scaffold(
         appBar: AppBar(
           title: const Text('Error'),
-          leading: BackButton(onPressed: () => Navigator.of(context).maybePop()),
+          leading: BackButton(
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
         ),
-        body: Center(child: Text('Auth Error: $err'))),
+        body: Center(child: Text('Auth Error: $err')),
+      ),
       data: (user) {
         if (user == null) return _buildAuthPlaceholder();
 
@@ -77,20 +81,23 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
         final companyAsync = ref.watch(companyProvider(argsId ?? ''));
 
         return companyAsync.when(
-          loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (err, _) => Scaffold(
             appBar: AppBar(
               title: const Text('Error'),
-              leading: BackButton(onPressed: () => Navigator.of(context).maybePop()),
+              leading: BackButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
             ),
             body: Center(child: Text('Error: $err')),
           ),
           data: (company) {
             _initCopy(company);
-            
+
             final isCreating = company == null;
             final isOwner = isCreating || company.ownerId == user.uid;
-            
+
             // Auto-enable editing for new companies
             if (isCreating && !_isEditing) {
               _isEditing = true;
@@ -100,20 +107,28 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
 
             return Scaffold(
               appBar: AppBar(
-                title: Text(isCreating ? 'Create Company' : '${company.name ?? 'Company Details'}'),
+                title: Text(
+                  isCreating
+                      ? 'Create Company'
+                      : company.name ?? 'Company Details',
+                ),
                 actions: [
                   if (isOwner && !isCreating)
                     IconButton(
-                      onPressed: isLoading ? null : () {
-                        if (_isEditing && hasChanged) {
-                          _saveOrCreate(company.id);
-                        } else {
-                          setState(() => _isEditing = !_isEditing);
-                        }
-                      },
-                      icon: Icon(_isEditing 
-                        ? (hasChanged ? Icons.check : Icons.close) 
-                        : Icons.edit),
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              if (_isEditing && hasChanged) {
+                                _saveOrCreate(company.id);
+                              } else {
+                                setState(() => _isEditing = !_isEditing);
+                              }
+                            },
+                      icon: Icon(
+                        _isEditing
+                            ? (hasChanged ? Icons.check : Icons.close)
+                            : Icons.edit,
+                      ),
                     ),
                 ],
               ),
@@ -131,13 +146,18 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                             photoURL: _logoURL ?? _companyCopy?.logoURL,
                             labelText: 'Company Name',
                             displayName: _companyCopy?.name,
-                            onNameChanged: (value) => setState(() => _companyCopy = _companyCopy?.copyWith(name: value)),
-                            onPhotoChanged: (value) => setState(() => _logoURL = value),
+                            onNameChanged: (value) => setState(
+                              () => _companyCopy = _companyCopy?.copyWith(
+                                name: value,
+                              ),
+                            ),
+                            onPhotoChanged: (value) =>
+                                setState(() => _logoURL = value),
                           ),
                         ),
 
                         const SizedBox(height: 16),
-                        
+
                         // Industry Field
                         EditableListField<Industry, Set<Industry>>(
                           initialValue: _companyCopy?.industry != null
@@ -158,7 +178,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                           validator: (value) =>
                               value.isEmpty ? 'Industry required' : null,
                         ),
-                        
+
                         const SizedBox(height: 16),
 
                         EditableAddressField(
@@ -178,7 +198,11 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                           initialValue: _companyCopy?.phone ?? '',
                           isEditable: _isEditing,
                           isRequired: true,
-                          onChanged: (value) => setState(() => _companyCopy = _companyCopy?.copyWith(phone: value)),
+                          onChanged: (value) => setState(
+                            () => _companyCopy = _companyCopy?.copyWith(
+                              phone: value,
+                            ),
+                          ),
                         ),
 
                         const SizedBox(height: 16),
@@ -187,30 +211,48 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                           initialValue: _companyCopy?.vatNumber,
                           isEditable: _isEditing,
                           decoration: const InputDecoration(
-                            labelText: 'VAT Number', 
+                            labelText: 'VAT Number',
                             prefixIcon: Icon(Icons.business),
                             hintText: 'e.g. DE123456789',
                           ),
-                          onChanged: (value) => setState(() => _companyCopy = _companyCopy?.copyWith(vatNumber: value)),
-                          validator: (value) => (value == null || value.isEmpty) ? 'VAT required' : null,
+                          onChanged: (value) => setState(
+                            () => _companyCopy = _companyCopy?.copyWith(
+                              vatNumber: value,
+                            ),
+                          ),
+                          validator: (value) => (value == null || value.isEmpty)
+                              ? 'VAT required'
+                              : null,
                         ),
-                                                
+
                         const SizedBox(height: 16),
 
                         EditableWebsiteField(
                           initialValue: _companyCopy?.website,
                           isEditable: _isEditing,
-                          onChanged: (value) => setState(() => _companyCopy = _companyCopy?.copyWith(website: value)),
+                          onChanged: (value) => setState(
+                            () => _companyCopy = _companyCopy?.copyWith(
+                              website: value,
+                            ),
+                          ),
                         ),
 
                         if (isCreating)
                           Padding(
                             padding: const EdgeInsets.only(top: 16.0),
                             child: ElevatedButton(
-                              onPressed: isLoading ? null : () => _saveOrCreate(null),
-                              child: isLoading 
-                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) 
-                                : const Text('Create Company'),
+                              onPressed: isLoading
+                                  ? null
+                                  : () => _saveOrCreate(null),
+                              child: isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Create Company'),
                             ),
                           ),
                       ],
