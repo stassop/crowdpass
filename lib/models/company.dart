@@ -43,44 +43,44 @@ enum Industry {
 }
 
 @immutable
-class Organizer implements Comparable<Organizer> {
+class Company implements Comparable<Company> {
   final Location? address;
   final String? email;
   final String? id;
-  final String? companyName;
+  final String? name;
   final Industry? industry;
   final String? phone;
   final String? vatNumber;
   final String? logoURL;
   final String? website;
-  final String? userId;
+  final String? ownerId;
   final String? iban;
 
-  const Organizer({
+  const Company({
     this.address,
     this.email,
     this.id,
-    this.companyName,
+    this.name,
     this.industry,
     this.phone,
     this.vatNumber,
     this.logoURL,
     this.website,
-    this.userId,
+    this.ownerId,
     this.iban,
   });
 
-  factory Organizer.fromJson(Map<String, dynamic> json) => Organizer(
+  factory Company.fromJson(Map<String, dynamic> json) => Company(
         address: json['address'] != null ? Location.fromJson(json['address'] as Map<String, dynamic>) : null,
         email: json['email'] as String?,
         id: json['id'] as String?,
         logoURL: json['logoURL'] as String?,
-        companyName: json['companyName'] as String?,
+        name: json['name'] as String?,
         industry: json['industry'] != null ? Industry.fromString(json['industry'] as String) : null,
         phone: json['phone'] as String?,
         vatNumber: json['vatNumber'] as String?,
         website: json['website'] as String?,
-        userId: json['userId'] as String?,
+        ownerId: json['ownerId'] as String?,
         iban: json['iban'] as String?,
       );
 
@@ -89,40 +89,39 @@ class Organizer implements Comparable<Organizer> {
         if (email != null) 'email': email,
         if (id != null) 'id': id,
         if (logoURL != null) 'logoURL': logoURL,
-        if (companyName != null) 'companyName': companyName,
+        if (name != null) 'name': name,
         if (industry != null) 'industry': industry!.name,
         if (phone != null) 'phone': phone,
         if (vatNumber != null) 'vatNumber': vatNumber,
         if (website != null) 'website': website,
-        if (userId != null) 'userId': userId,
+        if (ownerId != null) 'ownerId': ownerId,
         if (iban != null) 'iban': iban,
       };
 
-  Organizer copyWith({
+  Company copyWith({
     Location? address,
-    String? backgroundImageUrl,
     String? email,
     String? id,
     String? logoURL,
-    String? companyName,
+    String? name,
     Industry? industry,
     String? phone,
     String? vatNumber,
     String? website,
-    String? userId,
+    String? ownerId,
     String? iban,
   }) {
-    return Organizer(
+    return Company(
       address: address ?? this.address,
       email: email ?? this.email,
       id: id ?? this.id,
       logoURL: logoURL ?? this.logoURL,
-      companyName: companyName ?? this.companyName,
+      name: name ?? this.name,
       industry: industry ?? this.industry,
       phone: phone ?? this.phone,
       vatNumber: vatNumber ?? this.vatNumber,
       website: website ?? this.website,
-      userId: userId ?? this.userId,
+      ownerId: ownerId ?? this.ownerId,
       iban: iban ?? this.iban,
     );
   }
@@ -130,17 +129,17 @@ class Organizer implements Comparable<Organizer> {
   @override
     bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Organizer &&
+      other is Company &&
         address == other.address &&
         email == other.email &&
         id == other.id &&
         logoURL == other.logoURL &&
-        companyName == other.companyName &&
+        name == other.name &&
         industry == other.industry &&
         phone == other.phone &&
         vatNumber == other.vatNumber &&
         website == other.website &&
-        userId == other.userId &&
+        ownerId == other.ownerId &&
         iban == other.iban;
 
   @override
@@ -149,21 +148,21 @@ class Organizer implements Comparable<Organizer> {
         email,
         id,
         logoURL,
-        companyName,
+        name,
         industry,
         phone,
         vatNumber,
         website,
-        userId,
+        ownerId,
         iban,
       );
 
   @override
-  int compareTo(Organizer other) {
-    if (companyName == null && other.companyName == null) return 0;
-    if (companyName == null) return -1;
-    if (other.companyName == null) return 1;
-    return companyName!.compareTo(other.companyName!);
+  int compareTo(Company other) {
+    if (name == null && other.name == null) return 0;
+    if (name == null) return -1;
+    if (other.name == null) return 1;
+    return name!.compareTo(other.name!);
   }
 
   @override

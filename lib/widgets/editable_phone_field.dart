@@ -103,6 +103,7 @@ class _EditablePhoneFieldState extends State<EditablePhoneField> {
           icon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const SizedBox(width: 8),
               Text(
                 _selectedCountry?.phoneCode ?? '',
                 style: widget.textStyle ?? Theme.of(context).textTheme.bodyLarge,
@@ -136,6 +137,7 @@ class _EditablePhoneFieldState extends State<EditablePhoneField> {
             border: const OutlineInputBorder(),
             prefixIcon: widget.isEditable ? countryMenu : const Icon(Icons.phone),
             labelText: widget.decoration?.labelText ?? 'Phone Number',
+            hintText: 'e.g. 555-1234',
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {

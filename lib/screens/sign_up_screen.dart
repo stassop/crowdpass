@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// Providers
+import 'package:crowdpass/models/country.dart';
+
 import 'package:crowdpass/providers/auth_provider.dart';
 
 import 'package:crowdpass/widgets/error_dialog.dart';
 import 'package:crowdpass/widgets/editable_email_field.dart';
 import 'package:crowdpass/widgets/editable_password_field.dart';
+import 'package:crowdpass/widgets/editable_country_field.dart';
+import 'package:crowdpass/widgets/editable_phone_field.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -19,10 +22,13 @@ class SignUpScreen extends ConsumerStatefulWidget {
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _email;
-  String? _password;
-  String? _displayName;
-
+  late String _email;
+  late String _password;
+  late String _phone;
+  late Country _country;
+  late String _displayName;
+  String? _photoURL;
+  
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -38,9 +44,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       await ref
           .read(authNotifier.notifier)
           .signUp(
-            email: _email!.trim(),
-            password: _password!.trim(),
-            displayName: _displayName!.trim(),
+            email: _email.trim(),
+            password: _password.trim(),
+            displayName: _displayName.trim(),
+            photoURL: _photoURL,
+            phone: _phone.trim(),
+            country: _country,
           );
     } catch (e) {
       ErrorDialog.show(context, title: 'Sign Up Failed', message: e.toString());
@@ -90,22 +99,33 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
                   EditableEmailField(
                     isEditable: true,
+                    isRequired: true,
                     onChanged: (value) => _email = value.trim(),
-                    validator: (value) => (value == null || value.isEmpty)
-                        ? 'Invalid email'
-                        : null,
                   ),
 
                   const SizedBox(height: 16),
 
                   EditablePasswordField(
+                    isRequired: true,
                     onChanged: (value) => _password = value.trim(),
-                    validator: (value) => (value == null || value.length < 6)
-                        ? 'Min 6 characters'
-                        : null,
                   ),
 
                   const SizedBox(height: 16),
+
+                  EditableCountryField(
+                    isEditable: true,
+                    onChanged: (value) => _country = value.first,
+                    validator: (value) =>
+                        (value.isEmpty) ? 'Select country' : null,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  EditablePhoneField(
+                    isEditable: true,
+                    isRequired: true,
+                    onChanged: (value) => _phone = value.trim(),
+                  ),
 
                   ElevatedButton(
                     onPressed: isLoading ? null : _signUp,

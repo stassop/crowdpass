@@ -40,6 +40,7 @@ class EditableIBANField extends StatelessWidget {
         border: const OutlineInputBorder(),
         prefixIcon: const Icon(Icons.account_balance_wallet),
         labelText: decoration?.labelText ?? 'IBAN',
+        hintText: 'e.g. DE89 3704 0044 0532 0130 00',
       ),
       validator: (value) {
         // 1. Return null if empty (standard optional field behavior)

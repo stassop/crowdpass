@@ -9,7 +9,7 @@ import 'package:path/path.dart' as path;
 import 'package:crowdpass/services/image_service.dart';
 
 /// A notifier that manages image uploads and returns the download URL.
-final imageProvider = AsyncNotifierProvider<ImageNotifier, String?>(
+final imageNotifier = AsyncNotifierProvider<ImageNotifier, String?>(
   ImageNotifier.new,
 );
 

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Assuming these paths based on your previous snippet
 import 'package:crowdpass/providers/auth_provider.dart';
-import 'package:crowdpass/providers/organizer_provider.dart';
+import 'package:crowdpass/providers/company_provider.dart';
 
 import 'package:crowdpass/models/event.dart';
 
@@ -48,7 +48,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
       final user = await ref.read(authProvider.future);
       if (user == null) throw Exception('User must be authenticated to create an event.');
 
-      final isOrganizer = await ref.read(organizerProvider(user.uid).future) != null;
+      final isOrganizer = await ref.read(companyProvider(user.uid).future) != null;
       if (!isOrganizer) throw Exception('Only organizers can create events.');
 
       final firestore = ref.read(firestoreProvider);

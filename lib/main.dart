@@ -20,7 +20,8 @@ import 'package:crowdpass/screens/sign_in_screen.dart';
 import 'package:crowdpass/screens/sign_up_screen.dart';
 import 'package:crowdpass/screens/splash_screen.dart';
 import 'package:crowdpass/screens/terms_screen.dart';
-import 'package:crowdpass/screens/organizer_screen.dart';
+import 'package:crowdpass/screens/company_screen.dart';
+import 'package:crowdpass/screens/user_profile_screen.dart';
 // import 'package:crowdpass/screens/calendar_screen.dart';
 
 void main() async {
@@ -80,7 +81,8 @@ class App extends ConsumerWidget {
         '/home/': (context) => const HomeScreen(),
         '/sign_in/': (context) => const SignInScreen(),
         '/sign_up/': (context) => const SignUpScreen(),
-        '/organizer/': (context) => const OrganizerScreen(),
+        '/company/': (context) => const CompanyScreen(),
+        '/user/': (context) => const UserProfileScreen(),
         '/event/': (context) => const EventScreen(),
         '/terms/': (context) => TermsScreen(),
         '/privacy/': (context) => PrivacyScreen(),

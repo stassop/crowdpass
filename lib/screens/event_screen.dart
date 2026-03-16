@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/event.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
-import 'package:crowdpass/providers/organizer_provider.dart';
+import 'package:crowdpass/providers/company_provider.dart';
 import 'package:crowdpass/providers/event_provider.dart';
 
 import 'package:crowdpass/widgets/editable_text_field.dart';
@@ -95,7 +95,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         }
 
         final isOrganizer =
-            ref.watch(organizerProvider(user.uid)).value != null;
+            ref.watch(companyProvider(user.uid)).value != null;
 
         return eventAsync.when(
           loading: () =>

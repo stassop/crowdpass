@@ -80,19 +80,18 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   children: [
                     EditableEmailField(
                       isEditable: true,
-                      validator: (value) => (value == null || value.isEmpty)
-                          ? 'Please enter a valid email'
-                          : null,
+                      isRequired: true, 
                       onChanged: (value) => _email = value,
                     ),
                     const SizedBox(height: 16),
+
                     EditablePasswordField(
-                      validator: (value) => (value == null || value.isEmpty)
-                          ? 'Please enter your password'
-                          : null,
+                      isRequired: true,
                       onChanged: (value) => _password = value,
                     ),
+
                     const SizedBox(height: 16),
+
                     ElevatedButton(
                       onPressed: isLoading ? null : _signIn,
                       child: const Text('Sign in'),

@@ -27,6 +27,10 @@ class EditablePasswordField extends StatefulWidget {
 class _EditablePasswordFieldState extends State<EditablePasswordField> {
   bool _passwordHidden = true;
 
+  /// Regular expression for password that checks for at least 6 characters, 
+  /// one uppercase letter, one lowercase letter, one number and one special character.
+  final _passwordRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$');
+
   @override
   Widget build(BuildContext context) {
     return EditableTextField(
@@ -45,12 +49,22 @@ class _EditablePasswordFieldState extends State<EditablePasswordField> {
       isEditable: true,
       textStyle: widget.textStyle,
       validator: (value) {
-        // 1. Return null if empty (standard optional field behavior)
+        // Return null if empty (standard optional field behavior)
         if (value == null || value.isEmpty) {
           return widget.isRequired ? 'Password is required' : null;
         }
 
-        // 2. Custom external validation
+        // Check minimum length        
+        if (value.length < 6) {
+          return 'Password must be at least 6 characters';
+        }
+
+        // Check regex for complexity
+        if (!_passwordRegex.hasMatch(value)) {
+          return 'Password must contain uppercase, lowercase, number and special character';
+        }
+
+        // Custom external validation
         if (widget.validator != null) {
           return widget.validator!(value);
         }

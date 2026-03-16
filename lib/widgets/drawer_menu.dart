@@ -29,7 +29,7 @@ class DrawerMenu extends ConsumerWidget {
                         photoURL: user.photoURL,
                         onTap: () => Navigator.pushNamed(
                           context,
-                          '/user_profile/',
+                          '/user/',
                         ),
                       ),
                     )
@@ -71,10 +71,18 @@ class DrawerMenu extends ConsumerWidget {
                   if (user != null) ...[
                     ListTile(
                       leading: const Icon(Icons.person),
-                      title: const Text('Organizer Profile'),
+                      title: const Text('My Profile'),
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/organizer/');
+                         Navigator.pushNamed(context, '/user/');
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.business),
+                      title: const Text('My Company'),
+                      onTap: () {
+                         Navigator.pop(context); // Close the drawer first
+                         Navigator.pushNamed(context, '/company/');
                       },
                     ),
                     ListTile(

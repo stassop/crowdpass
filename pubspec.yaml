@@ -106,7 +106,6 @@ flutter:
         - asset: fonts/Google_Sans/static/GoogleSans-Bold.ttf
         - asset: fonts/Google_Sans/static/GoogleSans-BoldItalic.ttf
         - asset: fonts/Google_Sans/static/GoogleSans-Italic.ttf
-        - asset: fonts/Google_Sans/static/GoogleSans-Light.ttf
         - asset: fonts/Google_Sans/static/GoogleSans-Medium.ttf
         - asset: fonts/Google_Sans/static/GoogleSans-MediumItalic.ttf
         - asset: fonts/Google_Sans/static/GoogleSans-Regular.ttf

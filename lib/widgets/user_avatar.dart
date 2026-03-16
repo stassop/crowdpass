@@ -3,9 +3,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:crowdpass/providers/auth_provider.dart';
 
 import 'package:crowdpass/widgets/error_dialog.dart';
 import 'package:crowdpass/widgets/round_icon_button.dart';
@@ -13,9 +10,10 @@ import 'package:crowdpass/widgets/radial_expansion_hero.dart';
 
 enum UserAvatarSize { small, medium, large }
 
-class UserAvatar extends ConsumerStatefulWidget {
+class UserAvatar extends StatefulWidget {
   final String? displayName;
   final bool isEditable;
+  final String? labelText;
   final VoidCallback? onTap;
   final Function(String)? onNameChanged;
   final Function(String)? onPhotoChanged;
@@ -28,6 +26,7 @@ class UserAvatar extends ConsumerStatefulWidget {
     super.key,
     this.displayName,
     this.isEditable = false,
+    this.labelText,
     this.onNameChanged,
     this.onPhotoChanged,
     this.onTap,
@@ -41,6 +40,7 @@ class UserAvatar extends ConsumerStatefulWidget {
     super.key,
     this.displayName,
     this.isEditable = false,
+    this.labelText,
     this.onNameChanged,
     this.onPhotoChanged,
     this.onTap,
@@ -53,6 +53,7 @@ class UserAvatar extends ConsumerStatefulWidget {
     super.key,
     this.displayName,
     this.isEditable = false,
+    this.labelText,
     this.onNameChanged,
     this.onPhotoChanged,
     this.onTap,
@@ -65,6 +66,7 @@ class UserAvatar extends ConsumerStatefulWidget {
     super.key,
     this.displayName,
     this.isEditable = false,
+    this.labelText,
     this.onNameChanged,
     this.onPhotoChanged,
     this.onTap,
@@ -74,10 +76,10 @@ class UserAvatar extends ConsumerStatefulWidget {
   }) : size = UserAvatarSize.large;
 
   @override
-  ConsumerState<UserAvatar> createState() => _UserAvatarState();
+  State<UserAvatar> createState() => _UserAvatarState();
 }
 
-class _UserAvatarState extends ConsumerState<UserAvatar> {
+class _UserAvatarState extends State<UserAvatar> {
   String? _localPhotoPath;
 
   Future<void> _changePhoto() async {
@@ -114,13 +116,11 @@ class _UserAvatarState extends ConsumerState<UserAvatar> {
       radius * math.sin(math.pi / 4) + radius - buttonRadius,
     );
 
-    final String? displayName = widget.displayName ?? ref.watch(authProvider).value?.displayName;
-    final String? photoURL = _localPhotoPath ?? widget.photoURL ?? ref.watch(authProvider).value?.photoURL;
-    final bool hasPhoto = photoURL != null && photoURL.isNotEmpty;
+    final String? photoURL = _localPhotoPath ?? widget.photoURL;
 
     // Optimized ImageProvider logic
     ImageProvider? imageProvider;
-    if (hasPhoto) {
+    if (photoURL != null && photoURL.isNotEmpty) {
       if (photoURL.startsWith('http')) {
         imageProvider = NetworkImage(photoURL);
       } else {
@@ -146,11 +146,13 @@ class _UserAvatarState extends ConsumerState<UserAvatar> {
                 child: CircleAvatar(
                   radius: radius,
                   foregroundImage: imageProvider,
-                  child: hasPhoto
-                      ? RadialExpansionHero(
-                          photo: photoURL,
-                          radius: radius,
-                        )
+                  child: photoURL != null && photoURL.isNotEmpty
+                      ? (widget.onTap != null
+                          ? null
+                          : RadialExpansionHero(
+                            photoURL: photoURL,
+                            radius: radius,
+                        ))
                       : Icon(
                           Icons.person,
                           size: radius,
@@ -174,9 +176,9 @@ class _UserAvatarState extends ConsumerState<UserAvatar> {
         const SizedBox(height: 8),
         widget.isEditable
           ? TextFormField(
-              initialValue: displayName,
+              initialValue: widget.displayName,
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              decoration: const InputDecoration(labelText: 'User Name'),
+              decoration: InputDecoration(labelText: widget.labelText ?? 'User Name'),
               onChanged: widget.onNameChanged,
               style: theme.textTheme.titleLarge,
               maxLength: 20,
@@ -190,7 +192,7 @@ class _UserAvatarState extends ConsumerState<UserAvatar> {
                 return widget.validator?.call(text);
               },
             )
-          : Text(displayName ?? '', style: theme.textTheme.titleLarge),
+          : Text(widget.displayName ?? '', style: theme.textTheme.titleLarge),
       ],
     );
   }

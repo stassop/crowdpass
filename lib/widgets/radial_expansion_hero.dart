@@ -5,21 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart' show timeDilation;
 
 class Photo extends StatelessWidget {
-  const Photo({super.key, required this.photo, this.onTap});
+  const Photo({super.key, required this.photoURL, this.onTap});
 
-  final String photo;
+  final String photoURL;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     ImageProvider imageProvider;
 
-    if (photo.toLowerCase().startsWith('http')) {
-      imageProvider = NetworkImage(photo);
-    } else if (photo.startsWith('/') || photo.toLowerCase().startsWith('file://')) {
-      imageProvider = FileImage(File(photo));
+    if (photoURL.toLowerCase().startsWith('http')) {
+      imageProvider = NetworkImage(photoURL);
+    } else if (photoURL.startsWith('/') || photoURL.toLowerCase().startsWith('file://')) {
+      imageProvider = FileImage(File(photoURL));
     } else {
-      imageProvider = AssetImage(photo);
+      imageProvider = AssetImage(photoURL);
     }
 
     return Material(
@@ -64,11 +64,11 @@ class RadialExpansion extends StatelessWidget {
 class RadialExpansionHero extends StatelessWidget {
   const RadialExpansionHero({
     super.key,
-    required this.photo,
+    required this.photoURL,
     required this.radius,
   });
 
-  final String photo;
+  final String photoURL;
   final double radius;
 
   final Interval opacityCurve = const Interval(0.0, 0.75, curve: Curves.easeInOut);
@@ -103,7 +103,7 @@ class RadialExpansionHero extends StatelessWidget {
                         child: RadialExpansion(
                           maxRadius: maxRadius,
                           child: Photo(
-                            photo: photo,
+                            photoURL: photoURL,
                             onTap: () => Navigator.of(context).pop(),
                           ),
                         ),
@@ -119,7 +119,7 @@ class RadialExpansionHero extends StatelessWidget {
     );
   }
 
-  String get _heroTag => 'hero:$photo';
+  String get _heroTag => 'hero:$photoURL';
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +133,7 @@ class RadialExpansionHero extends StatelessWidget {
         child: RadialExpansion(
           maxRadius: maxRadius,
           child: Photo(
-            photo: photo,
+            photoURL: photoURL,
             onTap: () => _expand(context, maxRadius),
           ),
         ),
