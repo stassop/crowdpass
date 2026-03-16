@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:crowdpass/widgets/editable_text_field.dart';
-
 class EditablePasswordField extends StatefulWidget {
   final String? initialValue;
   final InputDecoration? decoration;
@@ -33,7 +31,7 @@ class _EditablePasswordFieldState extends State<EditablePasswordField> {
 
   @override
   Widget build(BuildContext context) {
-    return EditableTextField(
+    return TextFormField(
       initialValue: widget.initialValue,
       onChanged: widget.onChanged,
       obscureText: _passwordHidden,
@@ -46,8 +44,7 @@ class _EditablePasswordFieldState extends State<EditablePasswordField> {
           onPressed: () => setState(() => _passwordHidden = !_passwordHidden),
         ),
       ),
-      isEditable: true,
-      textStyle: widget.textStyle,
+      style: widget.textStyle,
       validator: (value) {
         // Return null if empty (standard optional field behavior)
         if (value == null || value.isEmpty) {

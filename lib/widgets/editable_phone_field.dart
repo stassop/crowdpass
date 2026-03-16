@@ -136,7 +136,7 @@ class _EditablePhoneFieldState extends State<EditablePhoneField> {
           decoration: (widget.decoration ?? const InputDecoration()).copyWith(
             border: const OutlineInputBorder(),
             prefixIcon: widget.isEditable ? countryMenu : const Icon(Icons.phone),
-            labelText: widget.decoration?.labelText ?? 'Phone Number',
+            labelText: widget.decoration?.labelText ?? 'Phone',
             hintText: 'e.g. 555-1234',
           ),
           validator: (value) {

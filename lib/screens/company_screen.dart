@@ -4,7 +4,7 @@ import 'package:crowdpass/models/company.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/company_provider.dart';
 import 'package:crowdpass/widgets/editable_list_field.dart';
-import 'package:crowdpass/widgets/editable_location_field.dart';
+import 'package:crowdpass/widgets/editable_address_field.dart';
 import 'package:crowdpass/widgets/editable_phone_field.dart';
 import 'package:crowdpass/widgets/editable_text_field.dart';
 import 'package:crowdpass/widgets/editable_website_field.dart';
@@ -100,7 +100,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
 
             return Scaffold(
               appBar: AppBar(
-                title: Text(isCreating ? 'Create Company' : '${company?.name ?? 'Company Details'}'),
+                title: Text(isCreating ? 'Create Company' : '${company.name ?? 'Company Details'}'),
                 actions: [
                   if (isOwner && !isCreating)
                     IconButton(
@@ -140,7 +140,9 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                         
                         // Industry Field
                         EditableListField<Industry, Set<Industry>>(
-                          initialValue: _companyCopy?.industry != null ? {_companyCopy!.industry!} : {},
+                          initialValue: _companyCopy?.industry != null
+                              ? {_companyCopy!.industry!}
+                              : {},
                           isEditable: _isEditing,
                           options: Industry.values.toSet(),
                           getOptionLabel: (i) => i.label,
@@ -148,17 +150,26 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                           decoration: const InputDecoration(
                             prefixIcon: Icon(Icons.factory),
                           ),
-                          onChanged: (value) => setState(() => _companyCopy = _companyCopy?.copyWith(industry: value.firstOrNull)),
-                          validator: (value) => value.isEmpty ? 'Industry required' : null,
+                          onChanged: (value) => setState(
+                            () => _companyCopy = _companyCopy?.copyWith(
+                              industry: value.firstOrNull,
+                            ),
+                          ),
+                          validator: (value) =>
+                              value.isEmpty ? 'Industry required' : null,
                         ),
                         
                         const SizedBox(height: 16),
 
-                        EditableLocationField(
-                          initialValue: _companyCopy?.address,
-                          isEditable: _isEditing,
-                          onChanged: (value) => setState(() => _companyCopy = _companyCopy?.copyWith(address: value)),
-                          validator: (value) => value == null ? 'Address required' : null,
+                        EditableAddressField(
+                          location: _companyCopy?.address,
+                          onLocationChanged: (value) => setState(
+                            () => _companyCopy = _companyCopy?.copyWith(
+                              address: value,
+                            ),
+                          ),
+                          validator: (value) =>
+                              value == null ? 'Address required' : null,
                         ),
 
                         const SizedBox(height: 16),
@@ -168,14 +179,6 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                           isEditable: _isEditing,
                           isRequired: true,
                           onChanged: (value) => setState(() => _companyCopy = _companyCopy?.copyWith(phone: value)),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        EditableWebsiteField(
-                          initialValue: _companyCopy?.website,
-                          isEditable: _isEditing,
-                          onChanged: (value) => setState(() => _companyCopy = _companyCopy?.copyWith(website: value)),
                         ),
 
                         const SizedBox(height: 16),
@@ -190,6 +193,14 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                           ),
                           onChanged: (value) => setState(() => _companyCopy = _companyCopy?.copyWith(vatNumber: value)),
                           validator: (value) => (value == null || value.isEmpty) ? 'VAT required' : null,
+                        ),
+                                                
+                        const SizedBox(height: 16),
+
+                        EditableWebsiteField(
+                          initialValue: _companyCopy?.website,
+                          isEditable: _isEditing,
+                          onChanged: (value) => setState(() => _companyCopy = _companyCopy?.copyWith(website: value)),
                         ),
 
                         if (isCreating)

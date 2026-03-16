@@ -2,300 +2,171 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-
 import 'package:geolocator/geolocator.dart';
 // ignore: library_prefixes
 import 'package:geocoding/geocoding.dart' as Geocoding;
-
-// ignore: depend_on_referenced_packages
 import 'package:http/http.dart' as http;
-
 import 'package:intl/intl.dart';
-
 import 'package:crowdpass/models/location.dart';
 
 class LocationService {
+  /// Nominatim Policy: User-Agent is MANDATORY to avoid 403 Forbidden errors.
+  static const String _userAgent = 'CrowdPass/1.0 (support@crowdpass.app)';
+
   static Future<dynamic> _makeOpenStreetMapRequest({
     required String path,
     Map<String, dynamic>? queryParams,
   }) async {
     try {
-      if (queryParams != null) {
-        queryParams = queryParams.map(
-          (key, value) => MapEntry(key, value.toString()),
-        );
-      }
-
       final language = Intl.getCurrentLocale().split('_').first;
+      final uri = Uri.https('nominatim.openstreetmap.org', path, {
+        if (queryParams != null) ...queryParams.map((k, v) => MapEntry(k, v.toString())),
+        'format': 'json',
+        'addressdetails': '1',
+        'accept-language': language,
+      });
 
-      final request = http.Request(
-        'GET',
-        Uri.https('nominatim.openstreetmap.org', path, {
-          if (queryParams != null) ...queryParams,
-          'format': 'json',
-          'addressdetails': '1',
-          'accept-language': language,
-        }),
-      )..headers.addAll({
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'User-Agent': 'CrowdPass/1.0 (support@crowdpass.app)', // Update to real contact
-        });
-
-      final streamedResponse = await request.send().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => throw TimeoutException('Request timed out'),
-      );
-
-      final response = await http.Response.fromStream(streamedResponse);
+      final response = await http.get(uri, headers: {
+        'User-Agent': _userAgent,
+        'Accept': 'application/json',
+      }).timeout(const Duration(seconds: 5));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final contentType = response.headers['content-type'];
-        if (contentType != null && contentType.contains('application/json')) {
-          final data = jsonDecode(response.body);
-          if (data is Map && data.containsKey('error')) {
-            throw Exception('Server error: ${data['error']}');
-          }
-          return data;
-        }
+        return jsonDecode(response.body);
       } else {
-        throw HttpException('Server error: ${response.statusCode}');
+        throw HttpException('OSM Server Error: ${response.statusCode}');
       }
-    } on TimeoutException {
-      throw Exception('Request timed out');
-    } on SocketException {
-      throw Exception('No internet connection');
-    } on HttpException catch (error) {
-      throw Exception('Request error: $error');
-    } on FormatException {
-      throw Exception('Bad response format');
-    } catch (error) {
-      throw Exception('Error: $error');
+    } catch (e) {
+      debugPrint('OSM Request Failed: $e');
+      rethrow;
     }
   }
 
-  /// Parse JSON responses from Nominatim (OpenStreetMap) API:
-  /// https://nominatim.org/release-docs/latest/api/Search/
   static Location locationFromOpenStreetMap(Map<String, dynamic> json) {
-    // Normalize address: handle both List (e.g. Bijenkorf) and Map (standard search)
-    final Map<String, dynamic> addr = {};
-    final rawAddr = json['address'];
-    if (rawAddr is Map<String, dynamic>) {
-      addr.addAll(rawAddr);
-    } else if (rawAddr is List) {
-      for (var item in rawAddr) {
-        addr[item['type']] = item['localname'];
-      }
-    }
-
-    // Extract Names
-    final String fullName = json['display_name'] ?? 'Unknown Location';
-    // Short name priority: 'name' field -> first part of display name
-    final String shortName = json['name'] ?? json['localname'] ?? (fullName.isNotEmpty ? fullName.split(',').first : 'Unknown Location');
+    final addr = json['address'] as Map<String, dynamic>? ?? {};
+    final String fullName = json['display_name'] ?? '';
+    final String shortName = json['name'] ?? 
+                             json['localname'] ?? 
+                             (fullName.isNotEmpty ? fullName.split(',').first : 'Unknown');
 
     return Location(
       shortName: shortName,
       fullName: fullName,
       latitude: double.tryParse(json['lat']?.toString() ?? '') ?? 0.0,
       longitude: double.tryParse(json['lon']?.toString() ?? '') ?? 0.0,
-      // Field Mapping
-      address: addr['road'] ?? addr['street'] ?? json['addresstags']?['street'],
+      address: addr['road'] ?? addr['house_number'] ?? addr['street'],
       city: addr['city'] ?? addr['town'] ?? addr['village'] ?? addr['municipality'],
       state: addr['state'] ?? addr['province'] ?? addr['region'],
-      postalCode: addr['postcode'] ?? json['calculated_postcode'],
+      postalCode: addr['postcode'],
       countryCode: (json['country_code'] ?? addr['country_code'] as String?)?.toUpperCase(),
-      bounds: (json['boundingbox'] as List?)?.map((e) => double.tryParse(e.toString()) ?? 0.0).toList(),
     );
   }
 
-  static Future<Location?> _getGeocodingLocation({
-    required double latitude,
-    required double longitude,
-  }) async {
-    try {
-      List<Geocoding.Placemark> placemarks = await Geocoding.placemarkFromCoordinates(latitude, longitude);
-      if (placemarks.isNotEmpty) {
-        final placemark = placemarks.first;
-        return Location(
-          address: placemark.street,
-          city: placemark.locality,
-          state: placemark.administrativeArea,
-          countryCode: placemark.isoCountryCode,
-          postalCode: placemark.postalCode,
-          fullName: [
-            // if (placemark.name != null && placemark.name!.isNotEmpty) placemark.name,
-            if (placemark.street != null && placemark.street!.isNotEmpty) placemark.street,
-            if (placemark.locality != null && placemark.locality!.isNotEmpty) placemark.locality,
-            if (placemark.administrativeArea != null && placemark.administrativeArea!.isNotEmpty) placemark.administrativeArea,
-            if (placemark.country != null && placemark.country!.isNotEmpty) placemark.country,
-          ].whereType<String>().join(', '),
-          shortName: placemark.name ?? placemark.locality ?? 'Unknown Location',
-          latitude: latitude,
-          longitude: longitude,
-        );
-      }
-      return null;
-    } catch (e) {
-      throw Exception('Error getting Geocoding location: $e');
-    }
-  }
-
-  static Future<List<Location>> _searchGeocodingLocation(String query) async {
-    if (query.trim().isEmpty) {
-      return [];
-    }
-
-    try {
-      final geoLocations = await Geocoding.locationFromAddress(query);
-      if (geoLocations.isEmpty) return [];
-
-      final results = await Future.wait(
-        geoLocations.map((geoLoc) async {
-          return await _getGeocodingLocation(
-            latitude: geoLoc.latitude,
-            longitude: geoLoc.longitude,
-          );
-        }),
-      );
-
-      // Filter out null results
-      return results.whereType<Location>().toList();
-    } catch (e) {
-      throw Exception('Error searching Geocoding locations: $e');
-    }
-  }
-
   static Future<List<Location>> searchLocation(String query) async {
-    if (query.trim().isEmpty) {
-      return [];
-    }
+    if (query.trim().isEmpty) return [];
 
-    // Before making an OSM API call, try using the Geocoding package
+    // 1. Try Geocoding package first
     try {
-      final locations = await _searchGeocodingLocation(query);
-      if (locations.isNotEmpty) {
-        return locations;
+      final List<Geocoding.Location> geoResults = await Geocoding.locationFromAddress(query);
+      if (geoResults.isNotEmpty) {
+        final List<Location> mappedResults = [];
+        for (var geo in geoResults) {
+          final loc = await getLocationByCoordinates(
+            latitude: geo.latitude, 
+            longitude: geo.longitude
+          );
+          if (loc != null) mappedResults.add(loc);
+        }
+        if (mappedResults.isNotEmpty) return mappedResults;
       }
     } catch (e) {
-      // Ignore errors from Geocoding and fallback to OSM
-      debugPrint("Error searching Geocoding locations: $e");
+      debugPrint('Geocoding search failed: $e');
     }
 
+    // 2. Fallback to OpenStreetMap
     try {
       final data = await _makeOpenStreetMapRequest(
-        path: 'search',
-        queryParams: {
-          'q': query,
-          'limit': 10,
-        },
+        path: 'search', 
+        queryParams: {'q': query, 'limit': 10}
       );
-
       if (data is List) {
-        return data.map((e) => locationFromOpenStreetMap(e)).toList();
-      } else {
-        return [];
+        return data.map((e) => locationFromOpenStreetMap(e as Map<String, dynamic>)).toList();
       }
-    } catch (error) {
-      throw Exception('Error searching for location: $error');
-    }
+    } catch (_) {}
+    return [];
   }
 
   static Future<Location?> getLocationByCoordinates({
     required double latitude,
     required double longitude,
   }) async {
-    // Before making an OSM API call, try using the Geocoding package
+    // 1. Try Geocoding package first
     try {
-      final location = await _getGeocodingLocation(
-        latitude: latitude,
-        longitude: longitude,
-      );
-      if (location != null) {
-        return location;
+      final placemarks = await Geocoding.placemarkFromCoordinates(latitude, longitude);
+      if (placemarks.isNotEmpty) {
+        final p = placemarks.first;
+        return Location(
+          latitude: latitude,
+          longitude: longitude,
+          shortName: p.name ?? p.locality ?? 'Unknown',
+          fullName: [p.street, p.locality, p.postalCode, p.country]
+              .where((e) => e != null && e.isNotEmpty)
+              .join(', '),
+          address: p.street,
+          city: p.locality,
+          state: p.administrativeArea,
+          postalCode: p.postalCode,
+          countryCode: p.isoCountryCode,
+        );
       }
     } catch (e) {
-      // Ignore errors from Geocoding and fallback to OSM
-      debugPrint('Error getting Geocoding location: $e');
+      debugPrint('Geocoding reverse failed: $e');
     }
 
-    // If Geocoding fails, fallback to OSM reverse geocoding
+    // 2. Fallback to OpenStreetMap
     try {
       final data = await _makeOpenStreetMapRequest(
-        path: 'reverse',
-        queryParams: {
-          'lat': latitude,
-          'lon': longitude,
-        },
+        path: 'reverse', 
+        queryParams: {'lat': latitude, 'lon': longitude}
       );
-
-      if (data is Map && data.containsKey('lat') && data.containsKey('lon')) {
-        return locationFromOpenStreetMap(data as Map<String, dynamic>);
-      }
-
-      return null;
-    } catch (error) {
-      throw Exception('Error getting location from coordinates: $error');
-    }
-  }
-
-  static Future<Location?> getLocationByLocale() async {
-    try {
-      final countryCode = Intl.getCurrentLocale().split('_').last;
-      final data = await _makeOpenStreetMapRequest(
-        path: 'search',
-        queryParams: {
-          'country': countryCode,
-          'limit': 1,
-        },
-      );
-
-      if (data is List && data.isNotEmpty) {
-        return locationFromOpenStreetMap(data.first);
-      }
-      return null;
-    } catch (error) {
-      throw Exception('Error getting location from country code: $error');
-    }
+      if (data is Map<String, dynamic>) return locationFromOpenStreetMap(data);
+    } catch (_) {}
+    return null;
   }
 
   static Future<Location> getCurrentLocation() async {
-    bool locationServiceEnabled;
-    LocationPermission permission;
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) throw Exception('Location services are disabled.');
 
-    locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!locationServiceEnabled) {
-      throw Exception('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception('Location permissions are denied.');
-      }
+      if (permission == LocationPermission.denied) throw Exception('Location permissions are denied.');
     }
 
     if (permission == LocationPermission.deniedForever) {
-      throw Exception('Location permissions are permanently denied.');
+      await Geolocator.openAppSettings();
+      throw Exception('Location permissions are permanently denied. Please enable them in settings.');
     }
 
-    try {
-      final position = await Geolocator.getCurrentPosition();
-      final location = await getLocationByCoordinates(
-        latitude: position.latitude,
-        longitude: position.longitude,
-      );
-      // We try to return a Location object even if reverse geocoding fails
-      return location ??
-          Location(
-            latitude: position.latitude,
-            longitude: position.longitude,
-            shortName: 'Unknown Location',
-            fullName: 'Lat: ${position.latitude}, Lon: ${position.longitude}',
-          );
-    } catch (error) {
-      throw Exception('Error getting current location: $error');
-    }
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: LocationSettings(
+        accuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      ),
+    );
+
+    final location = await getLocationByCoordinates(
+      latitude: position.latitude, 
+      longitude: position.longitude
+    );
+    
+    return location ?? Location(
+      latitude: position.latitude,
+      longitude: position.longitude,
+      shortName: 'Current Position',
+      fullName: 'Lat: ${position.latitude.toStringAsFixed(4)}, Lon: ${position.longitude.toStringAsFixed(4)}',
+    );
   }
 
   static Future<Location?> getLastKnownLocation() async {
@@ -308,7 +179,8 @@ class LocationService {
         );
       }
       return null;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error fetching last known location: $e');
       return null;
     }
   }

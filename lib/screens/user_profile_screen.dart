@@ -174,7 +174,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     const SizedBox(height: 16),
 
                     EditableCountryField(
-                      initialValue: user.country != null ? {user.country!} : null,
+                      initialValue: {user.country},
                       isEditable: isMe && _isEditing,
                       onChanged: (value) => setState(() => _country = value.first),
                     ),

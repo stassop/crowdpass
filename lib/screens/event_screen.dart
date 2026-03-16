@@ -9,7 +9,7 @@ import 'package:crowdpass/providers/event_provider.dart';
 import 'package:crowdpass/widgets/editable_text_field.dart';
 import 'package:crowdpass/widgets/editable_date_range_field.dart';
 import 'package:crowdpass/widgets/editable_time_range_field.dart';
-import 'package:crowdpass/widgets/editable_location_field.dart';
+import 'package:crowdpass/widgets/editable_address_field.dart';
 import 'package:crowdpass/widgets/editable_event_type_field.dart';
 import 'package:crowdpass/widgets/error_dialog.dart';
 
@@ -186,13 +186,13 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
                       const SizedBox(height: 16),
 
-                      EditableLocationField(
-                        initialValue: _eventCopy?.location,
+                      EditableAddressField(
+                        location: _eventCopy?.location,
                         isEditable: _isEditing,
-                        onChanged: (loc) =>
-                            _eventCopy = _eventCopy?.copyWith(location: loc),
-                        validator: (loc) =>
-                            loc == null ? 'Location required' : null,
+                        onLocationChanged: (location) =>
+                            _eventCopy = _eventCopy?.copyWith(location: location),
+                        validator: (location) =>
+                            location == null ? 'Location required' : null,
                       ),
 
                       const SizedBox(height: 16),
