@@ -52,6 +52,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             phone: _phone.trim(),
             country: _country,
           );
+
+      final authState = ref.read(authNotifier);
+      if (authState.hasError) {
+        throw authState.error!;
+      }
     } catch (e) {
       ErrorDialog.show(context, title: 'Sign Up Failed', message: e.toString());
     } finally {

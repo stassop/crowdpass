@@ -69,6 +69,11 @@ class AuthNotifier extends AsyncNotifier<User?> {
               phone: phone,
               country: country,
             );
+
+        final profileState = ref.read(userProfileNotifier);
+        if (profileState.hasError) {
+          throw profileState.error!;
+        }
       }
       return _auth.currentUser;
     });
@@ -116,6 +121,11 @@ class AuthNotifier extends AsyncNotifier<User?> {
             phone: phone,
             country: country,
           );
+
+      final profileState = ref.read(userProfileNotifier);
+      if (profileState.hasError) {
+        throw profileState.error!;
+      }
 
       await user.reload();
       return _auth.currentUser;
