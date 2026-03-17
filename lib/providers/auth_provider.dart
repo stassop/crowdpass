@@ -22,11 +22,8 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
   @override
   Future<User?> build() async {
-    // We watch the instance so the notifier is reactive to the provider itself
     _auth = ref.watch(firebaseAuthProvider);
-
-    // Automatically update state whenever the Firebase User changes (login/logout/token change)
-    return ref.watch(authProvider.future);
+    return _auth.currentUser;
   }
 
   /// Create account + Create Firestore Profile
