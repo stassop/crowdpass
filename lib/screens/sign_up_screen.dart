@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/country.dart';
@@ -53,8 +51,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             phone: _phone.trim(),
             country: _country,
           );
-    } catch (e) {
-      ErrorDialog.show(context, title: 'Sign Up Failed', message: e.toString());
     } finally {
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -64,20 +60,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen to the auth stream (authProvider) for navigation/error handling.
-    ref.listen<AsyncValue<User?>>(authProvider, (previous, next) {
+    // Listen to the authNotifier (action state) so navigation only happens after
+    // the full sign-up flow — including Firestore profile creation — has completed.
+    ref.listen<AsyncValue<void>>(authNotifier, (previous, next) {
       next.whenOrNull(
-        data: (user) {
-          if (user != null) {
-            // Success: Navigate
-            Navigator.of(context).pushReplacementNamed('/home/');
-          }
+        data: (_) {
+          // Success: the entire signUp process (Auth + profile) is done.
+          Navigator.of(context).pushReplacementNamed('/home/');
         },
-        error: (error, stackTrace) {
-          // Error: Show Dialog
+        error: (error, _) {
           ErrorDialog.show(
-            context, 
-            title: 'Sign Up Failed', 
+            context,
+            title: 'Sign Up Failed',
             message: error.toString(),
           );
         },

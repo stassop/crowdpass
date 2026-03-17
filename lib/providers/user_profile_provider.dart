@@ -72,6 +72,7 @@ class UserProfileNotifier extends AsyncNotifier<void> {
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
+      rethrow;
     }
   }
 
@@ -104,6 +105,7 @@ class UserProfileNotifier extends AsyncNotifier<void> {
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
+      rethrow;
     }
   }
 
@@ -115,6 +117,7 @@ class UserProfileNotifier extends AsyncNotifier<void> {
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
+      rethrow;
     }
   }
 }
