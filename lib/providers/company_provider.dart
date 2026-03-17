@@ -1,10 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
+import 'package:crowdpass/providers/firestore_provider.dart';
 import 'package:crowdpass/providers/image_provider.dart';
 import 'package:crowdpass/models/company.dart';
-
-final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 
 /// 1. Data Stream Provider
 final companyProvider = StreamProvider.family<Company?, String>((ref, companyId) {
