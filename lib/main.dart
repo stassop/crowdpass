@@ -76,7 +76,7 @@ class App extends ConsumerWidget {
           displaySmall: TextStyle(fontFamily: 'Unbounded'),
         ),
       ),
-      home: const SplashScreen(),
+      home: const HomeScreen(),
       routes: {
         '/home/': (context) => const HomeScreen(),
         '/sign_in/': (context) => const SignInScreen(),

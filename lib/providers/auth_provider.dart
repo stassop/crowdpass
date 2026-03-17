@@ -62,7 +62,9 @@ class AuthNotifier extends AsyncNotifier<User?> {
         }
 
         // Create the Firestore profile
+        // FIX: Pass the UID directly instead of waiting for the provider to update
         await ref.read(userProfileNotifier.notifier).createUserProfile(
+              uid: user.uid,
               displayName: displayName,
               photoURL: uploadedPhotoURL,
               email: email,
@@ -115,7 +117,9 @@ class AuthNotifier extends AsyncNotifier<User?> {
       if (uploadedPhotoURL != null) await user.updatePhotoURL(uploadedPhotoURL);
 
       // Sync changes to Firestore
+      // FIX: Pass the UID directly
       await ref.read(userProfileNotifier.notifier).updateUserProfile(
+            uid: user.uid,
             displayName: displayName,
             photoURL: uploadedPhotoURL,
             phone: phone,
@@ -158,7 +162,8 @@ class AuthNotifier extends AsyncNotifier<User?> {
     state = const AsyncLoading();
 
     state = await AsyncValue.guard(() async {
-      await ref.read(userProfileNotifier.notifier).deleteUserProfile();
+      // FIX: Pass UID directly
+      await ref.read(userProfileNotifier.notifier).deleteUserProfile(uid: user.uid);
       await user.delete();
       return null;
     });

@@ -51,21 +51,19 @@ class UserProfileAsyncNotifier extends AsyncNotifier<void> {
   }
 
   /// Only handles the creation of the Firestore Document.
-  /// Updated to require all non-nullable fields defined in UserProfile.
+  /// UPDATED: Accepts uid explicitly to avoid race condition with authProvider
   Future<void> createUserProfile({
+    required String uid,
     required String displayName,
     required String email,
     required String phone,
     required Country country,
     String? photoURL,
   }) async {
-    final user = ref.read(authProvider).value;
-    if (user == null) throw Exception('No authenticated user found.');
-
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final userProfile = UserProfile(
-        uid: user.uid,
+        uid: uid,
         displayName: displayName,
         email: email, 
         phone: phone,
@@ -76,23 +74,21 @@ class UserProfileAsyncNotifier extends AsyncNotifier<void> {
       await ref
           .read(firestoreProvider)
           .collection('users')
-          .doc(user.uid)
+          .doc(uid)
           .set(userProfile.toJson());
     });
   }
 
   /// Only updates fields in the Firestore 'users' collection.
-  /// Uses a Map for partial updates, so we don't need the full Model here.
+  /// UPDATED: Accepts uid explicitly
   Future<void> updateUserProfile({
+    required String uid,
     String? displayName,
     String? photoURL,
     String? email,
     String? phone,
     Country? country,
   }) async {
-    final user = ref.read(authProvider).value;
-    if (user == null) return;
-
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final updates = <String, dynamic>{
@@ -107,23 +103,21 @@ class UserProfileAsyncNotifier extends AsyncNotifier<void> {
         await ref
             .read(firestoreProvider)
             .collection('users')
-            .doc(user.uid)
+            .doc(uid)
             .update(updates);
       }
     });
   }
 
   /// Only deletes the Firestore document.
-  Future<void> deleteUserProfile() async {
-    final user = ref.read(authProvider).value;
-    if (user == null) return;
-
+  /// UPDATED: Accepts uid explicitly
+  Future<void> deleteUserProfile({required String uid}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await ref
           .read(firestoreProvider)
           .collection('users')
-          .doc(user.uid)
+          .doc(uid)
           .delete();
     });
   }

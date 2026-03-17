@@ -57,24 +57,24 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       if (authState.hasError) {
         throw authState.error!;
       }
+
+      // Navigate manually after ALL operations (Auth + Storage + Firestore) are done
+      // if (mounted) {
+      //   Navigator.of(context).pushReplacementNamed('/home/');
+      // }
     } catch (e) {
       ErrorDialog.show(context, title: 'Sign Up Failed', message: e.toString());
     } finally {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 1. Check authProvider for existing signup/signin
-    ref.listen<AsyncValue<User?>>(authProvider, (previousState, nextState) {
-      nextState.whenData((user) {
-        if (user != null) {
-          Navigator.of(context).pushReplacementNamed('/home/');
-        }
-      });
-    });
-
+    // REMOVED: ref.listen that caused premature navigation
+    
     final isLoading = ref.watch(authProvider).isLoading;
 
     return Scaffold(
