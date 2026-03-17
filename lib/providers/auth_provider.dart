@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -68,10 +69,15 @@ class AuthNotifier extends AsyncNotifier<User?> {
       // 2. Upload Image (if any)
       String? uploadedPhotoURL;
       if (photoPath != null && photoPath.isNotEmpty) {
-        uploadedPhotoURL = await ImageFileService.uploadImage(
-          photoPath,
-          'users/${user.uid}/profile_photo',
-        );
+        try {
+          uploadedPhotoURL = await ImageFileService.uploadImage(
+            photoPath,
+            'users/${user.uid}/profile_photo',
+          );
+        } catch (uploadError, uploadStackTrace) {
+          debugPrint('signUp: image upload failed: $uploadError\n$uploadStackTrace');
+          rethrow;
+        }
       }
 
       // // 3. Update Firebase Auth profile
@@ -97,6 +103,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
       state = AsyncData(updatedUser);
     } catch (e, st) {
+      debugPrint('signUp: rolling back after error: $e\n$st');
       // Rollback if needed
       if (credential?.user != null) {
         await credential!.user!.delete();
