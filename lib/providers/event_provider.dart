@@ -44,20 +44,26 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   /// Creates a new event and automatically assigns the Firestore Doc ID.
   Future<void> createEvent(Event event) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final user = await ref.read(authProvider.future);
-      if (user == null) throw Exception('User must be authenticated to create an event.');
+    try {
+      state = await AsyncValue.guard(() async {
+        final user = await ref.read(authProvider.future);
+        if (user == null) throw Exception('User must be authenticated to create an event.');
 
-      final isOrganizer = await ref.read(companyProvider(user.uid).future) != null;
-      if (!isOrganizer) throw Exception('Only organizers can create events.');
+        final isOrganizer = await ref.read(companyProvider(user.uid).future) != null;
+        if (!isOrganizer) throw Exception('Only organizers can create events.');
 
-      final firestore = ref.read(firestoreProvider);
-      final docRef = firestore.collection('events').doc();
-      
-      // Sync the Firestore ID with the model ID before saving
-      final eventWithId = event.copyWith(id: docRef.id);
-      await docRef.set(eventWithId.toJson());
-    });
+        final firestore = ref.read(firestoreProvider);
+        final docRef = firestore.collection('events').doc();
+        
+        // Sync the Firestore ID with the model ID before saving
+        final eventWithId = event.copyWith(id: docRef.id);
+        await docRef.set(eventWithId.toJson());
+      });
+    } catch (e, st) {
+      // Ensure state reflects the error and rethrow for upstream handling/logging.
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
   }
 
   /// Updates an existing event.
@@ -67,25 +73,30 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
     }
 
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final user = await ref.read(authProvider.future);
-      if (user == null) throw Exception('User must be authenticated to update an event.');
+    try {
+      state = await AsyncValue.guard(() async {
+        final user = await ref.read(authProvider.future);
+        if (user == null) throw Exception('User must be authenticated to update an event.');
 
-      final firestore = ref.read(firestoreProvider);
+        final firestore = ref.read(firestoreProvider);
 
-      // Get the existing event to ensure it exists and to check permissions if needed
-      final docRef = firestore.collection('events').doc(event.id);
-      final snapshot = await docRef.get();
-      if (!snapshot.exists) throw Exception('Event does not exist.');
+        // Get the existing event to ensure it exists and to check permissions if needed
+        final docRef = firestore.collection('events').doc(event.id);
+        final snapshot = await docRef.get();
+        if (!snapshot.exists) throw Exception('Event does not exist.');
 
-      // Optionally, check if the user is the creator of the event
-      final existingEvent = Event.fromJson(snapshot.data()!);
-      if (existingEvent.createdBy != user.uid) {
-        throw Exception('User does not have permission to update this event.');
-      }
+        // Optionally, check if the user is the creator of the event
+        final existingEvent = Event.fromJson(snapshot.data()!);
+        if (existingEvent.createdBy != user.uid) {
+          throw Exception('User does not have permission to update this event.');
+        }
 
-      await firestore.collection('events').doc(event.id).update(event.toJson());
-    });
+        await firestore.collection('events').doc(event.id).update(event.toJson());
+      });
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
   }
 
   Future<void> cancelEvent(String eventId) async {
@@ -98,25 +109,30 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
     if (eventId.isEmpty) throw ArgumentError('Event ID cannot be empty for deletion.');
 
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final user = await ref.read(authProvider.future);
-      if (user == null) throw Exception('User must be authenticated to delete an event.');
+    try {
+      state = await AsyncValue.guard(() async {
+        final user = await ref.read(authProvider.future);
+        if (user == null) throw Exception('User must be authenticated to delete an event.');
 
-      final firestore = ref.read(firestoreProvider);
+        final firestore = ref.read(firestoreProvider);
 
-      // Get the existing event to ensure it exists and to check permissions if needed
-      final docRef = firestore.collection('events').doc(eventId);
-      final snapshot = await docRef.get();
-      if (!snapshot.exists) throw Exception('Event does not exist.');
+        // Get the existing event to ensure it exists and to check permissions if needed
+        final docRef = firestore.collection('events').doc(eventId);
+        final snapshot = await docRef.get();
+        if (!snapshot.exists) throw Exception('Event does not exist.');
 
-      // Optionally, check if the user is the creator of the event
-      final existingEvent = Event.fromJson(snapshot.data()!);
-      if (existingEvent.createdBy != user.uid) {
-        throw Exception('User does not have permission to delete this event.');
-      }
+        // Optionally, check if the user is the creator of the event
+        final existingEvent = Event.fromJson(snapshot.data()!);
+        if (existingEvent.createdBy != user.uid) {
+          throw Exception('User does not have permission to delete this event.');
+        }
 
-      await firestore.collection('events').doc(eventId).delete();
-    });
+        await firestore.collection('events').doc(eventId).delete();
+      });
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
   }
 }
 

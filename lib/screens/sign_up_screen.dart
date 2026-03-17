@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/country.dart';
 
@@ -52,16 +53,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             phone: _phone.trim(),
             country: _country,
           );
-
-      final authState = ref.read(authNotifier);
-      if (authState.hasError) {
-        throw authState.error!;
-      }
-
-      // Navigate manually after ALL operations (Auth + Storage + Firestore) are done
-      // if (mounted) {
-      //   Navigator.of(context).pushReplacementNamed('/home/');
-      // }
     } catch (e) {
       ErrorDialog.show(context, title: 'Sign Up Failed', message: e.toString());
     } finally {
@@ -73,8 +64,26 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // REMOVED: ref.listen that caused premature navigation
-    
+    // Listen to the auth stream (authProvider) for navigation/error handling.
+    ref.listen<AsyncValue<User?>>(authProvider, (previous, next) {
+      next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            // Success: Navigate
+            Navigator.of(context).pushReplacementNamed('/home/');
+          }
+        },
+        error: (error, stackTrace) {
+          // Error: Show Dialog
+          ErrorDialog.show(
+            context, 
+            title: 'Sign Up Failed', 
+            message: error.toString(),
+          );
+        },
+      );
+    });
+
     final isLoading = ref.watch(authNotifier).isLoading;
 
     return Scaffold(

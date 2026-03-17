@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 // Ensure these paths match your project structure
 import 'package:crowdpass/providers/user_profile_provider.dart';
 import 'package:crowdpass/providers/image_provider.dart';
+
 import 'package:crowdpass/models/country.dart';
 
 /// Provides the Firebase Auth instance
@@ -11,19 +12,16 @@ final firebaseAuthProvider = Provider<FirebaseAuth>(
   (ref) => FirebaseAuth.instance,
 );
 
-/// A stream of the current user's authentication state.
+/// A stream of the current user's authentication state for the UI to listen to.
 final authProvider = StreamProvider<User?>((ref) {
   return ref.watch(firebaseAuthProvider).userChanges();
 });
 
 /// The main Notifier managing authentication logic and state
-class AuthNotifier extends AsyncNotifier<User?> {
-  late final FirebaseAuth _auth;
-
+class AuthNotifier extends AsyncNotifier<void> {
   @override
-  Future<User?> build() async {
-    _auth = ref.watch(firebaseAuthProvider);
-    return _auth.currentUser;
+  Future<void> build() async {
+    // No initial state to load here; kept for possible future initialization.
   }
 
   /// Create account + Create Firestore Profile
@@ -36,49 +34,58 @@ class AuthNotifier extends AsyncNotifier<User?> {
     String? photoURL,
   }) async {
     state = const AsyncLoading();
+    User? user;
 
-    state = await AsyncValue.guard(() async {
-      final credential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+    try {
+      final credential = await ref
+          .read(firebaseAuthProvider)
+          .createUserWithEmailAndPassword(email: email, password: password);
+      user = credential.user;
 
-      final user = credential.user;
+      if (user == null) {
+        // Defensive: handle unexpected null user
+        state = AsyncError('Failed to create user.', StackTrace.current);
+        return;
+      }
+
+      // 1. Update Auth Profile
+      await user.updateDisplayName(displayName);
+
+      // 2. Handle Image Upload if necessary
+      String? uploadedPhotoURL;
+      if (photoURL != null && photoURL.isNotEmpty) {
+        uploadedPhotoURL = await ref
+            .read(imageNotifier.notifier)
+            .uploadImage(photoURL, 'users/${user.uid}/photo');
+      }
+
+      if (uploadedPhotoURL != null) {
+        await user.updatePhotoURL(uploadedPhotoURL);
+      }
+
+      // 3. Create the Firestore profile
+      await ref.read(userProfileNotifier.notifier).createUserProfile(
+            displayName: displayName,
+            photoURL: uploadedPhotoURL,
+            email: email,
+            phone: phone,
+            country: country,
+          );
+
+      state = const AsyncData(null);
+    } catch (e, st) {
+      // CLEANUP: If Auth succeeded but Firestore/Image failed, try deleting the auth user
       if (user != null) {
-        await user.updateDisplayName(displayName);
-
-        String? uploadedPhotoURL;
-        if (photoURL != null && photoURL.isNotEmpty) {
-          uploadedPhotoURL = await ref
-              .read(imageNotifier.notifier)
-              .uploadImage(photoURL, 'users/${user.uid}/photo');
-        }
-
-        if (uploadedPhotoURL != null) {
-          await user.updatePhotoURL(uploadedPhotoURL);
-        }
-
-        // Create the Firestore profile
-        // FIX: Pass the UID directly instead of waiting for the provider to update
-        await ref.read(userProfileNotifier.notifier).createUserProfile(
-              uid: user.uid,
-              displayName: displayName,
-              photoURL: uploadedPhotoURL,
-              email: email,
-              phone: phone,
-              country: country,
-            );
-
-        final profileState = ref.read(userProfileNotifier);
-        if (profileState.hasError) {
-          throw profileState.error!;
+        try {
+          await user.delete();
+        } catch (_) {
+          // Deletion may fail (e.g., requires recent login); don't mask the original error.
         }
       }
-      return _auth.currentUser;
-    });
 
-    if (state.hasError) {
-      state = AsyncError(_handleError(state.error), state.stackTrace!);
+      final errorMessage = _handleError(e);
+      state = AsyncError(errorMessage, st);
+      rethrow; // Rethrow so the UI can catch it for SnackBars/Dialogs if desired
     }
   }
 
@@ -90,12 +97,12 @@ class AuthNotifier extends AsyncNotifier<User?> {
     String? phone,
     Country? country,
   }) async {
-    final user = _auth.currentUser;
+    final user = ref.read(firebaseAuthProvider).currentUser;
     if (user == null) return;
 
     state = const AsyncLoading();
 
-    state = await AsyncValue.guard(() async {
+    try {
       if (password != null && password.isNotEmpty) {
         await user.updatePassword(password);
       }
@@ -109,121 +116,151 @@ class AuthNotifier extends AsyncNotifier<User?> {
         uploadedPhotoURL = await ref
             .read(imageNotifier.notifier)
             .uploadImage(photoURL, 'users/${user.uid}/photo');
+        if (uploadedPhotoURL != null) {
+          await user.updatePhotoURL(uploadedPhotoURL);
+        }
       }
 
-      if (uploadedPhotoURL != null) await user.updatePhotoURL(uploadedPhotoURL);
-
       // Sync changes to Firestore
-      // FIX: Pass the UID directly
       await ref.read(userProfileNotifier.notifier).updateUserProfile(
-            uid: user.uid,
             displayName: displayName,
             photoURL: uploadedPhotoURL,
             phone: phone,
             country: country,
           );
 
-      final profileState = ref.read(userProfileNotifier);
-      if (profileState.hasError) {
-        throw profileState.error!;
-      }
-
       await user.reload();
-      return _auth.currentUser;
-    });
-
-    if (state.hasError) {
-      state = AsyncError(_handleError(state.error), state.stackTrace!);
-    }
-  }
-
-  /// Specifically for handling "requires-recent-login" errors
-  Future<void> reauthenticate(String email, String password) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final credential = EmailAuthProvider.credential(email: email, password: password);
-      await _auth.currentUser?.reauthenticateWithCredential(credential);
-      return _auth.currentUser;
-    });
-
-    if (state.hasError) {
-      state = AsyncError(_handleError(state.error), state.stackTrace!);
-    }
-  }
-
-  /// Delete Firestore Profile + Delete Auth Account
-  Future<void> deleteUser() async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-
-    state = const AsyncLoading();
-
-    state = await AsyncValue.guard(() async {
-      // FIX: Pass UID directly
-      await ref.read(userProfileNotifier.notifier).deleteUserProfile(uid: user.uid);
-      await user.delete();
-      return null;
-    });
-
-    if (state.hasError) {
-      state = AsyncError(_handleError(state.error), state.stackTrace!);
+      // AuthNotifier is typed as void, so return AsyncData(null)
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(_handleError(e), st);
+      rethrow;
     }
   }
 
   Future<void> signIn({required String email, required String password}) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
-      return _auth.currentUser;
-    });
-
-    if (state.hasError) {
-      state = AsyncError(_handleError(state.error), state.stackTrace!);
+    try {
+      await ref
+          .read(firebaseAuthProvider)
+          .signInWithEmailAndPassword(email: email, password: password);
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(_handleError(e), st);
+      rethrow;
     }
   }
 
   Future<void> signOut() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      await _auth.signOut();
-      return null;
-    });
+    try {
+      await ref.read(firebaseAuthProvider).signOut();
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(_handleError(e), st);
+      rethrow;
+    }
+  }
 
-    if (state.hasError) {
-      state = AsyncError(_handleError(state.error), state.stackTrace!);
+  Future<void> reauthenticate(String email, String password) async {
+    state = const AsyncLoading();
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: password,
+      );
+      await ref
+          .read(firebaseAuthProvider)
+          .currentUser
+          ?.reauthenticateWithCredential(credential);
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(_handleError(e), st);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteUser() async {
+    final user = ref.read(firebaseAuthProvider).currentUser;
+    if (user == null) return;
+
+    state = const AsyncLoading();
+    try {
+      // Delete Firestore data before Auth account
+      await ref.read(userProfileNotifier.notifier).deleteUserProfile();
+      await user.delete();
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(_handleError(e), st);
+      rethrow;
     }
   }
 
   String _handleError(dynamic error) {
     if (error is FirebaseAuthException) {
       switch (error.code) {
+        // Sign in / account errors
         case 'user-not-found':
           return 'No account found with this email.';
         case 'wrong-password':
-          return 'Incorrect password. Please try again.';
-        case 'email-already-in-use':
-          return 'This email is already registered.';
-        case 'weak-password':
-          return 'The password provided is too weak.';
-        case 'invalid-email':
-          return 'The email address is not valid.';
-        case 'requires-recent-login':
-          return 'Security check: Please re-login to perform this action.';
-        case 'network-request-failed':
-          return 'Network error. Please check your connection.';
+          return 'Incorrect password.';
+        case 'invalid-credential':
+          return 'Invalid login credentials.';
         case 'user-disabled':
           return 'This account has been disabled.';
+
+        // Email errors
+        case 'invalid-email':
+          return 'The email address is not valid.';
+        case 'email-already-in-use':
+        case 'email-already-exists':
+          return 'This email is already registered.';
+
+        // Password errors
+        case 'weak-password':
+          return 'The password is too weak.';
+
+        // Credential / provider issues
+        case 'account-exists-with-different-credential':
+          return 'An account already exists with a different sign-in method.';
+        case 'credential-already-in-use':
+          return 'This credential is already associated with another account.';
+        case 'operation-not-allowed':
+          return 'This sign-in method is not enabled.';
+
+        // Phone auth
+        case 'invalid-verification-code':
+          return 'The verification code is invalid.';
+        case 'invalid-verification-id':
+          return 'The verification session has expired. Please try again.';
+
+        // Security / re-auth
+        case 'requires-recent-login':
+          return 'Please re-login to perform this action.';
+
+        // Network / rate limiting
+        case 'network-request-failed':
+          return 'Network error. Check your connection.';
         case 'too-many-requests':
-          return 'Too many attempts. Please try again later.';
+          return 'Too many attempts. Try again later.';
+
+        // Fallback
         default:
-          return error.message ?? 'An authentication error occurred.';
+          return 'Authentication failed. Please try again.';
       }
     }
-    return 'An unexpected error occurred. Please try again.';
+
+    final message = error.toString();
+
+    if (message.contains('Exception:')) {
+      return message.split('Exception:').last.trim();
+    }
+
+    return 'An unexpected error occurred.';
   }
 }
 
 /// The global provider for the AuthNotifier
-final authNotifier = AsyncNotifierProvider<AuthNotifier, User?>(
+final authNotifier = AsyncNotifierProvider<AuthNotifier, void>(
   AuthNotifier.new,
 );

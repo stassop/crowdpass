@@ -2,7 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Assuming authProvider is the StreamProvider<User?> from your auth file
-import 'package:crowdpass/providers/auth_provider.dart';
+import 'package:crowdpass/providers/auth_provider.dart'; // Update to your actual path
+
 import 'package:crowdpass/models/user_profile.dart';
 import 'package:crowdpass/models/country.dart';
 
@@ -17,11 +18,12 @@ final userProfileProvider = StreamProvider.family<UserProfile?, String?>((
   userId,
 ) {
   final firestore = ref.watch(firestoreProvider);
-  final authState = ref.watch(authProvider);
+  
+  // Optimization: Only listen to changes in the UID, not the whole User object.
+  final currentUid = ref.watch(authProvider.select((s) => s.value?.uid));
 
-  // If no userId is provided, we reactively watch the current Auth state
   final String? effectiveId = (userId == null || userId.isEmpty)
-      ? authState.value?.uid
+      ? currentUid
       : userId;
 
   if (effectiveId == null) {
@@ -34,11 +36,9 @@ final userProfileProvider = StreamProvider.family<UserProfile?, String?>((
       .snapshots()
       .map((snapshot) {
     final data = snapshot.data();
-    // If document doesn't exist or data is null, return null
     if (data == null || !snapshot.exists) return null;
     
-    // This will now throw an error if the Firestore data is missing 
-    // any of the required fields (phone, country, email, etc.)
+    // Returns the model. If fields are missing, the Stream will emit an AsyncError.
     return UserProfile.fromJson(data);
   });
 });
@@ -50,20 +50,21 @@ class UserProfileAsyncNotifier extends AsyncNotifier<void> {
     return;
   }
 
-  /// Only handles the creation of the Firestore Document.
-  /// UPDATED: Accepts uid explicitly to avoid race condition with authProvider
+  /// Creates the Firestore Document.
   Future<void> createUserProfile({
-    required String uid,
     required String displayName,
     required String email,
     required String phone,
     required Country country,
     String? photoURL,
   }) async {
+    final user = await ref.read(authProvider.future);
+    if (user == null) throw Exception('Authenticated user not found.');
+
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    try {
       final userProfile = UserProfile(
-        uid: uid,
+        uid: user.uid,
         displayName: displayName,
         email: email, 
         phone: phone,
@@ -74,23 +75,29 @@ class UserProfileAsyncNotifier extends AsyncNotifier<void> {
       await ref
           .read(firestoreProvider)
           .collection('users')
-          .doc(uid)
+          .doc(user.uid)
           .set(userProfile.toJson());
-    });
+          
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
   }
 
-  /// Only updates fields in the Firestore 'users' collection.
-  /// UPDATED: Accepts uid explicitly
+  /// Updates fields in the Firestore 'users' collection.
   Future<void> updateUserProfile({
-    required String uid,
     String? displayName,
     String? photoURL,
     String? email,
     String? phone,
     Country? country,
   }) async {
+    final user = await ref.read(authProvider.future);
+    if (user == null) throw Exception('Authenticated user not found.');
+
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    try {
       final updates = <String, dynamic>{
         if (displayName != null) 'displayName': displayName,
         if (photoURL != null) 'photoURL': photoURL,
@@ -103,23 +110,33 @@ class UserProfileAsyncNotifier extends AsyncNotifier<void> {
         await ref
             .read(firestoreProvider)
             .collection('users')
-            .doc(uid)
+            .doc(user.uid)
             .update(updates);
       }
-    });
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
   }
 
-  /// Only deletes the Firestore document.
-  /// UPDATED: Accepts uid explicitly
-  Future<void> deleteUserProfile({required String uid}) async {
+  /// Deletes the Firestore document.
+  Future<void> deleteUserProfile() async {
+    final user = await ref.read(authProvider.future);
+    if (user == null) throw Exception('Authenticated user not found.');
+
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    try {
       await ref
           .read(firestoreProvider)
           .collection('users')
-          .doc(uid)
+          .doc(user.uid)
           .delete();
-    });
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
   }
 }
 
