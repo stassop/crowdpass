@@ -7,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:crowdpass/providers/user_profile_provider.dart';
 import 'package:crowdpass/models/country.dart';
 
-import 'package:crowdpass/services/image_service.dart';
+import 'package:crowdpass/services/image_file_service.dart';
 
 /// Provides the Firebase Auth instance
 final firebaseAuthProvider = Provider<FirebaseAuth>(
