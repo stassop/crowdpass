@@ -75,7 +75,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Widget build(BuildContext context) {
     // REMOVED: ref.listen that caused premature navigation
     
-    final isLoading = ref.watch(authProvider).isLoading;
+    final isLoading = ref.watch(authNotifier).isLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Create Account')),
