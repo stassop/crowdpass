@@ -1,17 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Assuming these paths based on your previous snippet
 import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/company_provider.dart';
+import 'package:crowdpass/providers/firestore_provider.dart';
 
 import 'package:crowdpass/models/event.dart';
-
-/// 1. Dependency Providers
-/// Providing the instance allows for easy mocking during unit tests.
-final firestoreProvider = Provider<FirebaseFirestore>((ref) {
-  return FirebaseFirestore.instance;
-});
 
 /// 2. Data Stream Provider
 /// Watches a specific event by ID. 
@@ -137,6 +130,4 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
 }
 
 /// 4. Global Notifier Provider
-final eventNotifier = AsyncNotifierProvider<EventAsyncNotifier, void>(() {
-  return EventAsyncNotifier();
-});
+final eventNotifier = AsyncNotifierProvider<EventAsyncNotifier, void>(EventAsyncNotifier.new);

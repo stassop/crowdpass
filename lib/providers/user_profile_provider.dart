@@ -1,12 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import this to access currentUser
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:crowdpass/providers/auth_provider.dart'; 
+import 'package:crowdpass/providers/firestore_provider.dart';
 import 'package:crowdpass/models/user_profile.dart';
 import 'package:crowdpass/models/country.dart';
-
-final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 
 /// Unified provider for fetching profile data.
 final userProfileProvider = StreamProvider.family<UserProfile?, String?>((ref, userId) {

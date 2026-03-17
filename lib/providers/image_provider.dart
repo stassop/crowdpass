@@ -20,67 +20,65 @@ class ImageNotifier extends AsyncNotifier<String?> {
   @override
   Future<String?> build() async => null;
 
-  Future<String> uploadImage(String filePath, [String storageDir = '']) async {
-    // Only update state if we aren't doing a bulk upload 
-    // to avoid UI "flicker" between multiple images.
-    state = const AsyncValue.loading();
+  /// Internal upload logic that does not touch provider state.
+  Future<String> _doUploadFile(String filePath, String storageDir) async {
+    final file = File(filePath);
 
+    if (!await file.exists()) throw Exception('File not found.');
+
+    final extension = path.extension(filePath).toLowerCase();
+    final contentType = _supportedFormats[extension];
+    if (contentType == null) {
+      throw Exception('Unsupported format (use JPG/PNG).');
+    }
+
+    if (await file.length() > _maxFileSize) {
+      throw Exception('File exceeds 5MB limit.');
+    }
+
+    final hash = await ImageFileService.hashImageFile(filePath);
+    final normalizedDir = storageDir.isNotEmpty && !storageDir.endsWith('/')
+        ? '$storageDir/'
+        : storageDir;
+
+    final storagePath = '$normalizedDir$hash$extension';
+    final refStorage = FirebaseStorage.instance.ref().child(storagePath);
+
+    // Return existing URL if already uploaded (deduplication).
     try {
-      final file = File(filePath);
+      return await refStorage.getDownloadURL();
+    } on FirebaseException catch (e) {
+      if (e.code != 'object-not-found') rethrow;
+    }
 
-      if (!await file.exists()) throw Exception('File not found.');
-      
-      final extension = path.extension(filePath).toLowerCase();
-      final contentType = _supportedFormats[extension];
-      if (contentType == null) {
-        throw Exception('Unsupported format (use JPG/PNG).');
-      }
+    await refStorage.putFile(
+      file,
+      SettableMetadata(contentType: contentType),
+    );
 
-      if (await file.length() > _maxFileSize) {
-        throw Exception('File exceeds 5MB limit.');
-      }
+    return await refStorage.getDownloadURL();
+  }
 
-      final hash = await ImageFileService.hashImageFile(filePath);
-      final normalizedDir = storageDir.isNotEmpty && !storageDir.endsWith('/') 
-          ? '$storageDir/' 
-          : storageDir;
-      
-      final storagePath = '$normalizedDir$hash$extension';
-      final refStorage = FirebaseStorage.instance.ref().child(storagePath);
-
-      // Check existence
-      try {
-        final existingUrl = await refStorage.getDownloadURL();
-        state = AsyncValue.data(existingUrl);
-        return existingUrl;
-      } on FirebaseException catch (e) {
-        if (e.code != 'object-not-found') rethrow;
-      }
-
-      // Upload with metadata
-      await refStorage.putFile(
-        file,
-        SettableMetadata(contentType: contentType),
-      );
-
-      final url = await refStorage.getDownloadURL();
+  Future<String> uploadImage(String filePath, [String storageDir = '']) async {
+    state = const AsyncValue.loading();
+    try {
+      final url = await _doUploadFile(filePath, storageDir);
       state = AsyncValue.data(url);
       return url;
-
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
     }
   }
 
-  /// Bulk upload: Note that this will currently result in the 
-  /// LAST image URL being the final state of the notifier.
+  /// Bulk upload: sets state once at the start and once at the end,
+  /// avoiding rapid state transitions between individual uploads.
   Future<List<String>> uploadImages(List<String> filePaths, [String storageDir = '']) async {
+    state = const AsyncValue.loading();
     try {
       final urls = await Future.wait(
-        filePaths.map((p) => uploadImage(p, storageDir))
+        filePaths.map((p) => _doUploadFile(p, storageDir)),
       );
-      // Explicitly set state to the last URL or handle as a list
       state = AsyncValue.data(urls.isNotEmpty ? urls.last : null);
       return urls;
     } catch (e, st) {
