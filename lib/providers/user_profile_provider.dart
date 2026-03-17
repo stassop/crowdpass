@@ -1,20 +1,29 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
-import 'package:crowdpass/providers/auth_provider.dart'; 
+import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/firestore_provider.dart';
 import 'package:crowdpass/models/user_profile.dart';
 import 'package:crowdpass/models/country.dart';
 
 /// Unified provider for fetching profile data.
-final userProfileProvider = StreamProvider.family<UserProfile?, String?>((ref, userId) {
+final userProfileProvider =
+    StreamProvider.family<UserProfile?, String?>((ref, userId) {
   final firestore = ref.watch(firestoreProvider);
-  
-  // Watch only the UID to avoid unnecessary rebuilds if other User properties change
-  final currentUserUid = ref.watch(authProvider.select((s) => s.value?.uid));
 
-  final String? effectiveId = (userId == null || userId.isEmpty) ? currentUserUid : userId;
+  // Watch auth state from the SINGLE source of truth
+  final authState = ref.watch(authNotifier);
+
+  // Only rebuild when UID changes
+  final currentUserUid = authState.value?.uid;
+
+  // Avoid emitting null during auth loading (prevents UI flicker)
+  if (authState.isLoading) {
+    return const Stream.empty();
+  }
+
+  final String? effectiveId =
+      (userId == null || userId.isEmpty) ? currentUserUid : userId;
 
   if (effectiveId == null) {
     return Stream.value(null);
@@ -26,21 +35,25 @@ final userProfileProvider = StreamProvider.family<UserProfile?, String?>((ref, u
       .snapshots()
       .map((snapshot) {
         if (!snapshot.exists || snapshot.data() == null) return null;
-        
-        // Ensure the ID is injected if your model expects it
+
         final data = snapshot.data()!;
-        return UserProfile.fromJson({...data, 'uid': snapshot.id});
+        return UserProfile.fromJson({
+          ...data,
+          'uid': snapshot.id,
+        });
       });
 });
 
 class UserProfileNotifier extends AsyncNotifier<void> {
   @override
-  Future<void> build() async => null; // No initial data, just manage loading/error states
+  Future<void> build() async => null;
 
-  /// Private helper to get the UID without waiting for the Auth Stream
+  /// Get current UID safely from provider
   String _requireUserId() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('User must be logged in to perform this action.');
+    final user = ref.read(firebaseAuthProvider).currentUser;
+    if (user == null) {
+      throw Exception('User must be logged in to perform this action.');
+    }
     return user.uid;
   }
 
@@ -52,23 +65,24 @@ class UserProfileNotifier extends AsyncNotifier<void> {
     String? photoURL,
   }) async {
     state = const AsyncLoading();
+
     try {
       final uid = _requireUserId();
+
       final userProfile = UserProfile(
         uid: uid,
         displayName: displayName,
-        email: email, 
+        email: email,
         phone: phone,
         country: country,
         photoURL: photoURL,
       );
 
-      await ref
-          .read(firestoreProvider)
-          .collection('users')
-          .doc(uid)
-          .set(userProfile.toJson(), SetOptions(merge: true)); // Use merge for safety
-          
+      await ref.read(firestoreProvider).collection('users').doc(uid).set(
+            userProfile.toJson(),
+            SetOptions(merge: true),
+          );
+
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -84,15 +98,17 @@ class UserProfileNotifier extends AsyncNotifier<void> {
     Country? country,
   }) async {
     state = const AsyncLoading();
+
     try {
       final uid = _requireUserId();
+
       final updates = <String, dynamic>{
         if (displayName != null) 'displayName': displayName,
         if (photoURL != null) 'photoURL': photoURL,
         if (email != null) 'email': email,
         if (phone != null) 'phone': phone,
         if (country != null) 'country': country.toJson(),
-        'updatedAt': FieldValue.serverTimestamp(), // Good practice
+        'updatedAt': FieldValue.serverTimestamp(),
       };
 
       if (updates.isNotEmpty) {
@@ -102,6 +118,7 @@ class UserProfileNotifier extends AsyncNotifier<void> {
             .doc(uid)
             .update(updates);
       }
+
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -111,9 +128,16 @@ class UserProfileNotifier extends AsyncNotifier<void> {
 
   Future<void> deleteUserProfile() async {
     state = const AsyncLoading();
+
     try {
       final uid = _requireUserId();
-      await ref.read(firestoreProvider).collection('users').doc(uid).delete();
+
+      await ref
+          .read(firestoreProvider)
+          .collection('users')
+          .doc(uid)
+          .delete();
+
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -123,4 +147,5 @@ class UserProfileNotifier extends AsyncNotifier<void> {
 }
 
 final userProfileNotifier =
-    AsyncNotifierProvider<UserProfileNotifier, void>(UserProfileNotifier.new);
+    AsyncNotifierProvider<UserProfileNotifier, void>(
+        UserProfileNotifier.new);

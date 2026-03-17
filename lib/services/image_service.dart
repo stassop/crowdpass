@@ -1,5 +1,8 @@
+
 import 'dart:io';
 import 'package:crypto/crypto.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path/path.dart' as path;
 
 /// Custom exception for image file operations.
 class ImageFileException implements Exception {
@@ -24,6 +27,71 @@ class ImageFileException implements Exception {
 /// Suitable for large files and production environments.
 class ImageFileService {
   ImageFileService._(); // Prevent instantiation
+
+  static const int _maxFileSize = 5 * 1024 * 1024;
+
+  static const Map<String, String> _supportedFormats = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+  };
+
+  /// Pure upload logic (NO state mutation)
+  static Future<String> uploadFile(String filePath, String storageDir) async {
+    final file = File(filePath);
+
+    if (!await file.exists()) throw Exception('File not found.');
+
+    final extension = path.extension(filePath).toLowerCase();
+    final contentType = _supportedFormats[extension];
+    if (contentType == null) {
+      throw Exception('Unsupported format (use JPG/PNG).');
+    }
+
+    if (await file.length() > _maxFileSize) {
+      throw Exception('File exceeds 5MB limit.');
+    }
+
+    final hash = await ImageFileService.hashImageFile(filePath);
+
+    final normalizedDir =
+        storageDir.isNotEmpty && !storageDir.endsWith('/')
+            ? '$storageDir/'
+            : storageDir;
+
+    final storagePath = '$normalizedDir$hash$extension';
+
+    final refStorage =
+        FirebaseStorage.instance.ref().child(storagePath);
+
+    // Deduplication
+    try {
+      return await refStorage.getDownloadURL();
+    } on FirebaseException catch (e) {
+      if (e.code != 'object-not-found') rethrow;
+    }
+
+    await refStorage.putFile(
+      file,
+      SettableMetadata(contentType: contentType),
+    );
+
+    return await refStorage.getDownloadURL();
+  }
+
+  /// SAFE: does NOT interfere with auth flow
+  static Future<String> uploadImage(String filePath,
+      [String storageDir = '']) async {
+    return await uploadFile(filePath, storageDir);
+  }
+
+  /// Bulk upload (safe)
+  static Future<List<String>> uploadImages(List<String> filePaths,
+      [String storageDir = '']) async {
+    return await Future.wait(
+      filePaths.map((p) => uploadFile(p, storageDir)),
+    );
+  }
 
   /// Compares two files for identity using SHA-256 hash.
   ///
@@ -113,5 +181,3 @@ class ImageFileService {
     return digest.toString();
   }
 }
-
-

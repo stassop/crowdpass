@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/country.dart';
-
 import 'package:crowdpass/providers/auth_provider.dart';
 
 import 'package:crowdpass/widgets/error_dialog.dart';
@@ -28,11 +26,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   late Country _country;
   late String _displayName;
   String? _photoPath;
-  
+
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Show loading snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Creating account...'),
@@ -51,6 +48,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             phone: _phone.trim(),
             country: _country,
           );
+    } catch (e) {
+      ErrorDialog.show(context, title: 'Sign Up Failed', message: e.toString());
     } finally {
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -60,20 +59,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen to the authNotifier (action state) so navigation only happens after
-    // the full sign-up flow — including Firestore profile creation — has completed.
-    ref.listen<AsyncValue<void>>(authNotifier, (previous, next) {
+    // Listen to AuthNotifier instead of authProvider
+    ref.listen(authNotifier, (previous, next) {
       next.whenOrNull(
-        data: (_) {
-          // Success: the entire signUp process (Auth + profile) is done.
-          Navigator.of(context).pushReplacementNamed('/home/');
+        data: (user) {
+          if (user != null) {
+            Navigator.of(context).pushReplacementNamed('/home/');
+          }
         },
         error: (error, _) {
-          ErrorDialog.show(
-            context,
-            title: 'Sign Up Failed',
-            message: error.toString(),
-          );
+          // Optional: only handle if you REMOVE try/catch in _signUp
+          // Otherwise this can double-fire
         },
       );
     });
@@ -97,48 +93,40 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     child: UserAvatar.medium(
                       isEditable: true,
                       photoURL: _photoPath,
-                      onNameChanged: (value) => setState(() => _displayName = value),
-                      onPhotoChanged: (value) => setState(() => _photoPath = value),
+                      onNameChanged: (value) =>
+                          setState(() => _displayName = value),
+                      onPhotoChanged: (value) =>
+                          setState(() => _photoPath = value),
                       validator: (value) => (value == null || value.isEmpty)
                           ? 'Display name required'
                           : null,
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
                   EditableEmailField(
                     isEditable: true,
                     isRequired: true,
                     onChanged: (value) => _email = value.trim(),
                   ),
-
                   const SizedBox(height: 16),
-
                   EditablePasswordField(
                     isRequired: true,
                     onChanged: (value) => _password = value.trim(),
                   ),
-
                   const SizedBox(height: 16),
-
                   EditableCountryField(
                     isEditable: true,
                     onChanged: (value) => _country = value.first,
                     validator: (value) =>
                         (value.isEmpty) ? 'Select country' : null,
                   ),
-
                   const SizedBox(height: 16),
-
                   EditablePhoneField(
                     isEditable: true,
                     isRequired: true,
                     onChanged: (value) => _phone = value.trim(),
                   ),
-
                   const SizedBox(height: 32),
-
                   ElevatedButton(
                     onPressed: isLoading ? null : _signUp,
                     child: const Text('Create Account'),

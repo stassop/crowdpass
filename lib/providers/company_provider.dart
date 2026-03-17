@@ -1,14 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/firestore_provider.dart';
-import 'package:crowdpass/providers/image_provider.dart';
 import 'package:crowdpass/models/company.dart';
 
+import 'package:crowdpass/services/image_service.dart';
+
 /// 1. Data Stream Provider
-final companyProvider = StreamProvider.family<Company?, String>((ref, companyId) {
+final companyProvider = StreamProvider.family<Company?, String>((
+  ref,
+  companyId,
+) {
   if (companyId.isEmpty) return Stream.value(null);
 
-  return ref.watch(firestoreProvider)
+  return ref
+      .watch(firestoreProvider)
       .collection('companies')
       .doc(companyId)
       .snapshots()
@@ -31,13 +36,14 @@ class CompanyAsyncNotifier extends AsyncNotifier<void> {
         if (user == null) throw Exception('Authenticated user not found.');
 
         final firestore = ref.read(firestoreProvider);
-        final docRef = firestore.collection('companies').doc(); 
-        
+        final docRef = firestore.collection('companies').doc();
+
         String? uploadedLogoURL;
         if (logoURL != null) {
-          uploadedLogoURL = await ref
-              .read(imageNotifier.notifier)
-              .uploadImage(logoURL, 'companies/${docRef.id}/logo');
+          uploadedLogoURL = await ImageFileService.uploadImage(
+            logoURL,
+            'companies/${docRef.id}/logo',
+          );
         }
 
         final newCompany = company.copyWith(
@@ -69,15 +75,17 @@ class CompanyAsyncNotifier extends AsyncNotifier<void> {
 
         final data = snapshot.data()!;
         final oldCompany = Company.fromJson(data);
-        
+
         if (oldCompany.ownerId != user?.uid) {
           throw Exception('Access Denied: You do not own this company.');
         }
-        
+
         String? finalLogoURL = oldCompany.logoURL;
         if (logoURL != null) {
-          finalLogoURL = await ref.read(imageNotifier.notifier)
-              .uploadImage(logoURL, 'companies/${company.id}/logo');
+          finalLogoURL = await ImageFileService.uploadImage(
+            logoURL,
+            'companies/${company.id}/logo',
+          );
         }
 
         await docRef.update(company.copyWith(logoURL: finalLogoURL).toJson());
