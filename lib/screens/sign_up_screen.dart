@@ -29,7 +29,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   late String _phone;
   late Country _country;
   late String _displayName;
-  String? _photoURL;
+  String? _photoPath;
   
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
@@ -49,7 +49,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             email: _email.trim(),
             password: _password.trim(),
             displayName: _displayName.trim(),
-            photoURL: _photoURL,
+            photoPath: _photoPath,
             phone: _phone.trim(),
             country: _country,
           );
@@ -102,9 +102,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   Center(
                     child: UserAvatar.medium(
                       isEditable: true,
-                      photoURL: _photoURL,
+                      photoURL: _photoPath,
                       onNameChanged: (value) => setState(() => _displayName = value),
-                      onPhotoChanged: (value) => setState(() => _photoURL = value),
+                      onPhotoChanged: (value) => setState(() => _photoPath = value),
                       validator: (value) => (value == null || value.isEmpty)
                           ? 'Display name required'
                           : null,

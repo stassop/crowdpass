@@ -22,7 +22,7 @@ class UserProfileScreen extends ConsumerStatefulWidget {
 class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   String? _displayName;
-  String? _photoURL;
+  String? _photoPath;
   String? _password;
   String? _phone;
   Country? _country;
@@ -34,7 +34,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     // Call the update method with ALL fields
     await ref.read(authNotifier.notifier).updateUser(
           displayName: _displayName,
-          photoURL: _photoURL,
+          photoPath: _photoPath,
           password: _password,
           phone: _phone,
           country: _country,
@@ -127,7 +127,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
         
         // Comprehensive check to see if any field differs from the database
         final hasChanged = (_displayName != null && _displayName != user.displayName) ||
-            (_photoURL != null && _photoURL != user.photoURL) ||
+            (_photoPath != null && _photoPath != user.photoURL) ||
             (_phone != null && _phone != user.phone) ||
             (_country != null && _country != user.country) ||
             (_password != null && _password!.isNotEmpty);
@@ -164,10 +164,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     Center(
                       child: UserAvatar.medium(
                         isEditable: isMe && _isEditing,
-                        photoURL: _photoURL ?? user.photoURL,
+                        photoURL: _photoPath ?? user.photoURL,
                         displayName: _displayName ?? user.displayName,
                         onNameChanged: (value) => setState(() => _displayName = value),
-                        onPhotoChanged: (value) => setState(() => _photoURL = value),
+                        onPhotoChanged: (value) => setState(() => _photoPath = value),
                       ),
                     ),
 

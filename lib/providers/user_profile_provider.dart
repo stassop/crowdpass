@@ -1,30 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import this to access currentUser
 
-// Assuming authProvider is the StreamProvider<User?> from your auth file
-import 'package:crowdpass/providers/auth_provider.dart'; // Update to your actual path
-
+import 'package:crowdpass/providers/auth_provider.dart'; 
 import 'package:crowdpass/models/user_profile.dart';
 import 'package:crowdpass/models/country.dart';
 
-final firestoreProvider = Provider<FirebaseFirestore>(
-  (ref) => FirebaseFirestore.instance,
-);
+final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
 
-/// Unified provider: Pass a userId to fetch a specific profile,
-/// or null/empty string to fetch the currently authenticated user's profile.
-final userProfileProvider = StreamProvider.family<UserProfile?, String?>((
-  ref,
-  userId,
-) {
+/// Unified provider for fetching profile data.
+final userProfileProvider = StreamProvider.family<UserProfile?, String?>((ref, userId) {
   final firestore = ref.watch(firestoreProvider);
   
-  // Optimization: Only listen to changes in the UID, not the whole User object.
-  final currentUid = ref.watch(authProvider.select((s) => s.value?.uid));
+  // Watch only the UID to avoid unnecessary rebuilds if other User properties change
+  final currentUserUid = ref.watch(authProvider.select((s) => s.value?.uid));
 
-  final String? effectiveId = (userId == null || userId.isEmpty)
-      ? currentUid
-      : userId;
+  final String? effectiveId = (userId == null || userId.isEmpty) ? currentUserUid : userId;
 
   if (effectiveId == null) {
     return Stream.value(null);
@@ -35,22 +26,25 @@ final userProfileProvider = StreamProvider.family<UserProfile?, String?>((
       .doc(effectiveId)
       .snapshots()
       .map((snapshot) {
-    final data = snapshot.data();
-    if (data == null || !snapshot.exists) return null;
-    
-    // Returns the model. If fields are missing, the Stream will emit an AsyncError.
-    return UserProfile.fromJson(data);
-  });
+        if (!snapshot.exists || snapshot.data() == null) return null;
+        
+        // Ensure the ID is injected if your model expects it
+        final data = snapshot.data()!;
+        return UserProfile.fromJson({...data, 'uid': snapshot.id});
+      });
 });
 
-/// Auxiliary Notifier strictly for Firestore CRUD operations.
-class UserProfileAsyncNotifier extends AsyncNotifier<void> {
+class UserProfileNotifier extends AsyncNotifier<void> {
   @override
-  Future<void> build() async {
-    return;
+  Future<void> build() async => null; // No initial data, just manage loading/error states
+
+  /// Private helper to get the UID without waiting for the Auth Stream
+  String _requireUserId() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User must be logged in to perform this action.');
+    return user.uid;
   }
 
-  /// Creates the Firestore Document.
   Future<void> createUserProfile({
     required String displayName,
     required String email,
@@ -58,13 +52,11 @@ class UserProfileAsyncNotifier extends AsyncNotifier<void> {
     required Country country,
     String? photoURL,
   }) async {
-    final user = await ref.read(authProvider.future);
-    if (user == null) throw Exception('Authenticated user not found.');
-
     state = const AsyncLoading();
     try {
+      final uid = _requireUserId();
       final userProfile = UserProfile(
-        uid: user.uid,
+        uid: uid,
         displayName: displayName,
         email: email, 
         phone: phone,
@@ -75,17 +67,15 @@ class UserProfileAsyncNotifier extends AsyncNotifier<void> {
       await ref
           .read(firestoreProvider)
           .collection('users')
-          .doc(user.uid)
-          .set(userProfile.toJson());
+          .doc(uid)
+          .set(userProfile.toJson(), SetOptions(merge: true)); // Use merge for safety
           
       state = const AsyncData(null);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
+      state = AsyncError(e, st);
     }
   }
 
-  /// Updates fields in the Firestore 'users' collection.
   Future<void> updateUserProfile({
     String? displayName,
     String? photoURL,
@@ -93,54 +83,42 @@ class UserProfileAsyncNotifier extends AsyncNotifier<void> {
     String? phone,
     Country? country,
   }) async {
-    final user = await ref.read(authProvider.future);
-    if (user == null) throw Exception('Authenticated user not found.');
-
     state = const AsyncLoading();
     try {
+      final uid = _requireUserId();
       final updates = <String, dynamic>{
         if (displayName != null) 'displayName': displayName,
         if (photoURL != null) 'photoURL': photoURL,
         if (email != null) 'email': email,
         if (phone != null) 'phone': phone,
         if (country != null) 'country': country.toJson(),
+        'updatedAt': FieldValue.serverTimestamp(), // Good practice
       };
 
       if (updates.isNotEmpty) {
         await ref
             .read(firestoreProvider)
             .collection('users')
-            .doc(user.uid)
+            .doc(uid)
             .update(updates);
       }
       state = const AsyncData(null);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
+      state = AsyncError(e, st);
     }
   }
 
-  /// Deletes the Firestore document.
   Future<void> deleteUserProfile() async {
-    final user = await ref.read(authProvider.future);
-    if (user == null) throw Exception('Authenticated user not found.');
-
     state = const AsyncLoading();
     try {
-      await ref
-          .read(firestoreProvider)
-          .collection('users')
-          .doc(user.uid)
-          .delete();
+      final uid = _requireUserId();
+      await ref.read(firestoreProvider).collection('users').doc(uid).delete();
       state = const AsyncData(null);
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
+      state = AsyncError(e, st);
     }
   }
 }
 
 final userProfileNotifier =
-    AsyncNotifierProvider<UserProfileAsyncNotifier, void>(
-      UserProfileAsyncNotifier.new,
-    );
+    AsyncNotifierProvider<UserProfileNotifier, void>(UserProfileNotifier.new);
