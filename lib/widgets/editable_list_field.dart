@@ -211,7 +211,9 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
       isEditable: widget.isEditable,
       onTap: widget.isEditable ? _showListDialog : null,
       textStyle: widget.textStyle,
-      decoration: widget.decoration,
+      decoration: (widget.decoration ?? const InputDecoration()).copyWith(
+        suffixIcon: const Icon(Icons.arrow_drop_down),
+      ),
       validator: (_) => widget.validator?.call(_selectedOptions),
     );
   }

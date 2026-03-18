@@ -13,6 +13,7 @@ class EditableCountryField extends StatefulWidget {
     this.initialValue,
     this.isEditable = false,
     this.isMultiple = false,
+    this.isRequired = false,
     this.onChanged,
     this.textStyle,
     this.title,
@@ -21,6 +22,7 @@ class EditableCountryField extends StatefulWidget {
 
   final bool isEditable;
   final bool isMultiple;
+  final bool isRequired;
   final Function(Set<Country>)? onChanged;
   final String? Function(Set<Country>)? validator;
   final InputDecoration? decoration;
@@ -77,7 +79,12 @@ class _EditableCountryFieldState extends State<EditableCountryField> {
             textStyle: widget.textStyle,
             title: widget.title ?? (widget.isMultiple ? 'Countries' : 'Country'),
             onChanged: widget.onChanged,
-            validator: widget.validator,
+            validator: (selected) {
+              if (widget.isRequired && (selected.isEmpty)) {
+                return 'Please select at least one country';
+              }
+              return widget.validator?.call(selected);
+            },
           );
         } else {
           return const SizedBox.shrink();

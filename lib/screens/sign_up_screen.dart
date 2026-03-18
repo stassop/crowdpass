@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:crowdpass/models/country.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
 
@@ -26,6 +28,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   late Country _country;
   late String _displayName;
   String? _photoPath;
+  late final ProviderSubscription<AsyncValue<User?>> _authSub;
 
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
@@ -49,7 +52,16 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             country: _country,
           );
     } catch (e) {
-      ErrorDialog.show(context, title: 'Sign Up Failed', message: e.toString());
+      // Only show dialog if this widget is still mounted
+      if (mounted) {
+        ErrorDialog.show(
+          context,
+          title: 'Sign Up Failed',
+          message: e.toString(),
+        );
+      } else {
+        debugPrint('SignUp failed but widget unmounted: $e');
+      }
     } finally {
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -58,23 +70,40 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    // Listen to AuthNotifier instead of authProvider
-    ref.listen(authNotifier, (previous, next) {
-      next.whenOrNull(
-        data: (user) {
-          if (user != null) {
-            Navigator.of(context).pushReplacementNamed('/home/');
-          }
-        },
-        error: (error, _) {
-          // Optional: only handle if you REMOVE try/catch in _signUp
-          // Otherwise this can double-fire
-          ErrorDialog.show(context, title: 'Sign Up Failed', message: error.toString());
-        },
-      );
-    });
+  void initState() {
+    super.initState();
 
+    _authSub = ref.listenManual<AsyncValue<User?>>(
+      authNotifier,
+      (previous, next) {
+        next.whenOrNull(
+          data: (user) {
+            if (user != null && mounted) {
+              Navigator.of(context).pushReplacementNamed('/home/');
+            }
+          },
+          error: (error, _) {
+            if (mounted) {
+              ErrorDialog.show(
+                context,
+                title: 'Authentication Error',
+                message: error.toString(),
+              );
+            }
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _authSub.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isLoading = ref.watch(authNotifier).isLoading;
 
     return Scaffold(
@@ -103,31 +132,40 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           : null,
                     ),
                   ),
+
                   const SizedBox(height: 16),
+
                   EditableEmailField(
                     isEditable: true,
                     isRequired: true,
                     onChanged: (value) => _email = value.trim(),
                   ),
+
                   const SizedBox(height: 16),
+
                   EditablePasswordField(
                     isRequired: true,
                     onChanged: (value) => _password = value.trim(),
                   ),
+
                   const SizedBox(height: 16),
-                  EditableCountryField(
-                    isEditable: true,
-                    onChanged: (value) => _country = value.first,
-                    validator: (value) =>
-                        (value.isEmpty) ? 'Select country' : null,
-                  ),
-                  const SizedBox(height: 16),
+
                   EditablePhoneField(
                     isEditable: true,
                     isRequired: true,
                     onChanged: (value) => _phone = value.trim(),
                   ),
-                  const SizedBox(height: 32),
+
+                  const SizedBox(height: 16),
+
+                  EditableCountryField(
+                    isEditable: true,
+                    isRequired: true,
+                    onChanged: (value) => _country = value.first,
+                  ),
+
+                  const SizedBox(height: 16),
+
                   ElevatedButton(
                     onPressed: isLoading ? null : _signUp,
                     child: const Text('Create Account'),

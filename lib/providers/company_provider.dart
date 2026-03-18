@@ -3,7 +3,7 @@ import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/firestore_provider.dart';
 import 'package:crowdpass/models/company.dart';
 
-import 'package:crowdpass/services/image_service.dart';
+import 'package:crowdpass/services/image_file_service.dart';
 
 /// 1. Data Stream Provider
 final companyProvider = StreamProvider.family<Company?, String>((
