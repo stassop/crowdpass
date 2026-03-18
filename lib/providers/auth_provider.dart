@@ -63,7 +63,7 @@ class AuthNotifier extends AsyncNotifier<void> {
           'users/${user.uid}/profile_photo',
         );
       }
-
+      
       await Future.wait([
         user.updateDisplayName(displayName),
         if (uploadedPhotoURL != null) user.updatePhotoURL(uploadedPhotoURL),
