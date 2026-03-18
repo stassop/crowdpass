@@ -14,11 +14,10 @@ final userProfileProvider = StreamProvider.family<UserProfile?, String?>((
   final firestore = ref.watch(firestoreProvider);
 
   // Watch auth state to get current UID for fallback when userId is not provided.
-  final authAsync = ref.watch(authNotifier);
   final userAsync = ref.watch(authProvider);
 
   // Avoid emitting null during auth loading (prevents UI flicker)
-  if (authAsync.isLoading || userAsync.isLoading) {
+  if (userAsync.isLoading) {
     return const Stream.empty();
   }
 
