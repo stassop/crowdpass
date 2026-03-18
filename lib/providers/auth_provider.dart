@@ -13,29 +13,19 @@ final firebaseAuthProvider = Provider<FirebaseAuth>(
   (ref) => FirebaseAuth.instance,
 );
 
-/// Stream provider to listen to auth state changes
+/// Stream provider to listen to auth state changes.
+/// This is the SINGLE SOURCE OF TRUTH for "Who is the current user?".
 final authProvider = StreamProvider<User?>((ref) {
   return ref.watch(firebaseAuthProvider).userChanges();
 });
 
-/// Main Auth Notifier (single source of truth)
-class AuthNotifier extends AsyncNotifier<User?> {
-  StreamSubscription<User?>? _authSub;
-
+/// Auth Notifier for performing actions (Sign In, Sign Up, Update, Delete).
+/// This tracks the STATE OF THE ACTION (Loading, Success, Error), not the user data.
+class AuthNotifier extends AsyncNotifier<void> {
   @override
-  Future<User?> build() async {
-    final auth = ref.read(firebaseAuthProvider);
-
-    _authSub = auth.userChanges().listen(
-      (user) => state = AsyncData(user),
-      onError: (e, st) => state = AsyncError(e, st),
-    );
-
-    ref.onDispose(() {
-      _authSub?.cancel();
-    });
-
-    return auth.currentUser;
+  Future<void> build() async {
+    // No initial state to load or subscription to maintain.
+    return null;
   }
 
   /// SIGN UP
@@ -47,7 +37,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     required Country country,
     String? photoPath,
   }) async {
-    state = const AsyncLoading<User?>();
+    state = const AsyncLoading();
 
     UserCredential? credential;
     String? uploadedPhotoURL;
@@ -64,10 +54,9 @@ class AuthNotifier extends AsyncNotifier<User?> {
       if (user == null) throw Exception('User creation failed.');
 
       /// IMPORTANT: Force token refresh to ensure new user has valid token for storage operations.
-      /// This is a known Firebase quirk where the token may not reflect the new user's permissions immediately after sign-up.
       await user.getIdToken(true);
 
-      // Upload image. We allow this to throw so the UI shows the error dialog if upload fails.
+      // Upload image
       if (photoPath != null && photoPath.isNotEmpty) {
         uploadedPhotoURL = await ImageFileService.uploadImage(
           photoPath,
@@ -91,13 +80,14 @@ class AuthNotifier extends AsyncNotifier<User?> {
             country: country,
           );
 
-      // Refresh user
+      // Refresh user to ensure Firebase Auth updates locally
       await user.reload();
-      state = AsyncData(ref.read(firebaseAuthProvider).currentUser);
+      
+      state = const AsyncData(null);
     } catch (e, st) {
       debugPrint('signUp error: $e\n$st');
 
-      // Rollback: delete uploaded image (if you later add deleteImage)
+      // Rollback: delete uploaded image
       if (uploadedPhotoURL != null) {
         try {
           await ImageFileService.deleteImage(uploadedPhotoURL);
@@ -118,17 +108,17 @@ class AuthNotifier extends AsyncNotifier<User?> {
     required String email,
     required String password,
   }) async {
-    state = const AsyncLoading<User?>();
+    state = const AsyncLoading();
 
     try {
-      final credential = await ref
+      await ref
           .read(firebaseAuthProvider)
           .signInWithEmailAndPassword(
             email: email,
             password: password,
           );
 
-      state = AsyncData(credential.user);
+      state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncError(_handleError(e), st);
       rethrow;
@@ -137,7 +127,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
   /// SIGN OUT
   Future<void> signOut() async {
-    state = const AsyncLoading<User?>();
+    state = const AsyncLoading();
 
     try {
       await ref.read(firebaseAuthProvider).signOut();
@@ -163,18 +153,15 @@ class AuthNotifier extends AsyncNotifier<User?> {
       return;
     }
 
-    state = const AsyncLoading<User?>();
+    state = const AsyncLoading();
 
     try {
-      // Ensure token is fresh before storage operations
       await user.getIdToken(true);
 
-      // Sensitive update (may require re-auth)
       if (password != null && password.isNotEmpty) {
         await user.updatePassword(password);
       }
 
-      // Upload new image. We allow this to throw so the UI shows the error dialog.
       String? newPhotoURL;
       if (photoPath != null && photoPath.isNotEmpty) {
         newPhotoURL = await ImageFileService.uploadImage(
@@ -183,7 +170,6 @@ class AuthNotifier extends AsyncNotifier<User?> {
         );
       }
 
-      // Update Firebase profile
       if (displayName != null) {
         await user.updateDisplayName(displayName);
       }
@@ -191,7 +177,6 @@ class AuthNotifier extends AsyncNotifier<User?> {
         await user.updatePhotoURL(newPhotoURL);
       }
 
-      // Update Firestore profile
       await ref.read(userProfileNotifier.notifier).updateUserProfile(
             displayName: displayName,
             photoURL: newPhotoURL,
@@ -200,7 +185,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
           );
 
       await user.reload();
-      state = AsyncData(ref.read(firebaseAuthProvider).currentUser);
+      state = const AsyncData(null);
     } catch (e, st) {
       if (e is FirebaseAuthException && e.code == 'requires-recent-login') {
         debugPrint('Re-authentication required');
@@ -216,7 +201,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     final user = ref.read(firebaseAuthProvider).currentUser;
     if (user == null) return;
 
-    state = const AsyncLoading<User?>();
+    state = const AsyncLoading();
 
     try {
       await ref.read(userProfileNotifier.notifier).deleteUserProfile();
@@ -255,6 +240,6 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
 /// Global provider
 final authNotifier =
-    AsyncNotifierProvider<AuthNotifier, User?>(
+    AsyncNotifierProvider<AuthNotifier, void>(
   AuthNotifier.new,
 );

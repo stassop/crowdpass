@@ -107,12 +107,13 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     final argsUserId = ModalRoute.of(context)?.settings.arguments as String?;
 
     // Use SINGLE source of truth
-    final authState = ref.watch(authNotifier);
-    final currentAuthUser = authState.value;
+    final authAsync = ref.watch(authNotifier);
+    final currentAuthUser = ref.watch(authProvider).value;
+    final userProfileAsync = ref.watch(userProfileProvider(argsUserId));
 
-    final userAsync = ref.watch(userProfileProvider(argsUserId));
+    final isLoading = authAsync.isLoading || userProfileAsync.isLoading;
 
-    return userAsync.when(
+    return userProfileAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) => Scaffold(
@@ -124,8 +125,8 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
         ),
         body: Center(child: Text('Error loading profile: $err')),
       ),
-      data: (user) {
-        if (user == null) {
+      data: (userProfile) {
+        if (userProfile == null) {
           return Scaffold(
             appBar: AppBar(
               title: const Text('Not Found'),
@@ -137,22 +138,22 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
           );
         }
 
-        final isMe = currentAuthUser != null && currentAuthUser.uid == user.uid;
+        final isMe = currentAuthUser != null && currentAuthUser.uid == userProfile.uid;
 
         final hasChanged =
-            (_displayName != null && _displayName != user.displayName) ||
-            (_photoPath != null && _photoPath != user.photoURL) ||
-            (_phone != null && _phone != user.phone) ||
-            (_country != null && _country != user.country) ||
+            (_displayName != null && _displayName != userProfile.displayName) ||
+            (_photoPath != null && _photoPath != userProfile.photoURL) ||
+            (_phone != null && _phone != userProfile.phone) ||
+            (_country != null && _country != userProfile.country) ||
             (_password != null && _password!.isNotEmpty);
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(isMe ? 'My Profile' : '${user.displayName}\'s Profile'),
+            title: Text(isMe ? 'My Profile' : '${userProfile.displayName}\'s Profile'),
             actions: [
               if (isMe)
                 IconButton(
-                  onPressed: authState.isLoading
+                  onPressed: isLoading
                       ? null
                       : () {
                           if (_isEditing) {
@@ -163,7 +164,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                             setState(() => _isEditing = true);
                           }
                         },
-                  icon: authState.isLoading
+                  icon: isLoading
                       ? const SizedBox(
                           width: 20,
                           height: 20,
@@ -188,8 +189,8 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     Center(
                       child: UserAvatar.medium(
                         isEditable: isMe && _isEditing,
-                        photoURL: _photoPath ?? user.photoURL,
-                        displayName: _displayName ?? user.displayName,
+                        photoURL: _photoPath ?? userProfile.photoURL,
+                        displayName: _displayName ?? userProfile.displayName,
                         onNameChanged: (value) =>
                             setState(() => _displayName = value),
                         onPhotoChanged: (value) =>
@@ -198,20 +199,20 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     ),
                     const SizedBox(height: 16),
                     EditableEmailField(
-                      initialValue: user.email,
+                      initialValue: userProfile.email,
                       isEditable: false,
                       onChanged: (_) {},
                     ),
                     const SizedBox(height: 16),
                     EditableCountryField(
-                      initialValue: {user.country},
+                      initialValue: {userProfile.country},
                       isEditable: isMe && _isEditing,
                       onChanged: (value) =>
                           setState(() => _country = value.first),
                     ),
                     const SizedBox(height: 16),
                     EditablePhoneField(
-                      initialValue: user.phone,
+                      initialValue: userProfile.phone,
                       isEditable: isMe && _isEditing,
                       onChanged: (value) => setState(() => _phone = value),
                     ),
@@ -230,7 +231,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                       ElevatedButton.icon(
                         icon: const Icon(Icons.delete_forever),
                         label: const Text('Delete Account'),
-                        onPressed: authState.isLoading ? null : _deleteAccount,
+                        onPressed: isLoading ? null : _deleteAccount,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(context).colorScheme.error,
                           foregroundColor: Theme.of(

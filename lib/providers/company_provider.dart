@@ -6,10 +6,7 @@ import 'package:crowdpass/models/company.dart';
 import 'package:crowdpass/services/image_file_service.dart';
 
 /// 1. Data Stream Provider
-final companyProvider = StreamProvider.family<Company?, String>((
-  ref,
-  companyId,
-) {
+final companyProvider = StreamProvider.family<Company?, String>((ref, companyId) {
   if (companyId.isEmpty) return Stream.value(null);
 
   return ref
@@ -89,6 +86,34 @@ class CompanyAsyncNotifier extends AsyncNotifier<void> {
         }
 
         await docRef.update(company.copyWith(logoURL: finalLogoURL).toJson());
+      });
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteCompany(String companyId) async {
+    if (companyId.isEmpty) throw ArgumentError('Company ID is required.');
+
+    state = const AsyncLoading();
+    try {
+      state = await AsyncValue.guard(() async {
+        final user = await ref.read(authProvider.future);
+        final firestore = ref.read(firestoreProvider);
+        final docRef = firestore.collection('companies').doc(companyId);
+
+        final snapshot = await docRef.get();
+        if (!snapshot.exists) throw Exception('Company not found.');
+
+        final data = snapshot.data()!;
+        final company = Company.fromJson(data);
+
+        if (company.ownerId != user?.uid) {
+          throw Exception('Access Denied: You do not own this company.');
+        }
+
+        await docRef.delete();
       });
     } catch (e, st) {
       state = AsyncValue.error(e, st);

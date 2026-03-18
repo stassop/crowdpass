@@ -7,41 +7,37 @@ import 'package:crowdpass/models/user_profile.dart';
 import 'package:crowdpass/models/country.dart';
 
 /// Unified provider for fetching profile data.
-final userProfileProvider =
-    StreamProvider.family<UserProfile?, String?>((ref, userId) {
+final userProfileProvider = StreamProvider.family<UserProfile?, String?>((
+  ref,
+  userId,
+) {
   final firestore = ref.watch(firestoreProvider);
 
-  // Watch auth state from the SINGLE source of truth
-  final authState = ref.watch(authNotifier);
-
-  // Only rebuild when UID changes
-  final currentUserUid = authState.value?.uid;
+  // Watch auth state to get current UID for fallback when userId is not provided.
+  final authAsync = ref.watch(authNotifier);
+  final userAsync = ref.watch(authProvider);
 
   // Avoid emitting null during auth loading (prevents UI flicker)
-  if (authState.isLoading) {
+  if (authAsync.isLoading || userAsync.isLoading) {
     return const Stream.empty();
   }
 
-  final String? effectiveId =
-      (userId == null || userId.isEmpty) ? currentUserUid : userId;
+  final String? effectiveUserId = (userId == null || userId.isEmpty)
+      ? userAsync.value?.uid
+      : userId;
 
-  if (effectiveId == null) {
+  if (effectiveUserId == null) {
     return Stream.value(null);
   }
 
-  return firestore
-      .collection('users')
-      .doc(effectiveId)
-      .snapshots()
-      .map((snapshot) {
-        if (!snapshot.exists || snapshot.data() == null) return null;
+  return firestore.collection('users').doc(effectiveUserId).snapshots().map((
+    snapshot,
+  ) {
+    if (!snapshot.exists || snapshot.data() == null) return null;
 
-        final data = snapshot.data()!;
-        return UserProfile.fromJson({
-          ...data,
-          'uid': snapshot.id,
-        });
-      });
+    final data = snapshot.data()!;
+    return UserProfile.fromJson({...data, 'uid': snapshot.id});
+  });
 });
 
 class UserProfileNotifier extends AsyncNotifier<void> {
@@ -78,10 +74,11 @@ class UserProfileNotifier extends AsyncNotifier<void> {
         photoURL: photoURL,
       );
 
-      await ref.read(firestoreProvider).collection('users').doc(uid).set(
-            userProfile.toJson(),
-            SetOptions(merge: true),
-          );
+      await ref
+          .read(firestoreProvider)
+          .collection('users')
+          .doc(uid)
+          .set(userProfile.toJson(), SetOptions(merge: true));
 
       state = const AsyncData(null);
     } catch (e, st) {
@@ -132,11 +129,7 @@ class UserProfileNotifier extends AsyncNotifier<void> {
     try {
       final uid = _requireUserId();
 
-      await ref
-          .read(firestoreProvider)
-          .collection('users')
-          .doc(uid)
-          .delete();
+      await ref.read(firestoreProvider).collection('users').doc(uid).delete();
 
       state = const AsyncData(null);
     } catch (e, st) {
@@ -146,6 +139,6 @@ class UserProfileNotifier extends AsyncNotifier<void> {
   }
 }
 
-final userProfileNotifier =
-    AsyncNotifierProvider<UserProfileNotifier, void>(
-        UserProfileNotifier.new);
+final userProfileNotifier = AsyncNotifierProvider<UserProfileNotifier, void>(
+  UserProfileNotifier.new,
+);

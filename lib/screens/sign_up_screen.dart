@@ -40,6 +40,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       ),
     );
 
+    // Call the notifier. Errors are caught by the listener below.
     await ref.read(authNotifier.notifier).signUp(
           email: _email.trim(),
           password: _password.trim(),
@@ -48,41 +49,34 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           phone: _phone.trim(),
           country: _country,
         );
-    // Success/error handled by the listener in build.
   }
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authNotifier);
-    final isLoading = authState.isLoading;
+    final authActionState = ref.watch(authNotifier);
+    final isLoading = authActionState.isLoading;
 
     // Riverpod requires ref.listen to be called during build.
-    // We guard with _didSetupListener so this is only attached once.
     if (!_didSetupListener) {
       _didSetupListener = true;
 
-      ref.listen(authNotifier, (previous, next) {
+      // Listen to the ACTION state (success/error/loading)
+      ref.listen<AsyncValue<void>>(authNotifier, (previous, next) {
         next.whenOrNull(
-          data: (user) {
+          data: (_) {
             if (!mounted) return;
-            if (user != null) {
-              // Signup success: hide snackbar and go home.
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              Navigator.of(context).pushReplacementNamed('/home/');
-            }
-          },
-          error: (error, _) {
-            if (!mounted) return;
-
-            // Hide any loading snackbar then show error dialog.
+            // Action succeeded.
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            Navigator.of(context).pushReplacementNamed('/home/');
+          },
+          error: (error, stack) {
+            if (!mounted) return;
 
-            final message = error.toString();
-
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
             ErrorDialog.show(
               context,
               title: 'Sign Up Failed',
-              message: message,
+              message: error.toString(),
             );
           },
         );
