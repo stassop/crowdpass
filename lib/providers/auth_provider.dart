@@ -69,10 +69,18 @@ class AuthNotifier extends AsyncNotifier<User?> {
       await user.getIdToken(true);
 
       if (photoPath != null && photoPath.isNotEmpty) {
-        uploadedPhotoURL = await ImageFileService.uploadImage(
-          photoPath,
-          'users/${user.uid}/profile_photo',
-        );
+        try {
+          uploadedPhotoURL = await ImageFileService.uploadImage(
+            photoPath,
+            'users/${user.uid}/profile_photo',
+          );
+        } on ImageFileException catch (e, st) {
+          // Image upload failures are non-fatal: log and continue without a profile photo.
+          // Other exceptions (e.g., network errors not wrapped in ImageFileException) bubble
+          // to the outer catch and cause a full rollback.
+          debugPrint('signUp: non-fatal ImageFileException during upload, continuing without photo: $e\n$st');
+          uploadedPhotoURL = null;
+        }
       }
 
       await Future.wait([
@@ -111,7 +119,6 @@ class AuthNotifier extends AsyncNotifier<User?> {
       }
 
       state = AsyncError(_handleError(e), st);
-      rethrow;
     }
   }
 

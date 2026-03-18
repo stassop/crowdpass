@@ -28,7 +28,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   late Country _country;
   late String _displayName;
   String? _photoPath;
-  late final ProviderSubscription<AsyncValue<User?>> _authSub;
 
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
@@ -40,66 +39,40 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       ),
     );
 
-    try {
-      await ref
-          .read(authNotifier.notifier)
-          .signUp(
-            email: _email.trim(),
-            password: _password.trim(),
-            displayName: _displayName.trim(),
-            photoPath: _photoPath,
-            phone: _phone.trim(),
-            country: _country,
-          );
-    } catch (e) {
-      // Only show dialog if this widget is still mounted
-      if (mounted) {
-        ErrorDialog.show(
-          context,
-          title: 'Sign Up Failed',
-          message: e.toString(),
+    await ref.read(authNotifier.notifier).signUp(
+          email: _email.trim(),
+          password: _password.trim(),
+          displayName: _displayName.trim(),
+          photoPath: _photoPath,
+          phone: _phone.trim(),
+          country: _country,
         );
-      } else {
-        debugPrint('SignUp failed but widget unmounted: $e');
-      }
-    } finally {
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      }
-    }
   }
 
   @override
   void initState() {
     super.initState();
 
-    _authSub = ref.listenManual<AsyncValue<User?>>(
-      authNotifier,
-      (previous, next) {
-        next.whenOrNull(
-          data: (user) {
-            if (user != null && mounted) {
-              Navigator.of(context).pushReplacementNamed('/home/');
-            }
-          },
-          error: (error, _) {
-            if (mounted) {
-              ErrorDialog.show(
-                context,
-                title: 'Authentication Error',
-                message: error.toString(),
-              );
-            }
-          },
-        );
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _authSub.close();
-    super.dispose();
+    ref.listen<AsyncValue<User?>>(authNotifier, (previous, next) {
+      next.whenOrNull(
+        data: (user) {
+          if (user != null && mounted) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            Navigator.of(context).pushReplacementNamed('/home/');
+          }
+        },
+        error: (error, _) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ErrorDialog.show(
+              context,
+              title: 'Sign Up Failed',
+              message: error.toString(),
+            );
+          }
+        },
+      );
+    });
   }
 
   @override
