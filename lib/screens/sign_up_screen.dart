@@ -70,6 +70,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         error: (error, _) {
           // Optional: only handle if you REMOVE try/catch in _signUp
           // Otherwise this can double-fire
+          ErrorDialog.show(context, title: 'Sign Up Failed', message: error.toString());
         },
       );
     });
