@@ -63,22 +63,29 @@ class AuthNotifier extends AsyncNotifier<User?> {
       final user = credential.user;
       if (user == null) throw Exception('User creation failed.');
 
-      /// IMPORTANT: Force token refresh to ensure new user has valid token for storage operations
+      /// IMPORTANT: Force token refresh to ensure new user has valid token for storage operations.
       /// This is a known Firebase quirk where the token may not reflect the new user's permissions immediately after sign-up.
-      /// Without this, the subsequent image upload may fail with a permissions error.
       await user.getIdToken(true);
 
+      // Try to upload the image. If it fails with ImageFileException,
+      // treat it as non-fatal and continue signup without a photo.
       if (photoPath != null && photoPath.isNotEmpty) {
-        uploadedPhotoURL = await ImageFileService.uploadImage(
-          photoPath,
-          'users/${user.uid}/profile_photo',
-        );
+        try {
+          uploadedPhotoURL = await ImageFileService.uploadImage(
+            photoPath,
+            'users/${user.uid}/profile_photo',
+          );
+        } on ImageFileException catch (e, st) {
+          debugPrint(
+            'signUp: non-fatal ImageFileException during upload, continuing without photo: $e\n$st',
+          );
+          uploadedPhotoURL = null;
+        }
       }
 
       await Future.wait([
         user.updateDisplayName(displayName),
-        if (uploadedPhotoURL != null)
-          user.updatePhotoURL(uploadedPhotoURL),
+        if (uploadedPhotoURL != null) user.updatePhotoURL(uploadedPhotoURL),
       ]);
 
       // Optional: Email verification
@@ -98,7 +105,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     } catch (e, st) {
       debugPrint('signUp error: $e\n$st');
 
-      // Rollback: delete uploaded image
+      // Rollback: delete uploaded image (if you later add deleteImage)
       if (uploadedPhotoURL != null) {
         try {
           // await ImageFileService.deleteImage(uploadedPhotoURL);
@@ -111,7 +118,9 @@ class AuthNotifier extends AsyncNotifier<User?> {
       }
 
       state = AsyncError(_handleError(e), st);
-      rethrow;
+
+      // Do NOT rethrow; UI listens to AsyncError via authNotifier.
+      // rethrow;
     }
   }
 
@@ -201,8 +210,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
       await user.reload();
       state = AsyncData(ref.read(firebaseAuthProvider).currentUser);
     } catch (e, st) {
-      if (e is FirebaseAuthException &&
-          e.code == 'requires-recent-login') {
+      if (e is FirebaseAuthException && e.code == 'requires-recent-login') {
         // Hook for UI to trigger re-authentication flow
         debugPrint('Re-authentication required');
       }
@@ -225,8 +233,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
 
       state = const AsyncData(null);
     } catch (e, st) {
-      if (e is FirebaseAuthException &&
-          e.code == 'requires-recent-login') {
+      if (e is FirebaseAuthException && e.code == 'requires-recent-login') {
         debugPrint('Re-authentication required before deletion');
       }
 

@@ -109,7 +109,7 @@ class ImageFileService {
       return await action();
     } on FirebaseException catch (e) {
       if (e.code == 'unauthorized') {
-        await Future.delayed(const Duration(milliseconds: 300));
+        await Future.delayed(const Duration(milliseconds: 1000));
         return await action();
       }
       rethrow;
