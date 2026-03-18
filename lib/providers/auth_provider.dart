@@ -67,7 +67,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
       /// This is a known Firebase quirk where the token may not reflect the new user's permissions immediately after sign-up.
       await user.getIdToken(true);
 
-      // Upload image. We allow this to throw (no try-catch) so the UI shows the error dialog.
+      // Upload image. We allow this to throw so the UI shows the error dialog if upload fails.
       if (photoPath != null && photoPath.isNotEmpty) {
         uploadedPhotoURL = await ImageFileService.uploadImage(
           photoPath,
@@ -110,9 +110,6 @@ class AuthNotifier extends AsyncNotifier<User?> {
       }
 
       state = AsyncError(_handleError(e), st);
-
-      // Do NOT rethrow; UI listens to AsyncError via authNotifier.
-      // rethrow;
     }
   }
 
@@ -169,7 +166,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
     state = const AsyncLoading<User?>();
 
     try {
-      // Ensure token is fresh before storage operations, just like in signUp
+      // Ensure token is fresh before storage operations
       await user.getIdToken(true);
 
       // Sensitive update (may require re-auth)
@@ -206,7 +203,6 @@ class AuthNotifier extends AsyncNotifier<User?> {
       state = AsyncData(ref.read(firebaseAuthProvider).currentUser);
     } catch (e, st) {
       if (e is FirebaseAuthException && e.code == 'requires-recent-login') {
-        // Hook for UI to trigger re-authentication flow
         debugPrint('Re-authentication required');
       }
 

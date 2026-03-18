@@ -57,8 +57,11 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
     _text = sorted.isEmpty
         ? null
         : sorted
-            .map((option) => widget.getOptionLabel?.call(option) ?? option.toString())
-            .join(', ');
+              .map(
+                (option) =>
+                    widget.getOptionLabel?.call(option) ?? option.toString(),
+              )
+              .join(', ');
   }
 
   void _onChanged(T option, bool isSelected) {
@@ -66,7 +69,9 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
       if (!widget.isMultiple) {
         _selectedOptions = isSelected ? {option} : {};
       } else {
-        isSelected ? _selectedOptions.add(option) : _selectedOptions.remove(option);
+        isSelected
+            ? _selectedOptions.add(option)
+            : _selectedOptions.remove(option);
       }
       _isChanged = !_setEquals(_selectedOptions, widget.initialValue ?? {});
       _updateText();
@@ -91,7 +96,9 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
                   padding: EdgeInsets.zero,
                   children: widget.categorizedOptions != null
                       ? widget.categorizedOptions!.entries.expand((entry) {
-                          final label = widget.getCategoryLabel?.call(entry.key) ?? entry.key.toString();
+                          final label =
+                              widget.getCategoryLabel?.call(entry.key) ??
+                              entry.key.toString();
                           final leading = widget.getCategoryIcon != null
                               ? widget.getCategoryIcon!(entry.key)
                               : null;
@@ -105,10 +112,18 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
                               dense: true,
                               enabled: false,
                             ),
-                            ...entry.value.map((option) => _buildOptionTile(option, setDialogState)),
+                            ...entry.value.map(
+                              (option) =>
+                                  _buildOptionTile(option, setDialogState),
+                            ),
                           ];
                         }).toList()
-                      : widget.options!.map((option) => _buildOptionTile(option, setDialogState)).toList(),
+                      : widget.options!
+                            .map(
+                              (option) =>
+                                  _buildOptionTile(option, setDialogState),
+                            )
+                            .toList(),
                 ),
               ),
               Padding(
@@ -118,7 +133,8 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
                   children: [
                     TextButton.icon(
                       onPressed: () {
-                        if (_isChanged) widget.onChanged?.call(_selectedOptions);
+                        if (_isChanged)
+                          widget.onChanged?.call(_selectedOptions);
                         Navigator.of(context).pop();
                       },
                       icon: Icon(_isChanged ? Icons.check : Icons.close),
@@ -134,7 +150,10 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
     );
   }
 
-  Widget _buildOptionTile(T option, void Function(void Function()) setDialogState) {
+  Widget _buildOptionTile(
+    T option,
+    void Function(void Function()) setDialogState,
+  ) {
     final label = widget.getOptionLabel?.call(option) ?? option.toString();
     final icon = widget.getOptionIcon?.call(option);
 
@@ -150,7 +169,9 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
           )
         : RadioListTile<T>(
             value: option,
-            groupValue: _selectedOptions.isNotEmpty ? _selectedOptions.first : null,
+            groupValue: _selectedOptions.isNotEmpty
+                ? _selectedOptions.first
+                : null,
             title: Text(label),
             secondary: icon,
             onChanged: (T? selected) {
@@ -163,7 +184,9 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
   @override
   void initState() {
     super.initState();
-    final allOptions = widget.options ?? widget.categorizedOptions!.values.expand((s) => s).toSet();
+    final allOptions =
+        widget.options ??
+        widget.categorizedOptions!.values.expand((s) => s).toSet();
     _selectedOptions = allOptions
         .where((option) => widget.initialValue?.contains(option) ?? false)
         .toSet();
@@ -181,14 +204,22 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
   void didUpdateWidget(covariant EditableListField<T, C> oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final newOptions = widget.options ?? widget.categorizedOptions!.values.expand((s) => s).toSet();
-    final oldOptions = oldWidget.options ?? oldWidget.categorizedOptions?.values.expand((s) => s).toSet() ?? {};
+    final newOptions =
+        widget.options ??
+        widget.categorizedOptions!.values.expand((s) => s).toSet();
+    final oldOptions =
+        oldWidget.options ??
+        oldWidget.categorizedOptions?.values.expand((s) => s).toSet() ??
+        {};
 
     final newSelected = widget.initialValue ?? {};
     final oldSelected = oldWidget.initialValue ?? {};
 
-    if (!_setEquals(newOptions, oldOptions) || !_setEquals(newSelected, oldSelected)) {
-      _selectedOptions = newOptions.where((o) => newSelected.contains(o)).toSet();
+    if (!_setEquals(newOptions, oldOptions) ||
+        !_setEquals(newSelected, oldSelected)) {
+      _selectedOptions = newOptions
+          .where((o) => newSelected.contains(o))
+          .toSet();
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -200,7 +231,8 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
     }
   }
 
-  bool _setEquals(Set<T> a, Set<T> b) => a.length == b.length && a.containsAll(b);
+  bool _setEquals(Set<T> a, Set<T> b) =>
+      a.length == b.length && a.containsAll(b);
 
   @override
   Widget build(BuildContext context) {
@@ -212,7 +244,9 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
       onTap: widget.isEditable ? _showListDialog : null,
       textStyle: widget.textStyle,
       decoration: (widget.decoration ?? const InputDecoration()).copyWith(
-        suffixIcon: const Icon(Icons.arrow_drop_down),
+        suffixIcon: widget.isEditable
+            ? const Icon(Icons.arrow_drop_down)
+            : null,
       ),
       validator: (_) => widget.validator?.call(_selectedOptions),
     );
