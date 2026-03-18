@@ -103,7 +103,7 @@ class _DateRangeFieldState extends State<EditableDateRangeField> {
       textStyle: widget.textStyle,
       isEditable: widget.isEditable,
       decoration: (widget.decoration ?? const InputDecoration()).copyWith(
-        labelText: widget.decoration?.labelText ?? 'Date Range',
+        labelText: widget.decoration?.labelText ?? 'Dates',
         prefixIcon: const Icon(Icons.date_range),
       ),
       onTap: widget.isEditable ? _showDateTimeRangePicker : null,

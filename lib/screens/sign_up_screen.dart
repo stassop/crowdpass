@@ -109,31 +109,41 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           : null,
                     ),
                   ),
+
                   const SizedBox(height: 16),
+                  
                   EditableEmailField(
                     isEditable: true,
                     isRequired: true,
                     onChanged: (value) => _email = value.trim(),
                   ),
+
                   const SizedBox(height: 16),
+
                   EditablePasswordField(
                     isRequired: true,
                     onChanged: (value) => _password = value.trim(),
                   ),
+
                   const SizedBox(height: 16),
+
                   EditableCountryField(
                     isEditable: true,
                     onChanged: (value) => _country = value.first,
                     validator: (value) =>
                         (value.isEmpty) ? 'Select country' : null,
                   ),
+
                   const SizedBox(height: 16),
+
                   EditablePhoneField(
                     isEditable: true,
                     isRequired: true,
                     onChanged: (value) => _phone = value.trim(),
                   ),
+
                   const SizedBox(height: 32),
+
                   ElevatedButton(
                     onPressed: isLoading ? null : _signUp,
                     child: const Text('Create Account'),

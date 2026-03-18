@@ -81,6 +81,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       isRequired: true, 
                       onChanged: (value) => _email = value,
                     ),
+                    
                     const SizedBox(height: 16),
 
                     EditablePasswordField(

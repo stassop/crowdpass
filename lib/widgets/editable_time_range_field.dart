@@ -145,7 +145,7 @@ class _EditableTimeRangeFieldState
       textStyle: widget.textStyle,
       isEditable: widget.isEditable,
       decoration: (widget.decoration ?? const InputDecoration()).copyWith(
-        labelText: widget.decoration?.labelText ?? 'Time Range',
+        labelText: widget.decoration?.labelText ?? 'Times',
         prefixIcon: const Icon(Icons.access_time),
       ),
       onTap: widget.isEditable ? _showTimeRangePicker : null,

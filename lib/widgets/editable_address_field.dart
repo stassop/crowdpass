@@ -8,13 +8,13 @@ import 'package:crowdpass/widgets/error_dialog.dart';
 class EditableAddressField extends StatefulWidget {
   const EditableAddressField({
     super.key,
-    this.isEditable,
+    this.isEditable = false,
     this.location,
     this.onLocationChanged,
     this.validator,
   });
 
-  final bool? isEditable;
+  final bool isEditable;
   final Location? location;
   final Function(Location? location)? onLocationChanged;
   final String? Function(Location? value)? validator;

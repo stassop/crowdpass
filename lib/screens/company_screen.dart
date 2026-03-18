@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:crowdpass/models/company.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/company_provider.dart';
-import 'package:crowdpass/widgets/editable_list_field.dart';
-import 'package:crowdpass/widgets/editable_address_field.dart';
-import 'package:crowdpass/widgets/editable_phone_field.dart';
+
 import 'package:crowdpass/widgets/editable_text_field.dart';
 import 'package:crowdpass/widgets/editable_website_field.dart';
 import 'package:crowdpass/widgets/error_dialog.dart';
 import 'package:crowdpass/widgets/user_avatar.dart';
+import 'package:crowdpass/widgets/editable_address_field.dart';
+import 'package:crowdpass/widgets/editable_list_field.dart';
+import 'package:crowdpass/widgets/editable_phone_field.dart';
 
 class CompanyScreen extends ConsumerStatefulWidget {
   const CompanyScreen({super.key});
@@ -26,7 +28,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
 
   // Initialize the local copy only if it's currently null to prevent overwriting user typing
   void _initCopy(Company? original) {
-    _companyCopy ??= original ?? const Company(name: '', phone: '');
+    _companyCopy ??= original ?? const Company();
   }
 
   Future<void> _saveOrCreate(String? existingId) async {
@@ -78,7 +80,9 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
         if (user == null) return _buildAuthPlaceholder();
 
         final argsId = ModalRoute.of(context)?.settings.arguments as String?;
-        final companyAsync = ref.watch(companyProvider(argsId ?? ''));
+        // Now passing argsId (which can be null) directly.
+        // If null, the provider fetches the current user's company.
+        final companyAsync = ref.watch(companyProvider(argsId));
 
         return companyAsync.when(
           loading: () =>
@@ -183,6 +187,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
 
                         EditableAddressField(
                           location: _companyCopy?.address,
+                          isEditable: _isEditing,
                           onLocationChanged: (value) => setState(
                             () => _companyCopy = _companyCopy?.copyWith(
                               address: value,

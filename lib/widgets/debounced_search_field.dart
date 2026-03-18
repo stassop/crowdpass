@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:crowdpass/widgets/editable_text_field.dart';
+
 typedef _Debounceable<S, T> = Future<S?> Function(T parameter);
 
 _Debounceable<S, T> _debounce<S, T>(
@@ -66,7 +68,7 @@ class DebouncedSearchField<T> extends StatefulWidget {
   final Widget Function(BuildContext context, T result) tileBuilder;
   final T? initialValue;
   final InputDecoration? decoration;
-  final bool? isEditable;
+  final bool isEditable;
   final String? Function(T? value)? validator;
   final String? hintText;
 
@@ -154,27 +156,21 @@ class _DebouncedSearchFieldState<T> extends State<DebouncedSearchField<T>> {
       initialValue: widget.initialValue,
       validator: widget.validator,
       builder: (FormFieldState<T> field) {
-        // Logic: Decide which label to use to avoid the "Both label and labelText" error.
-        final userDecoration = widget.decoration ?? const InputDecoration();
-        final bool hasAnyLabel = userDecoration.label != null || userDecoration.labelText != null;
-
         return SearchAnchor(
           searchController: _searchController,
           builder: (BuildContext context, SearchController controller) {
-            return TextField(
+            return EditableTextField(
               controller: controller,
-              readOnly: !(widget.isEditable ?? false),
+              isEditable: widget.isEditable,
               onTap: controller.openView,
               onChanged: (value) {
                 if (!controller.isOpen) controller.openView();
                 if (value.isEmpty) _handleSelection(null, field);
               },
-              decoration: userDecoration.copyWith(
-                hintText: widget.hintText,
+              decoration: (widget.decoration ?? const InputDecoration()).copyWith(
                 errorText: field.errorText,
-                // Only provide a default label if the user didn't provide label OR labelText
-                label: hasAnyLabel ? userDecoration.label : const Text('Search'),
-                prefixIcon: userDecoration.prefixIcon ?? const Icon(Icons.search),
+                labelText: widget.decoration?.labelText ?? 'Search',
+                prefixIcon: widget.decoration?.prefixIcon ?? const Icon(Icons.search),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),

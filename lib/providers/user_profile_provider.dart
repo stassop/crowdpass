@@ -41,7 +41,7 @@ final userProfileProvider = StreamProvider.family<UserProfile?, String?>((
 
 class UserProfileNotifier extends AsyncNotifier<void> {
   @override
-  Future<void> build() async => null;
+  Future<void> build() async {}
 
   /// Get current UID safely from provider
   String _requireUserId() {

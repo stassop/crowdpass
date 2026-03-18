@@ -2,22 +2,43 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/firestore_provider.dart';
 import 'package:crowdpass/models/company.dart';
-
 import 'package:crowdpass/services/image_file_service.dart';
 
 /// 1. Data Stream Provider
-final companyProvider = StreamProvider.family<Company?, String>((ref, companyId) {
-  if (companyId.isEmpty) return Stream.value(null);
+/// Returns a Company.
+/// - If [companyId] is provided, fetches that specific company.
+/// - If [companyId] is null/empty, fetches the company owned by the current user.
+final companyProvider = StreamProvider.family<Company?, String?>((ref, companyId) {
+  final user = ref.watch(authProvider).value;
+  final firestore = ref.watch(firestoreProvider);
 
-  return ref
-      .watch(firestoreProvider)
-      .collection('companies')
-      .doc(companyId)
-      .snapshots()
-      .map((snapshot) {
-        if (!snapshot.exists || snapshot.data() == null) return null;
-        return Company.fromJson(snapshot.data()!).copyWith(id: snapshot.id);
-      });
+  // If a specific Company ID is provided, fetch that company
+  if (companyId != null && companyId.isNotEmpty) {
+    return firestore
+        .collection('companies')
+        .doc(companyId)
+        .snapshots()
+        .map((snapshot) {
+      if (!snapshot.exists || snapshot.data() == null) return null;
+      return Company.fromJson(snapshot.data()!).copyWith(id: snapshot.id);
+    });
+  }
+
+  // If no Company ID provided, look for a company owned by the current user
+  if (user != null) {
+    return firestore
+        .collection('companies')
+        .where('ownerId', isEqualTo: user.uid)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isEmpty) return null;
+      final doc = snapshot.docs.first;
+      return Company.fromJson(doc.data()).copyWith(id: doc.id);
+    });
+  }
+
+  return Stream.value(null);
 });
 
 /// 2. Company Action Notifier
@@ -33,6 +54,11 @@ class CompanyAsyncNotifier extends AsyncNotifier<void> {
         if (user == null) throw Exception('Authenticated user not found.');
 
         final firestore = ref.read(firestoreProvider);
+
+        // Check if user already has a company
+        final existingCompany = await ref.read(companyProvider(null).future);
+        if (existingCompany != null) throw Exception('User already has a company.');
+
         final docRef = firestore.collection('companies').doc();
 
         String? uploadedLogoURL;
@@ -122,6 +148,6 @@ class CompanyAsyncNotifier extends AsyncNotifier<void> {
   }
 }
 
-final companyNotifier = AsyncNotifierProvider<CompanyAsyncNotifier, void>(
-  CompanyAsyncNotifier.new,
-);
+final companyNotifier = AsyncNotifierProvider<CompanyAsyncNotifier, void>(() {
+  return CompanyAsyncNotifier();
+});

@@ -115,6 +115,7 @@ enum EventType {
 @immutable
 class Event implements Comparable<Event> {
   final String? createdBy;
+  final String? companyId;
   final DateTimeRange? dates;
   final String? description;
   final String? id;
@@ -131,18 +132,16 @@ class Event implements Comparable<Event> {
   final bool? isOutdoor;
   final bool? isPetFriendly;
   final bool? isWheelchairAccessible;
-  final String? imageUrl;
+  final String? imageURL;
 
   const Event({
+    this.admissionStart,
     this.createdBy,
+    this.companyId,
     this.dates,
     this.description,
     this.id,
-    this.location,
-    this.title,
-    this.type,
-    this.times,
-    this.admissionStart,
+    this.imageURL,
     this.isEpilepsyFriendly,
     this.isFamilyFriendly,
     this.isFree,
@@ -151,11 +150,15 @@ class Event implements Comparable<Event> {
     this.isOutdoor,
     this.isPetFriendly,
     this.isWheelchairAccessible,
-    this.imageUrl,
+    this.location,
+    this.times,
+    this.title,
+    this.type,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) => Event(
         createdBy: json['createdBy'] as String?,
+        companyId: json['companyId'] as String?,
         dates: json['dates'] != null && json['dates']['start'] != null && json['dates']['end'] != null
             ? DateTimeRange(
                 start: DateTime.tryParse(json['dates']['start']) ?? DateTime.now(),
@@ -177,11 +180,12 @@ class Event implements Comparable<Event> {
         isOutdoor: json['isOutdoor'] as bool?,
         isPetFriendly: json['isPetFriendly'] as bool?,
         isWheelchairAccessible: json['isWheelchairAccessible'] as bool?,
-        imageUrl: json['imageUrl'] as String?,
+        imageURL: json['imageURL'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
         if (createdBy != null) 'createdBy': createdBy,
+        if (companyId != null) 'companyId': companyId,
         if (dates != null)
           'dates': {
             'start': dates!.start.toIso8601String(),
@@ -202,11 +206,12 @@ class Event implements Comparable<Event> {
         if (isOutdoor != null) 'isOutdoor': isOutdoor,
         if (isPetFriendly != null) 'isPetFriendly': isPetFriendly,
         if (isWheelchairAccessible != null) 'isWheelchairAccessible': isWheelchairAccessible,
-        if (imageUrl != null) 'imageUrl': imageUrl,
+        if (imageURL != null) 'imageURL': imageURL,
       };
 
   Event copyWith({
     String? createdBy,
+    String? companyId,
     DateTimeRange? dates,
     String? description,
     String? id,
@@ -219,7 +224,7 @@ class Event implements Comparable<Event> {
     bool? isOutdoor,
     bool? isPetFriendly,
     bool? isWheelchairAccessible,
-    String? imageUrl,
+    String? imageURL,
     Location? location,
     String? title,
     EventType? type,
@@ -227,6 +232,7 @@ class Event implements Comparable<Event> {
   }) {
     return Event(
       createdBy: createdBy ?? this.createdBy,
+      companyId: companyId ?? this.companyId,
       id: id ?? this.id,
       location: location ?? this.location,
       title: title ?? this.title,
@@ -243,7 +249,7 @@ class Event implements Comparable<Event> {
       isOutdoor: isOutdoor ?? this.isOutdoor,
       isPetFriendly: isPetFriendly ?? this.isPetFriendly,
       isWheelchairAccessible: isWheelchairAccessible ?? this.isWheelchairAccessible,
-      imageUrl: imageUrl ?? this.imageUrl,
+      imageURL: imageURL ?? this.imageURL,
     );
   }
 
@@ -252,10 +258,11 @@ class Event implements Comparable<Event> {
         identical(this, other) ||
         other is Event &&
           createdBy == other.createdBy &&
+          companyId == other.companyId &&
           dates == other.dates &&
           description == other.description &&
           id == other.id &&
-          imageUrl == other.imageUrl &&
+          imageURL == other.imageURL &&
           admissionStart == other.admissionStart &&
           isEpilepsyFriendly == other.isEpilepsyFriendly &&
           isFamilyFriendly == other.isFamilyFriendly &&
@@ -273,10 +280,11 @@ class Event implements Comparable<Event> {
   @override
   int get hashCode => Object.hash(
         createdBy,
+        companyId,
         dates,
         description,
         id,
-        imageUrl,
+        imageURL,
         admissionStart,
         isEpilepsyFriendly,
         isFamilyFriendly,

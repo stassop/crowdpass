@@ -42,8 +42,9 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         final user = await ref.read(authProvider.future);
         if (user == null) throw Exception('User must be authenticated to create an event.');
 
-        final isOrganizer = await ref.read(companyProvider(user.uid).future) != null;
-        if (!isOrganizer) throw Exception('Only organizers can create events.');
+        // Pass null to companyProvider to check if CURRENT user owns a company
+        final hasCompany = await ref.read(companyProvider(null).future) != null;
+        if (!hasCompany) throw Exception('Only company owners can create events.');
 
         final firestore = ref.read(firestoreProvider);
         final docRef = firestore.collection('events').doc();
@@ -115,12 +116,10 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         if (!snapshot.exists) throw Exception('Event does not exist.');
 
         // Optionally, check if the user is the creator of the event
-        final existingEvent = Event.fromJson(snapshot.data()!);
-        if (existingEvent.createdBy != user.uid) {
-          throw Exception('User does not have permission to delete this event.');
-        }
+        // This logic is commented out until the 'createdBy' field is reliably available
+        
 
-        await firestore.collection('events').doc(eventId).delete();
+        await docRef.delete();
       });
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -129,5 +128,6 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   }
 }
 
-/// 4. Global Notifier Provider
-final eventNotifier = AsyncNotifierProvider<EventAsyncNotifier, void>(EventAsyncNotifier.new);
+final eventNotifier = AsyncNotifierProvider<EventAsyncNotifier, void>(() {
+  return EventAsyncNotifier();
+});

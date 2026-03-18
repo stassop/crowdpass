@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/event.dart';
+
 import 'package:crowdpass/providers/auth_provider.dart';
-import 'package:crowdpass/providers/company_provider.dart';
 import 'package:crowdpass/providers/event_provider.dart';
+import 'package:crowdpass/providers/company_provider.dart';
 
 import 'package:crowdpass/widgets/editable_text_field.dart';
-import 'package:crowdpass/widgets/editable_date_range_field.dart';
-import 'package:crowdpass/widgets/editable_time_range_field.dart';
 import 'package:crowdpass/widgets/editable_address_field.dart';
 import 'package:crowdpass/widgets/editable_event_type_field.dart';
+import 'package:crowdpass/widgets/editable_date_range_field.dart';
+import 'package:crowdpass/widgets/editable_time_range_field.dart';
 import 'package:crowdpass/widgets/error_dialog.dart';
 
 class EventScreen extends ConsumerStatefulWidget {
@@ -44,7 +45,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     }
   }
 
-  Future<void> _handleSave() async {
+  Future<void> _createOrUpdate() async {
     if (!_formKey.currentState!.validate() || _eventCopy == null) return;
 
     try {
@@ -94,8 +95,9 @@ class _EventScreenState extends ConsumerState<EventScreen> {
           );
         }
 
-        final isOrganizer =
-            ref.watch(companyProvider(user.uid)).value != null;
+        // Check if the current user has a company (is an organizer).
+        // Passing null tells the provider to check the current user's ownership.
+        final isOrganizer = ref.watch(companyProvider(null)).value != null;
 
         return eventAsync.when(
           loading: () =>
@@ -125,7 +127,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                       icon: Icon(_isEditing ? Icons.check : Icons.edit),
                       onPressed: () {
                         if (_isEditing) {
-                          _handleSave();
+                          _createOrUpdate();
                         } else {
                           setState(() => _isEditing = true);
                         }
@@ -189,8 +191,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                       EditableAddressField(
                         location: _eventCopy?.location,
                         isEditable: _isEditing,
-                        onLocationChanged: (location) =>
-                            _eventCopy = _eventCopy?.copyWith(location: location),
+                        onLocationChanged: (location) => _eventCopy = _eventCopy
+                            ?.copyWith(location: location),
                         validator: (location) =>
                             location == null ? 'Location required' : null,
                       ),
@@ -221,7 +223,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
                       if (isCreating)
                         ElevatedButton(
-                          onPressed: _isEditing ? _handleSave : null,
+                          onPressed: _isEditing ? _createOrUpdate : null,
                           child: const Text('Create Event'),
                         ),
                     ],
