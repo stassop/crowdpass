@@ -67,20 +67,12 @@ class AuthNotifier extends AsyncNotifier<User?> {
       /// This is a known Firebase quirk where the token may not reflect the new user's permissions immediately after sign-up.
       await user.getIdToken(true);
 
-      // Try to upload the image. If it fails with ImageFileException,
-      // treat it as non-fatal and continue signup without a photo.
+      // Upload image. We allow this to throw (no try-catch) so the UI shows the error dialog.
       if (photoPath != null && photoPath.isNotEmpty) {
-        try {
-          uploadedPhotoURL = await ImageFileService.uploadImage(
-            photoPath,
-            'users/${user.uid}/profile_photo',
-          );
-        } on ImageFileException catch (e, st) {
-          debugPrint(
-            'signUp: non-fatal ImageFileException during upload, continuing without photo: $e\n$st',
-          );
-          uploadedPhotoURL = null;
-        }
+        uploadedPhotoURL = await ImageFileService.uploadImage(
+          photoPath,
+          'users/${user.uid}/profile_photo',
+        );
       }
 
       await Future.wait([
@@ -185,20 +177,13 @@ class AuthNotifier extends AsyncNotifier<User?> {
         await user.updatePassword(password);
       }
 
-      // Upload new image (non-fatal on ImageFileException)
+      // Upload new image. We allow this to throw so the UI shows the error dialog.
       String? newPhotoURL;
       if (photoPath != null && photoPath.isNotEmpty) {
-        try {
-          newPhotoURL = await ImageFileService.uploadImage(
-            photoPath,
-            'users/${user.uid}/profile_photo',
-          );
-        } on ImageFileException catch (e, st) {
-          debugPrint(
-            'updateUser: non-fatal ImageFileException during upload, continuing without new photo: $e\n$st',
-          );
-          newPhotoURL = null;
-        }
+        newPhotoURL = await ImageFileService.uploadImage(
+          photoPath,
+          'users/${user.uid}/profile_photo',
+        );
       }
 
       // Update Firebase profile
