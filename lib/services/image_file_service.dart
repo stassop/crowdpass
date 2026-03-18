@@ -102,6 +102,21 @@ class ImageFileService {
     }
   }
 
+  static Future<void> deleteImage(String url) async {
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp();
+      }
+
+      final refStorage = FirebaseStorage.instance.refFromURL(url);
+      await refStorage.delete();
+    } on FirebaseException catch (e) {
+      throw ImageFileException(_handleError(e), path: url);
+    } catch (e) {
+      throw ImageFileException('An unexpected error occurred during deletion: $e', path: url);
+    }
+  }
+
   /// Retries an asynchronous action if it fails due to an unauthorized error.
   /// Useful for handling transient auth issues during uploads.
   static Future<T> _retryOnUnauthorized<T>(Future<T> Function() action) async {

@@ -108,7 +108,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
       // Rollback: delete uploaded image (if you later add deleteImage)
       if (uploadedPhotoURL != null) {
         try {
-          // await ImageFileService.deleteImage(uploadedPhotoURL);
+          await ImageFileService.deleteImage(uploadedPhotoURL);
         } catch (_) {}
       }
 
@@ -177,18 +177,28 @@ class AuthNotifier extends AsyncNotifier<User?> {
     state = const AsyncLoading<User?>();
 
     try {
+      // Ensure token is fresh before storage operations, just like in signUp
+      await user.getIdToken(true);
+
       // Sensitive update (may require re-auth)
       if (password != null && password.isNotEmpty) {
         await user.updatePassword(password);
       }
 
-      // Upload new image
+      // Upload new image (non-fatal on ImageFileException)
       String? newPhotoURL;
       if (photoPath != null && photoPath.isNotEmpty) {
-        newPhotoURL = await ImageFileService.uploadImage(
-          photoPath,
-          'users/${user.uid}/profile_photo',
-        );
+        try {
+          newPhotoURL = await ImageFileService.uploadImage(
+            photoPath,
+            'users/${user.uid}/profile_photo',
+          );
+        } on ImageFileException catch (e, st) {
+          debugPrint(
+            'updateUser: non-fatal ImageFileException during upload, continuing without new photo: $e\n$st',
+          );
+          newPhotoURL = null;
+        }
       }
 
       // Update Firebase profile
@@ -199,7 +209,7 @@ class AuthNotifier extends AsyncNotifier<User?> {
         await user.updatePhotoURL(newPhotoURL);
       }
 
-      // Update Firestore
+      // Update Firestore profile
       await ref.read(userProfileNotifier.notifier).updateUserProfile(
             displayName: displayName,
             photoURL: newPhotoURL,
