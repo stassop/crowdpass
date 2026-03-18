@@ -29,29 +29,22 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       ),
     );
 
-    try {
-      await ref
-          .read(authNotifier.notifier)
-          .signIn(email: _email!.trim(), password: _password!.trim());
-    } catch (e) {
-      ErrorDialog.show(context, title: 'Sign In Failed', message: e.toString());
-    } finally {
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      }
-    }
+    await ref
+        .read(authNotifier.notifier)
+        .signIn(email: _email!.trim(), password: _password!.trim());
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch the auth state to react to loading/data changes
-    final userAsync = ref.watch(authProvider);
-    final authAsync = ref.watch(authNotifier);
+    // Watch the action state to react to loading/error/success changes
+    final authActionState = ref.watch(authNotifier);
 
     // Listen for errors or successful login to trigger side effects
     ref.listen<AsyncValue<void>>(authNotifier, (previous, next) {
       next.whenOrNull(
         error: (error, stackTrace) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ErrorDialog.show(
             context,
             title: 'Failed to Sign In',
@@ -59,12 +52,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           );
         },
         data: (state) {
-          Navigator.of(context).pushReplacementNamed('/home');
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          Navigator.of(context).pushReplacementNamed('/home/');
         },
       );
     });
 
-    final isLoading = authAsync.isLoading || userAsync.isLoading;
+    final isLoading = authActionState.isLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Sign in')),
