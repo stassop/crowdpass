@@ -114,142 +114,137 @@ enum EventType {
 
 @immutable
 class Event implements Comparable<Event> {
-  final String? createdBy;
-  final String? companyId;
-  final DateTimeRange? dates;
-  final String? description;
-  final String? id;
-  final Location? location;
-  final String? title;
-  final EventType? type;
-  final TimeRange? times;
-  final DateTime? admissionStart;
+  final DateTime admissionStart;
+  final String companyId;
+  final String createdBy;
+  final DateTimeRange dates;
+  final String description;
+  final bool isFree;
+  final bool isOutdoor;
+  final bool isWheelchairAccessible;
+  final String id;
+  final Location location;
+  final String title;
+  final EventType type;
+  final TimeRange times;
   final bool? isEpilepsyFriendly;
   final bool? isFamilyFriendly;
-  final bool? isFree;
   final bool? isHearingAidCompatible;
   final bool? isLowSensoryFriendly;
-  final bool? isOutdoor;
   final bool? isPetFriendly;
-  final bool? isWheelchairAccessible;
   final String? imageURL;
 
   const Event({
-    this.admissionStart,
-    this.createdBy,
-    this.companyId,
-    this.dates,
-    this.description,
-    this.id,
+    required this.admissionStart,
+    required this.companyId,
+    required this.createdBy,
+    required this.dates,
+    required this.description,
+    required this.id,
+    required this.isFree,
+    required this.isOutdoor,
+    required this.isWheelchairAccessible,
+    required this.location,
+    required this.times,
+    required this.title,
+    required this.type,
     this.imageURL,
     this.isEpilepsyFriendly,
     this.isFamilyFriendly,
-    this.isFree,
     this.isHearingAidCompatible,
     this.isLowSensoryFriendly,
-    this.isOutdoor,
     this.isPetFriendly,
-    this.isWheelchairAccessible,
-    this.location,
-    this.times,
-    this.title,
-    this.type,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) => Event(
-        createdBy: json['createdBy'] as String?,
-        companyId: json['companyId'] as String?,
-        dates: json['dates'] != null && json['dates']['start'] != null && json['dates']['end'] != null
-            ? DateTimeRange(
-                start: DateTime.tryParse(json['dates']['start']) ?? DateTime.now(),
-                end: DateTime.tryParse(json['dates']['end']) ?? DateTime.now(),
-              )
-            : null,
-        description: json['description'] as String?,
-        id: json['id'] as String?,
-        location: json['location'] != null ? Location.fromJson(json['location'] as Map<String, dynamic>) : null,
-        title: json['title'] as String?,
-        type: json['type'] != null ? EventType.fromString(json['type'] as String) : null,
-        times: json['times'] != null ? TimeRange.fromJson(json['times'] as Map<String, dynamic>) : null,
-        admissionStart: json['admissionStart'] != null ? DateTime.tryParse(json['admissionStart']) : null,
+        admissionStart: DateTime.tryParse(json['admissionStart']) ?? DateTime.now(),
+        companyId: json['companyId'] as String,
+        createdBy: json['createdBy'] as String,
+        dates: DateTimeRange(
+          start: DateTime.tryParse(json['dates']['start']) ?? DateTime.now(),
+          end: DateTime.tryParse(json['dates']['end']) ?? DateTime.now(),
+        ),
+        description: json['description'] as String,
+        id: json['id'] as String,
+        isFree: json['isFree'] as bool? ?? false,
+        isOutdoor: json['isOutdoor'] as bool? ?? false,
+        isWheelchairAccessible: json['isWheelchairAccessible'] as bool? ?? false,
+        location: Location.fromJson(json['location'] as Map<String, dynamic>),
+        times: TimeRange.fromJson(json['times'] as Map<String, dynamic>),
+        title: json['title'] as String,
+        type: EventType.fromString(json['type'] as String),
+        imageURL: json['imageURL'] as String?,
         isEpilepsyFriendly: json['isEpilepsyFriendly'] as bool?,
         isFamilyFriendly: json['isFamilyFriendly'] as bool?,
-        isFree: json['isFree'] as bool?,
         isHearingAidCompatible: json['isHearingAidCompatible'] as bool?,
         isLowSensoryFriendly: json['isLowSensoryFriendly'] as bool?,
-        isOutdoor: json['isOutdoor'] as bool?,
         isPetFriendly: json['isPetFriendly'] as bool?,
-        isWheelchairAccessible: json['isWheelchairAccessible'] as bool?,
-        imageURL: json['imageURL'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
-        if (createdBy != null) 'createdBy': createdBy,
-        if (companyId != null) 'companyId': companyId,
-        if (dates != null)
-          'dates': {
-            'start': dates!.start.toIso8601String(),
-            'end': dates!.end.toIso8601String(),
-          },
-        if (description != null) 'description': description,
-        if (id != null) 'id': id,
-        if (location != null) 'location': location,
-        if (title != null) 'title': title,
-        if (type != null) 'type': type.toString(),
-        if (times != null) 'times': times!.toJson(),
-        if (admissionStart != null) 'admissionStart': admissionStart!.toIso8601String(),
+        'admissionStart': admissionStart.toIso8601String(),
+        'companyId': companyId,
+        'createdBy': createdBy,
+        'dates': {
+          'start': dates.start.toIso8601String(),
+          'end': dates.end.toIso8601String(),
+        },
+        'description': description,
+        'id': id,
+        'isFree': isFree,
+        'isOutdoor': isOutdoor,
+        'isWheelchairAccessible': isWheelchairAccessible,
+        'location': location,
+        'times': times.toJson(),
+        'title': title,
+        'type': type.toString(),
+        if (imageURL != null) 'imageURL': imageURL,
         if (isEpilepsyFriendly != null) 'isEpilepsyFriendly': isEpilepsyFriendly,
         if (isFamilyFriendly != null) 'isFamilyFriendly': isFamilyFriendly,
-        if (isFree != null) 'isFree': isFree,
         if (isHearingAidCompatible != null) 'isHearingAidCompatible': isHearingAidCompatible,
         if (isLowSensoryFriendly != null) 'isLowSensoryFriendly': isLowSensoryFriendly,
-        if (isOutdoor != null) 'isOutdoor': isOutdoor,
         if (isPetFriendly != null) 'isPetFriendly': isPetFriendly,
-        if (isWheelchairAccessible != null) 'isWheelchairAccessible': isWheelchairAccessible,
-        if (imageURL != null) 'imageURL': imageURL,
       };
 
   Event copyWith({
-    String? createdBy,
-    String? companyId,
+    DateTime? admissionStart,
     DateTimeRange? dates,
     String? description,
-    String? id,
-    DateTime? admissionStart,
-    bool? isEpilepsyFriendly,
-    bool? isFamilyFriendly,
     bool? isFree,
-    bool? isHearingAidCompatible,
-    bool? isLowSensoryFriendly,
     bool? isOutdoor,
-    bool? isPetFriendly,
     bool? isWheelchairAccessible,
-    String? imageURL,
     Location? location,
+    TimeRange? times,
     String? title,
     EventType? type,
-    TimeRange? times,
+    String? imageURL,
+    bool? isEpilepsyFriendly,
+    bool? isFamilyFriendly,
+    bool? isHearingAidCompatible,
+    bool? isLowSensoryFriendly,
+    bool? isPetFriendly,
   }) {
     return Event(
-      createdBy: createdBy ?? this.createdBy,
-      companyId: companyId ?? this.companyId,
-      id: id ?? this.id,
-      location: location ?? this.location,
-      title: title ?? this.title,
-      type: type ?? this.type,
-      times: times ?? this.times,
+      // Id, companyId and createdBy can't be changed
+      id: id,
+      companyId: companyId,
+      createdBy: createdBy,
+      admissionStart: admissionStart ?? this.admissionStart,
       dates: dates ?? this.dates,
       description: description ?? this.description,
-      admissionStart: admissionStart ?? this.admissionStart,
+      isFree: isFree ?? this.isFree,
+      isOutdoor: isOutdoor ?? this.isOutdoor,
+      isWheelchairAccessible: isWheelchairAccessible ?? this.isWheelchairAccessible,
+      location: location ?? this.location,
+      times: times ?? this.times,
+      title: title ?? this.title,
+      type: type ?? this.type,
+      imageURL: imageURL ?? this.imageURL,
       isEpilepsyFriendly: isEpilepsyFriendly ?? this.isEpilepsyFriendly,
       isFamilyFriendly: isFamilyFriendly ?? this.isFamilyFriendly,
-      isFree: isFree ?? this.isFree,
       isHearingAidCompatible: isHearingAidCompatible ?? this.isHearingAidCompatible,
       isLowSensoryFriendly: isLowSensoryFriendly ?? this.isLowSensoryFriendly,
-      isOutdoor: isOutdoor ?? this.isOutdoor,
       isPetFriendly: isPetFriendly ?? this.isPetFriendly,
-      isWheelchairAccessible: isWheelchairAccessible ?? this.isWheelchairAccessible,
-      imageURL: imageURL ?? this.imageURL,
     );
   }
 
@@ -257,55 +252,52 @@ class Event implements Comparable<Event> {
       bool operator ==(Object other) =>
         identical(this, other) ||
         other is Event &&
-          createdBy == other.createdBy &&
+          admissionStart == other.admissionStart &&
           companyId == other.companyId &&
+          createdBy == other.createdBy &&
           dates == other.dates &&
           description == other.description &&
           id == other.id &&
-          imageURL == other.imageURL &&
-          admissionStart == other.admissionStart &&
-          isEpilepsyFriendly == other.isEpilepsyFriendly &&
-          isFamilyFriendly == other.isFamilyFriendly &&
           isFree == other.isFree &&
-          isHearingAidCompatible == other.isHearingAidCompatible &&
-          isLowSensoryFriendly == other.isLowSensoryFriendly &&
           isOutdoor == other.isOutdoor &&
-          isPetFriendly == other.isPetFriendly &&
           isWheelchairAccessible == other.isWheelchairAccessible &&
           location == other.location &&
-          title == other.title &&
           times == other.times &&
-          type == other.type;
+          title == other.title &&
+          type == other.type &&
+          imageURL == other.imageURL &&
+          isEpilepsyFriendly == other.isEpilepsyFriendly &&
+          isFamilyFriendly == other.isFamilyFriendly &&
+          isHearingAidCompatible == other.isHearingAidCompatible &&
+          isLowSensoryFriendly == other.isLowSensoryFriendly &&
+          isPetFriendly == other.isPetFriendly;
 
   @override
   int get hashCode => Object.hash(
-        createdBy,
+        admissionStart,
         companyId,
+        createdBy,
         dates,
         description,
         id,
-        imageURL,
-        admissionStart,
-        isEpilepsyFriendly,
-        isFamilyFriendly,
         isFree,
-        isHearingAidCompatible,
-        isLowSensoryFriendly,
         isOutdoor,
-        isPetFriendly,
         isWheelchairAccessible,
         location,
-        title,
         times,
+        title,
         type,
+        imageURL,
+        isEpilepsyFriendly,
+        isFamilyFriendly,
+        isHearingAidCompatible,
+        isLowSensoryFriendly,
+        isPetFriendly,
       );
 
   @override
   int compareTo(Event other) {
-    if (dates == null && other.dates == null) return 0;
-    if (dates == null) return -1;
-    if (other.dates == null) return 1;
-    return dates!.start.compareTo(other.dates!.start);
+    return dates.start.compareTo(other.dates.start);
   }
 
   @override

@@ -44,85 +44,90 @@ enum Industry {
 
 @immutable
 class Company implements Comparable<Company> {
-  final Location? address;
-  final String? email;
-  final String? id;
-  final String? name;
-  final Industry? industry;
-  final String? phone;
-  final String? vatNumber;
+  final Location address;
+  final String createdBy;
+  final String email;
+  final String iban;
+  final String id;
+  final Industry industry;
+  final String name;
+  final String ownerId;
+  final String phone;
+  final String vatNumber;
   final String? logoURL;
   final String? website;
-  final String? ownerId;
-  final String? iban;
 
   const Company({
-    this.address,
-    this.email,
-    this.id,
-    this.name,
-    this.industry,
-    this.phone,
-    this.vatNumber,
+    required this.address,
+    required this.createdBy,
+    required this.email,
+    required this.iban,
+    required this.id,
+    required this.industry,
+    required this.name,
+    required this.ownerId,
+    required this.phone,
+    required this.vatNumber,
     this.logoURL,
     this.website,
-    this.ownerId,
-    this.iban,
   });
 
   factory Company.fromJson(Map<String, dynamic> json) => Company(
-        address: json['address'] != null ? Location.fromJson(json['address'] as Map<String, dynamic>) : null,
-        email: json['email'] as String?,
-        id: json['id'] as String?,
+        address: Location.fromJson(json['address'] as Map<String, dynamic>),
+        createdBy: json['createdBy'] as String,
+        email: json['email'] as String,
+        iban: json['iban'] as String,
+        id: json['id'] as String,
+        industry: Industry.fromString(json['industry'] as String),
+        name: json['name'] as String,
+        ownerId: json['ownerId'] as String,
+        phone: json['phone'] as String,
+        vatNumber: json['vatNumber'] as String,
         logoURL: json['logoURL'] as String?,
-        name: json['name'] as String?,
-        industry: json['industry'] != null ? Industry.fromString(json['industry'] as String) : null,
-        phone: json['phone'] as String?,
-        vatNumber: json['vatNumber'] as String?,
         website: json['website'] as String?,
-        ownerId: json['ownerId'] as String?,
-        iban: json['iban'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
-        if (address != null) 'address': address!.toJson(),
-        if (email != null) 'email': email,
-        if (id != null) 'id': id,
+        'address': address.toJson(),
+        'createdBy': createdBy,
+        'email': email,
+        'iban': iban,
+        'id': id,
+        'industry': industry.name,
+        'name': name,
+        'ownerId': ownerId,
+        'phone': phone,
+        'vatNumber': vatNumber,
         if (logoURL != null) 'logoURL': logoURL,
-        if (name != null) 'name': name,
-        if (industry != null) 'industry': industry!.name,
-        if (phone != null) 'phone': phone,
-        if (vatNumber != null) 'vatNumber': vatNumber,
         if (website != null) 'website': website,
-        if (ownerId != null) 'ownerId': ownerId,
-        if (iban != null) 'iban': iban,
       };
 
   Company copyWith({
     Location? address,
     String? email,
-    String? id,
-    String? logoURL,
-    String? name,
+    String? iban,
     Industry? industry,
+    String? name,
+    String? ownerId,
     String? phone,
     String? vatNumber,
+    String? logoURL,
     String? website,
-    String? ownerId,
-    String? iban,
   }) {
     return Company(
+      // Id and createdBy can't be changed
+      id: id,
+      createdBy: createdBy,
       address: address ?? this.address,
       email: email ?? this.email,
-      id: id ?? this.id,
-      logoURL: logoURL ?? this.logoURL,
-      name: name ?? this.name,
+      iban: iban ?? this.iban,
       industry: industry ?? this.industry,
+      name: name ?? this.name,
+      ownerId: ownerId ?? this.ownerId,
       phone: phone ?? this.phone,
       vatNumber: vatNumber ?? this.vatNumber,
+      logoURL: logoURL ?? this.logoURL,
       website: website ?? this.website,
-      ownerId: ownerId ?? this.ownerId,
-      iban: iban ?? this.iban,
     );
   }
 
@@ -131,38 +136,37 @@ class Company implements Comparable<Company> {
       identical(this, other) ||
       other is Company &&
         address == other.address &&
+        createdBy == other.createdBy &&
         email == other.email &&
+        iban == other.iban &&
         id == other.id &&
-        logoURL == other.logoURL &&
-        name == other.name &&
         industry == other.industry &&
+        name == other.name &&
+        ownerId == other.ownerId &&
         phone == other.phone &&
         vatNumber == other.vatNumber &&
-        website == other.website &&
-        ownerId == other.ownerId &&
-        iban == other.iban;
+        logoURL == other.logoURL &&
+        website == other.website;
 
   @override
   int get hashCode => Object.hash(
         address,
+        createdBy,
         email,
+        iban,
         id,
-        logoURL,
-        name,
         industry,
+        name,
+        ownerId,
         phone,
         vatNumber,
+        logoURL,
         website,
-        ownerId,
-        iban,
       );
 
   @override
   int compareTo(Company other) {
-    if (name == null && other.name == null) return 0;
-    if (name == null) return -1;
-    if (other.name == null) return 1;
-    return name!.compareTo(other.name!);
+    return name.compareTo(other.name);
   }
 
   @override

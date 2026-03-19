@@ -35,7 +35,7 @@ class AuthNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
 
     UserCredential? credential;
-    String? uploadedPhotoURL;
+    String? photoURL;
 
     try {
       credential = await ref
@@ -53,7 +53,7 @@ class AuthNotifier extends AsyncNotifier<void> {
 
       // Upload image
       if (photoPath != null && photoPath.isNotEmpty) {
-        uploadedPhotoURL = await ImageFileService.uploadImage(
+        photoURL = await ImageFileService.uploadImage(
           photoPath,
           'users/${user.uid}/profile_photo',
         );
@@ -61,7 +61,7 @@ class AuthNotifier extends AsyncNotifier<void> {
       
       await Future.wait([
         user.updateDisplayName(displayName),
-        if (uploadedPhotoURL != null) user.updatePhotoURL(uploadedPhotoURL),
+        if (photoURL != null) user.updatePhotoURL(photoURL),
       ]);
 
       // Optional: Email verification
@@ -69,7 +69,7 @@ class AuthNotifier extends AsyncNotifier<void> {
 
       await ref.read(userProfileNotifier.notifier).createUserProfile(
             displayName: displayName,
-            photoURL: uploadedPhotoURL,
+            photoURL: photoURL,
             email: email,
             phone: phone,
             country: country,
@@ -83,9 +83,9 @@ class AuthNotifier extends AsyncNotifier<void> {
       debugPrint('signUp error: $e\n$st');
 
       // Rollback: delete uploaded image
-      if (uploadedPhotoURL != null) {
+      if (photoURL != null) {
         try {
-          await ImageFileService.deleteImage(uploadedPhotoURL);
+          await ImageFileService.deleteImage(photoURL);
         } catch (_) {}
       }
 
@@ -156,9 +156,9 @@ class AuthNotifier extends AsyncNotifier<void> {
         await user.updatePassword(password);
       }
 
-      String? newPhotoURL;
+      String? photoURL;
       if (photoPath != null && photoPath.isNotEmpty) {
-        newPhotoURL = await ImageFileService.uploadImage(
+        photoURL = await ImageFileService.uploadImage(
           photoPath,
           'users/${user.uid}/profile_photo',
         );
@@ -167,13 +167,13 @@ class AuthNotifier extends AsyncNotifier<void> {
       if (displayName != null) {
         await user.updateDisplayName(displayName);
       }
-      if (newPhotoURL != null) {
-        await user.updatePhotoURL(newPhotoURL);
+      if (photoURL != null) {
+        await user.updatePhotoURL(photoURL);
       }
 
       await ref.read(userProfileNotifier.notifier).updateUserProfile(
             displayName: displayName,
-            photoURL: newPhotoURL,
+            photoURL: photoURL,
             phone: phone,
             country: country,
           );

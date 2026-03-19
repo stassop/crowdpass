@@ -161,23 +161,28 @@ class _DebouncedSearchFieldState<T> extends State<DebouncedSearchField<T>> {
           builder: (BuildContext context, SearchController controller) {
             return EditableTextField(
               controller: controller,
+              isMultiline: true,
               isEditable: widget.isEditable,
-              onTap: controller.openView,
+              onTap: widget.isEditable ? controller.openView : null,
               onChanged: (value) {
                 if (!controller.isOpen) controller.openView();
                 if (value.isEmpty) _handleSelection(null, field);
               },
-              decoration: (widget.decoration ?? const InputDecoration()).copyWith(
-                errorText: field.errorText,
-                labelText: widget.decoration?.labelText ?? 'Search',
-                prefixIcon: widget.decoration?.prefixIcon ?? const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () => _handleSelection(null, field),
-                      )
-                    : null,
-              ),
+              decoration: (widget.decoration ?? const InputDecoration())
+                  .copyWith(
+                    errorText: field.errorText,
+                    labelText: widget.decoration?.labelText ?? 'Search',
+                    prefixIcon:
+                        widget.decoration?.prefixIcon ??
+                        const Icon(Icons.search),
+                    suffixIcon:
+                        _searchController.text.isNotEmpty && widget.isEditable
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => _handleSelection(null, field),
+                          )
+                        : null,
+                  ),
             );
           },
           suggestionsBuilder: (BuildContext context, SearchController controller) async {
