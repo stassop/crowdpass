@@ -58,7 +58,13 @@ class AuthNotifier extends AsyncNotifier<void> {
           'users/${user.uid}/profile_photo',
         );
       }
-      
+
+      // Delete old profile photos if a new one was uploaded (cleanup)
+      if (photoURL != null) {
+        final oldImages = await ImageFileService.listImages('users/${user.uid}/profile_photo');
+        await ImageFileService.deleteImages(oldImages);
+      }
+
       await Future.wait([
         user.updateDisplayName(displayName),
         if (photoURL != null) user.updatePhotoURL(photoURL),
@@ -164,6 +170,12 @@ class AuthNotifier extends AsyncNotifier<void> {
         );
       }
 
+      // Delete old profile photos if a new one was uploaded (cleanup)
+      if (photoURL != null) {
+        final oldImages = await ImageFileService.listImages('users/${user.uid}/profile_photo');
+        await ImageFileService.deleteImages(oldImages);
+      }
+
       if (displayName != null) {
         await user.updateDisplayName(displayName);
       }
@@ -227,12 +239,10 @@ class AuthNotifier extends AsyncNotifier<void> {
       return map[error.code] ??
           'Authentication error: ${error.message}';
     }
-
-    return error.toString().replaceAll('Exception:', '').trim();
+    return 'An unknown error occurred.'; // Added return statement to handle all cases
   }
 }
 
-/// Global provider
 final authNotifier =
     AsyncNotifierProvider<AuthNotifier, void>(
   AuthNotifier.new,

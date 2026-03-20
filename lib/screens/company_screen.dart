@@ -67,8 +67,12 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
     _updateHasChanged(company);
   }
 
-  Future<void> _saveOrCreate(String? companyId) async {
+  Future<void> _createOrUpdate(String? companyId) async {
     if (!_formKey.currentState!.validate()) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(companyId == null ? 'Creating company...' : 'Updating company...')),
+    );
 
     try {
       if (companyId == null || companyId.isEmpty) {
@@ -107,7 +111,11 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ErrorDialog.show(context, title: 'Save Failed', message: '$e');
+        ErrorDialog.show(context, title: 'Failed to save company', message: e.toString());
+      }
+    } finally {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }
     }
   }
@@ -115,7 +123,6 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
   @override
   Widget build(BuildContext context) {
     final authAsync = ref.watch(authProvider);
-    final isLoading = ref.watch(companyNotifier).isLoading;
 
     return authAsync.when(
       loading: () =>
@@ -157,6 +164,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
 
             final isCreating = company == null;
             final isOwner = isCreating || (company.ownerId == user.uid);
+            final isLoading = ref.watch(companyNotifier).isLoading;
 
             // Auto-enable editing for new companies
             if (isCreating && !_isEditing) {
@@ -177,7 +185,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                           ? null
                           : () {
                               if (_isEditing && _hasChanged) {
-                                _saveOrCreate(company.id);
+                                _createOrUpdate(company.id);
                               } else {
                                 setState(() => _isEditing = !_isEditing);
                               }
@@ -239,7 +247,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                         EditableAddressField(
                           location: _address,
                           isEditable: _isEditing,
-                          onLocationChanged: (value) => setState(() {
+                          onChanged: (value) => setState(() {
                             _address = value;
                             _updateHasChanged(company);
                           }),
@@ -294,7 +302,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                             child: ElevatedButton(
                               onPressed: isLoading
                                   ? null
-                                  : () => _saveOrCreate(null),
+                                  : () => _createOrUpdate(null),
                               child: isLoading
                                   ? const SizedBox(
                                       height: 20,

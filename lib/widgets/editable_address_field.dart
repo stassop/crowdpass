@@ -9,14 +9,16 @@ class EditableAddressField extends StatefulWidget {
   const EditableAddressField({
     super.key,
     this.isEditable = false,
+    this.isRequired = false,
     this.location,
-    this.onLocationChanged,
+    this.onChanged,
     this.validator,
   });
 
   final bool isEditable;
+  final bool isRequired;
   final Location? location;
-  final Function(Location? location)? onLocationChanged;
+  final Function(Location? location)? onChanged;
   final String? Function(Location? value)? validator;
 
   @override
@@ -43,7 +45,7 @@ class _EditableAddressFieldState extends State<EditableAddressField> {
 
   void _updateLocation(Location? location) {
     setState(() => _selectedLocation = location);
-    widget.onLocationChanged?.call(location);
+    widget.onChanged?.call(location);
   }
 
   Future<List<Location>> _searchLocation(String query) async {
@@ -89,7 +91,15 @@ class _EditableAddressFieldState extends State<EditableAddressField> {
     return DebouncedSearchField<Location>(
       initialValue: _selectedLocation,
       isEditable: widget.isEditable,
-      validator: widget.validator,
+      validator: (value) {
+        if (widget.isRequired && value == null) {
+          return 'Please select a location';
+        }
+        if (widget.validator != null) {
+          return widget.validator!(value);
+        }
+        return null;
+      },
       // We pass the GPS button through the decoration
       decoration: InputDecoration(
         labelText: 'Address',

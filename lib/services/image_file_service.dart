@@ -20,7 +20,7 @@ class ImageFileException implements Exception {
 class ImageFileService {
   ImageFileService._();
 
-  static const int _maxFileSize = 5 * 1024 * 1024;
+  static const int _maxFileSize = 5 * 1024 * 1024; // 5MB
   static const Map<String, String> _supportedFormats = {
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
@@ -66,10 +66,10 @@ class ImageFileService {
         );
       }
 
-      // 4. Generate Hash
+      // 4. Generate Hash (for deduplication)
       final String hash;
       try {
-        hash = await ImageFileService.hashImageFile(filePath);
+        hash = await hashImageFile(filePath);
       } catch (e) {
         throw ImageFileException(
           'Failed to process image data: $e',
@@ -84,14 +84,12 @@ class ImageFileService {
       final storagePath = '$normalizedDir$hash$extension';
       final refStorage = FirebaseStorage.instance.ref().child(storagePath);
 
-      // 5. Deduplication
+      // 5. Deduplication: Check if file already exists
       try {
-        final existingURL = await refStorage.getDownloadURL();
-        // If this succeeds → file already exists → reuse it
-        return existingURL;
+        // If this succeeds, the file is already there. Return the URL.
+        return await refStorage.getDownloadURL();
       } catch (e) {
-        // If checking existing file fails (not found, permission, or "No object exists"),
-        // we simply proceed to upload. We do NOT throw here.
+        // If it fails (usually 404), it doesn't exist yet. Proceed to upload.
       }
 
       // 6. Upload File
@@ -121,6 +119,7 @@ class ImageFileService {
     }
   }
 
+  /// Deletes a single image by its URL.
   static Future<void> deleteImage(String url) async {
     try {
       if (Firebase.apps.isEmpty) {
@@ -139,8 +138,52 @@ class ImageFileService {
     }
   }
 
-  /// Retries an asynchronous action if it fails due to an unauthorized error.
-  /// Useful for handling transient auth issues during uploads.
+  /// Deletes multiple images by their URLs.
+  static Future<void> deleteImages(List<String> urls) async {
+    if (urls.isEmpty) return;
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp();
+      }
+      // Execute deletions in parallel
+      await Future.wait(urls.map((url) async {
+        final refStorage = FirebaseStorage.instance.refFromURL(url);
+        await refStorage.delete();
+      }));
+    } on FirebaseException catch (e) {
+      throw ImageFileException(_handleError(e), path: urls.join(', '));
+    } catch (e) {
+      throw ImageFileException(
+        'An unexpected error occurred during batch deletion: $e',
+        path: urls.join(', '),
+      );
+    }
+  }
+
+  /// Returns URLs of all images in a directory.
+  static Future<List<String>> listImages(String storageDir) async {
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp();
+      }
+      final normalizedDir = storageDir.isNotEmpty && !storageDir.endsWith('/')
+          ? '$storageDir/'
+          : storageDir;
+          
+      final listResult = await FirebaseStorage.instance.ref().child(normalizedDir).listAll();
+      final urls = await Future.wait(listResult.items.map((ref) => ref.getDownloadURL()));
+      return urls;
+    } on FirebaseException catch (e) {
+      throw ImageFileException(_handleError(e), path: storageDir);
+    } catch (e) {
+      throw ImageFileException(
+        'An unexpected error occurred while listing images: $e',
+        path: storageDir,
+      );
+    }
+  }
+
+  /// Helper to retry an action once if it fails due to unauthorized status.
   static Future<T> _retryOnUnauthorized<T>(Future<T> Function() action) async {
     try {
       return await action();
@@ -153,96 +196,82 @@ class ImageFileService {
     }
   }
 
-  /// Maps Firebase and Storage error codes to user-friendly messages.
+  /// Maps Firebase error codes to user-friendly messages.
   static String _handleError(dynamic error) {
     if (error is! FirebaseException) {
-      return 'An unknown error occurred during the upload.';
+      return 'An unknown error occurred.';
     }
 
     switch (error.code) {
       case 'unauthorized':
         return 'Permission denied. Please check your login status.';
       case 'canceled':
-        return 'Upload was canceled by the user.';
+        return 'Operation was canceled.';
       case 'quota-exceeded':
         return 'Storage quota exceeded. Please contact support.';
       case 'retry-limit-exceeded':
-        return 'Network issues. The upload timed out. Please try again.';
+        return 'Network timeout. Please check your connection.';
       case 'not-found':
       case 'object-not-found':
-        return 'The requested file was not found on the server.';
+        return 'The file was not found on the server.';
       case 'invalid-checksum':
         return 'The upload was corrupted. Please try again.';
       default:
-        return 'Upload failed: ${error.message ?? "Unknown error"}';
+        return 'Storage error: ${error.message ?? "Unknown error"}';
     }
   }
 
-  // --- Keep existing helper methods below ---
+  // --- Helper Methods ---
 
-  static Future<String> uploadImage(
-    String filePath, [
-    String storageDir = '',
-  ]) async {
+  static Future<String> uploadImage(String filePath, [String storageDir = '']) async {
     return await uploadImageFile(filePath, storageDir);
   }
 
-  static Future<List<String>> uploadImages(
-    List<String> filePaths, [
-    String storageDir = '',
-  ]) async {
-    return await Future.wait(
-      filePaths.map((p) => uploadImageFile(p, storageDir)),
-    );
+  static Future<List<String>> uploadImages(List<String> filePaths, [String storageDir = '']) async {
+    return await Future.wait(filePaths.map((p) => uploadImageFile(p, storageDir)));
   }
 
   static Future<String> hashImageFile(String filePath) async {
     final file = File(filePath);
     try {
-      if (!await file.exists())
+      if (!await file.exists()) {
         throw ImageFileException('File does not exist.', path: filePath);
+      }
       return await _hashFile(file);
     } on FileSystemException catch (e) {
       throw ImageFileException('File system error: ${e.message}', path: e.path);
     }
   }
 
+  /// Generates SHA-256 hash using stream processing for memory efficiency.
   static Future<String> _hashFile(File file) async {
+    // bind() returns a stream that emits a single Digest 
+    // after the source stream (file) is fully processed.
     final digest = await sha256.bind(file.openRead()).first;
     return digest.toString();
   }
 
-  /// Compares two files for identity using SHA-256 hash.
-  static Future<bool> isIdenticalFile(
-    String filePath1,
-    String filePath2,
-  ) async {
+  /// Compares two files using SHA-256 hash to determine if they are identical.
+  static Future<bool> isIdenticalFile(String filePath1, String filePath2) async {
     final file1 = File(filePath1);
     final file2 = File(filePath2);
 
     try {
-      // Check existence in parallel
       final existsResults = await Future.wait([file1.exists(), file2.exists()]);
+      if (!existsResults[0] || !existsResults[1]) return false;
 
-      if (!existsResults[0] || !existsResults[1]) {
-        return false;
-      }
-
-      // Quick size check before hashing
+      // Quick check: If sizes differ, files cannot be identical
       final lengths = await Future.wait([file1.length(), file2.length()]);
+      if (lengths[0] != lengths[1]) return false;
 
-      if (lengths[0] != lengths[1]) {
-        return false;
-      }
-
-      // Stream-based hashing (constant memory)
+      // Deep check: Compare hashes
       final hash1 = await _hashFile(file1);
       final hash2 = await _hashFile(file2);
 
       return hash1 == hash2;
     } on FileSystemException catch (e) {
       throw ImageFileException(
-        'File system error during file comparison: ${e.message}',
+        'File system error during comparison: ${e.message}',
         path: e.path,
       );
     } catch (e) {

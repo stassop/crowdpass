@@ -13,6 +13,7 @@ class EditableTimeRangeField extends StatefulWidget {
     this.startTitle = 'Start Time',
     this.endTitle = 'End Time',
     this.isEditable = false,
+    this.isRequired = false,
     this.onChanged,
     this.textStyle,
     this.validator,
@@ -25,6 +26,7 @@ class EditableTimeRangeField extends StatefulWidget {
   final String startTitle;
   final String endTitle;
   final bool isEditable;
+  final bool isRequired;
   final InputDecoration? decoration;
   final TextStyle? textStyle;
   final String? Function(TimeRange?)? validator;
@@ -149,7 +151,15 @@ class _EditableTimeRangeFieldState
         prefixIcon: const Icon(Icons.access_time),
       ),
       onTap: widget.isEditable ? _showTimeRangePicker : null,
-      validator: (_) => widget.validator?.call(_timeRange),
+      validator: (_) {
+        if (widget.isRequired && _timeRange == null) {
+          return 'Times required';
+        }
+        if (widget.validator != null) {
+          return widget.validator!(_timeRange);
+        }
+        return null;
+      },
     );
   }
 }

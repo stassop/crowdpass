@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class EditableSwitchField extends StatefulWidget {
-  final Widget label;
+  final String labelText;
   final Widget? leading;
   final bool isEditable;
   final bool initialValue;
@@ -11,7 +11,7 @@ class EditableSwitchField extends StatefulWidget {
   const EditableSwitchField({
     super.key,
     required this.isEditable,
-    required this.label,
+    required this.labelText,
     required this.onChanged,
     this.initialValue = false,
     this.leading,
@@ -58,7 +58,7 @@ class _EditableSwitchFieldState extends State<EditableSwitchField> {
 
     if (widget.isEditable) {
       return SwitchListTile(
-        title: widget.label,
+        title: Text(widget.labelText),
         secondary: widget.leading,
         value: _value,
         onChanged: _onChanged,
@@ -67,7 +67,7 @@ class _EditableSwitchFieldState extends State<EditableSwitchField> {
       );
     } else {
       return ListTile(
-        title: widget.label,
+        title: Text(widget.labelText),
         leading: widget.leading,
         subtitle: _error != null ? Text(_error!, style: TextStyle(color: theme.colorScheme.error)) : null,
         trailing: Icon(

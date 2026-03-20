@@ -9,6 +9,7 @@ class EditableDateRangeField extends StatefulWidget {
     super.key,
     this.initialValue,
     this.isEditable = false,
+    this.isRequired = false,
     this.onChanged,
     this.textStyle,
     this.title,
@@ -21,6 +22,7 @@ class EditableDateRangeField extends StatefulWidget {
 
   final DateTimeRange? initialValue;
   final bool isEditable;
+  final bool isRequired;
   final InputDecoration? decoration;
   final String? title;
   final TextStyle? textStyle;
@@ -107,7 +109,15 @@ class _DateRangeFieldState extends State<EditableDateRangeField> {
         prefixIcon: const Icon(Icons.date_range),
       ),
       onTap: widget.isEditable ? _showDateTimeRangePicker : null,
-      validator: (_) => widget.validator?.call(_dateRange),
+      validator: (_) {
+          if (widget.isRequired && _dateRange == null) {
+            return 'Please select a date range';
+          }
+          if (widget.validator != null) {
+            return widget.validator!(_dateRange);
+          }
+          return null;
+        },
     );
   }
 }

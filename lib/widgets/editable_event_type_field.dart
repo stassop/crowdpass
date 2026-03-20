@@ -8,6 +8,7 @@ class EditableEventTypeField extends StatelessWidget {
   final String? title;
   final bool isMultiple;
   final bool isEditable;
+  final bool isRequired;
   final InputDecoration? decoration;
   final Set<EventType>? initialValue;
   final ValueChanged<Set<EventType>>? onChanged;
@@ -19,6 +20,7 @@ class EditableEventTypeField extends StatelessWidget {
     this.initialValue,
     this.isEditable = false,
     this.isMultiple = false,
+    this.isRequired = false,
     this.onChanged,
     this.title,
     this.validator,
@@ -40,7 +42,15 @@ class EditableEventTypeField extends StatelessWidget {
         labelText: decoration?.labelText ?? 'Event Type',
       ),
       onChanged: onChanged,
-      validator: validator,
+      validator: (value) {
+        if (isRequired && value.isEmpty) {
+          return 'Please select at least one event type';
+        }
+        if (validator != null) {
+          return validator!(value);
+        }
+        return null;
+      },
     );
   }
 }
