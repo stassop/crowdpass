@@ -13,17 +13,19 @@ import 'package:crowdpass/models/location.dart';
 import 'package:crowdpass/models/time_range.dart';
 
 /// 2. Data Stream Provider
-/// Watches a specific event by ID. 
+/// Watches a specific event by ID.
 /// Using .family allows you to pass the eventId as a parameter.
 final eventProvider = StreamProvider.family<Event?, String?>((ref, eventId) {
   if (eventId == null || eventId.isEmpty) return Stream.value(null);
 
   final firestore = ref.watch(firestoreProvider);
 
-  return firestore.collection('events').doc(eventId).snapshots().map((snapshot) {
+  return firestore.collection('events').doc(eventId).snapshots().map((
+    snapshot,
+  ) {
     final data = snapshot.data();
     if (data == null || !snapshot.exists) return null;
-    
+
     // Ensure the model handles the incoming ID from Firestore if necessary
     return Event.fromJson(data);
   });
@@ -31,7 +33,7 @@ final eventProvider = StreamProvider.family<Event?, String?>((ref, eventId) {
 
 /// 3. Event Action Notifier
 /// Handles side effects (Create, Update, Delete).
-/// Inheriting from AsyncNotifier<void> allows us to track the loading/error 
+/// Inheriting from AsyncNotifier<void> allows us to track the loading/error
 /// state of these asynchronous operations.
 class EventAsyncNotifier extends AsyncNotifier<void> {
   @override
@@ -44,116 +46,125 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   Future<void> createEvent({
     required DateTime admissionStart,
     required DateTimeRange dates,
-    required String description,
     required bool isFree,
     required bool isOutdoor,
     required bool isWheelchairAccessible,
     required Location location,
-    required TimeRange times,
+    required String description,
     required String title,
     required EventType type,
-    String? imagePath,
+    required TimeRange times,
+    required DateTimeRange ticketSaleDates,
+    bool? doorTicketsAvailable,
     bool? isEpilepsyFriendly,
     bool? isFamilyFriendly,
     bool? isHearingAidCompatible,
     bool? isLowSensoryFriendly,
     bool? isPetFriendly,
+    int? maxTicketsAvailable,
+    int? venueCapacity,
+    String? imagePath,
   }) async {
     state = const AsyncLoading();
     try {
       state = await AsyncValue.guard(() async {
         final user = await ref.read(authProvider.future);
-        if (user == null) throw Exception('User must be authenticated to create an event.');
+        if (user == null) {
+          throw Exception('User must be authenticated to create an event.');
+        }
 
-        // Pass null to companyProvider to check if CURRENT user owns a company
         final company = await ref.read(companyProvider(null).future);
-        if (company == null) throw Exception('Only company owners can create events.');
+        if (company == null) {
+          throw Exception('Only company owners can create events.');
+        }
 
-        // Upload image if provided and get the URL
         String? imageURL;
-        if (imagePath != null) {
+        if (imagePath != null && imagePath.isNotEmpty) {
           imageURL = await ImageFileService.uploadImage(
             imagePath,
             'events/${company.id}/images',
           );
         }
-
         final firestore = ref.read(firestoreProvider);
         final docRef = firestore.collection('events').doc();
-        
-        // Sync the Firestore ID with the model ID before saving
+
         final event = Event(
-          id: docRef.id,
           admissionStart: admissionStart,
           companyId: company.id,
           createdBy: user.uid,
           dates: dates,
+          doorTicketsAvailable: doorTicketsAvailable,
           description: description,
-          isFree: isFree,
-          isOutdoor: isOutdoor,
-          isWheelchairAccessible: isWheelchairAccessible,
-          location: location,
-          times: times,
-          title: title,
-          type: type,
+          id: docRef.id,
           imageURL: imageURL,
           isEpilepsyFriendly: isEpilepsyFriendly,
           isFamilyFriendly: isFamilyFriendly,
+          isFree: isFree,
           isHearingAidCompatible: isHearingAidCompatible,
           isLowSensoryFriendly: isLowSensoryFriendly,
+          isOutdoor: isOutdoor,
           isPetFriendly: isPetFriendly,
+          isWheelchairAccessible: isWheelchairAccessible,
+          location: location,
+          maxTicketsAvailable: maxTicketsAvailable,
+          type: type,
+          ticketSaleDates: ticketSaleDates,
+          title: title,
+          times: times,
+          venueCapacity: venueCapacity,
         );
-
         await docRef.set(event.toJson());
       });
     } catch (e, st) {
-      // Ensure state reflects the error and rethrow for upstream handling/logging.
       state = AsyncValue.error(e, st);
       rethrow;
     }
   }
 
-  /// Updates an existing event.
   Future<void> updateEvent({
     required DateTime admissionStart,
     required DateTimeRange dates,
-    required String description,
     required bool isFree,
     required bool isOutdoor,
     required bool isWheelchairAccessible,
     required Location location,
-    required TimeRange times,
+    required String description,
     required String title,
     required EventType type,
-    String? imagePath,
+    required TimeRange times,
+    required DateTimeRange ticketSaleDates,
+    required String eventId,
+    bool? doorTicketsAvailable,
     bool? isEpilepsyFriendly,
     bool? isFamilyFriendly,
     bool? isHearingAidCompatible,
     bool? isLowSensoryFriendly,
     bool? isPetFriendly,
-    required String eventId,
+    int? maxTicketsAvailable,
+    int? venueCapacity,
+    String? imagePath,
   }) async {
-
     state = const AsyncLoading();
     try {
       state = await AsyncValue.guard(() async {
         final user = await ref.read(authProvider.future);
-        if (user == null) throw Exception('User must be authenticated to update an event.');
+        if (user == null) {
+          throw Exception('User must be authenticated to update an event.');
+        }
 
         final firestore = ref.read(firestoreProvider);
-
-        // Get the existing event to ensure it exists and to check permissions if needed
         final docRef = firestore.collection('events').doc(eventId);
         final snapshot = await docRef.get();
         if (!snapshot.exists) throw Exception('Event does not exist.');
 
-        // Optionally, check if the user is the creator of the event
         final existingEvent = Event.fromJson(snapshot.data()!);
         if (existingEvent.createdBy != user.uid) {
-          throw Exception('User does not have permission to update this event.');
+          throw Exception(
+            'User does not have permission to update this event.',
+          );
         }
 
-        String? imageURL;
+        String? imageURL = existingEvent.imageURL;
         if (imagePath != null && imagePath.isNotEmpty) {
           imageURL = await ImageFileService.uploadImage(
             imagePath,
@@ -162,34 +173,42 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         }
 
         final updatedEvent = Event(
-          id: eventId,
           admissionStart: admissionStart,
           companyId: existingEvent.companyId,
           createdBy: existingEvent.createdBy,
           dates: dates,
+          doorTicketsAvailable: doorTicketsAvailable,
           description: description,
-          isFree: isFree,
-          isOutdoor: isOutdoor,
-          isWheelchairAccessible: isWheelchairAccessible,
-          location: location,
-          times: times,
-          title: title,
-          type: type,
+          id: eventId,
           imageURL: imageURL,
           isEpilepsyFriendly: isEpilepsyFriendly,
           isFamilyFriendly: isFamilyFriendly,
+          isFree: isFree,
           isHearingAidCompatible: isHearingAidCompatible,
           isLowSensoryFriendly: isLowSensoryFriendly,
+          isOutdoor: isOutdoor,
           isPetFriendly: isPetFriendly,
+          isWheelchairAccessible: isWheelchairAccessible,
+          location: location,
+          maxTicketsAvailable: maxTicketsAvailable,
+          type: type,
+          ticketSaleDates: ticketSaleDates,
+          title: title,
+          times: times,
+          venueCapacity: venueCapacity,
         );
 
-        await firestore.collection('events').doc(eventId).update(updatedEvent.toJson());
+        await firestore
+            .collection('events')
+            .doc(eventId)
+            .update(updatedEvent.toJson());
       });
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
     }
   }
+  // Removed stray lines from previous broken patch
 
   Future<void> cancelEvent(String eventId) async {
     // This method can be implemented to set a 'cancelled' flag on the event
@@ -198,13 +217,15 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
 
   /// Deletes an event by ID.
   Future<void> deleteEvent(String eventId) async {
-    if (eventId.isEmpty) throw ArgumentError('Event ID cannot be empty for deletion.');
+    if (eventId.isEmpty)
+      throw ArgumentError('Event ID cannot be empty for deletion.');
 
     state = const AsyncLoading();
     try {
       state = await AsyncValue.guard(() async {
         final user = await ref.read(authProvider.future);
-        if (user == null) throw Exception('User must be authenticated to delete an event.');
+        if (user == null)
+          throw Exception('User must be authenticated to delete an event.');
 
         final firestore = ref.read(firestoreProvider);
 
@@ -215,7 +236,6 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
 
         // Optionally, check if the user is the creator of the event
         // This logic is commented out until the 'createdBy' field is reliably available
-        
 
         await docRef.delete();
       });

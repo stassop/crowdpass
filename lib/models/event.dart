@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:crowdpass/models/location.dart';
+import 'package:crowdpass/models/money.dart';
 import 'package:crowdpass/models/time_range.dart';
 
 enum EventCategory {
@@ -118,42 +119,52 @@ class Event implements Comparable<Event> {
   final String companyId;
   final String createdBy;
   final DateTimeRange dates;
+  final bool? doorTicketsAvailable;
   final String description;
-  final bool isFree;
-  final bool isOutdoor;
-  final bool isWheelchairAccessible;
   final String id;
-  final Location location;
-  final String title;
-  final EventType type;
-  final TimeRange times;
+  final String? imageURL;
+  final bool isFree;
   final bool? isEpilepsyFriendly;
   final bool? isFamilyFriendly;
   final bool? isHearingAidCompatible;
   final bool? isLowSensoryFriendly;
   final bool? isPetFriendly;
-  final String? imageURL;
+  final Location location;
+  final int? maxTicketsAvailable;
+  final bool isOutdoor;
+  final bool isWheelchairAccessible;
+  final EventType type;
+  final DateTimeRange ticketSaleDates;
+  final String title;
+  final TimeRange times;
+  final int? venueCapacity;
+  final Money? ticketPrice;
 
   const Event({
     required this.admissionStart,
     required this.companyId,
     required this.createdBy,
     required this.dates,
+    this.doorTicketsAvailable,
     required this.description,
     required this.id,
-    required this.isFree,
-    required this.isOutdoor,
-    required this.isWheelchairAccessible,
-    required this.location,
-    required this.times,
-    required this.title,
-    required this.type,
     this.imageURL,
+    required this.isFree,
     this.isEpilepsyFriendly,
     this.isFamilyFriendly,
     this.isHearingAidCompatible,
     this.isLowSensoryFriendly,
     this.isPetFriendly,
+    required this.location,
+    this.maxTicketsAvailable,
+    required this.isOutdoor,
+    required this.isWheelchairAccessible,
+    required this.type,
+    required this.ticketSaleDates,
+    required this.title,
+    required this.times,
+    this.venueCapacity,
+    this.ticketPrice,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) => Event(
@@ -165,20 +176,28 @@ class Event implements Comparable<Event> {
           end: DateTime.tryParse(json['dates']['end']) ?? DateTime.now(),
         ),
         description: json['description'] as String,
+        doorTicketsAvailable: json['doorTicketsAvailable'] as bool?,
         id: json['id'] as String,
-        isFree: json['isFree'] as bool? ?? false,
-        isOutdoor: json['isOutdoor'] as bool? ?? false,
-        isWheelchairAccessible: json['isWheelchairAccessible'] as bool? ?? false,
-        location: Location.fromJson(json['location'] as Map<String, dynamic>),
-        times: TimeRange.fromJson(json['times'] as Map<String, dynamic>),
-        title: json['title'] as String,
-        type: EventType.fromString(json['type'] as String),
         imageURL: json['imageURL'] as String?,
         isEpilepsyFriendly: json['isEpilepsyFriendly'] as bool?,
         isFamilyFriendly: json['isFamilyFriendly'] as bool?,
+        isFree: json['isFree'] as bool? ?? false,
         isHearingAidCompatible: json['isHearingAidCompatible'] as bool?,
         isLowSensoryFriendly: json['isLowSensoryFriendly'] as bool?,
+        isOutdoor: json['isOutdoor'] as bool? ?? false,
         isPetFriendly: json['isPetFriendly'] as bool?,
+        isWheelchairAccessible: json['isWheelchairAccessible'] as bool? ?? false,
+        location: Location.fromJson(json['location'] as Map<String, dynamic>),
+        maxTicketsAvailable: json['maxTicketsAvailable'] as int?,
+        ticketPrice: json['ticketPrice'] != null ? Money.fromJson(json['ticketPrice']) : null,
+        ticketSaleDates: DateTimeRange(
+          start: DateTime.tryParse(json['ticketSaleDates']['start']) ?? DateTime.now(),
+          end: DateTime.tryParse(json['ticketSaleDates']['end']) ?? DateTime.now(),
+        ),
+        times: TimeRange.fromJson(json['times'] as Map<String, dynamic>),
+        title: json['title'] as String,
+        type: EventType.fromString(json['type'] as String),
+        venueCapacity: json['venueCapacity'] as int?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -186,65 +205,85 @@ class Event implements Comparable<Event> {
         'companyId': companyId,
         'createdBy': createdBy,
         'dates': {
-          'start': dates.start.toIso8601String(),
           'end': dates.end.toIso8601String(),
+          'start': dates.start.toIso8601String(),
         },
         'description': description,
+        'doorTicketsAvailable': doorTicketsAvailable,
         'id': id,
+        'imageURL': imageURL,
+        'isEpilepsyFriendly': isEpilepsyFriendly,
+        'isFamilyFriendly': isFamilyFriendly,
         'isFree': isFree,
+        'isHearingAidCompatible': isHearingAidCompatible,
+        'isLowSensoryFriendly': isLowSensoryFriendly,
         'isOutdoor': isOutdoor,
+        'isPetFriendly': isPetFriendly,
         'isWheelchairAccessible': isWheelchairAccessible,
         'location': location,
+        'maxTicketsAvailable': maxTicketsAvailable,
+        'ticketPrice': ticketPrice?.toJson(),
+        'ticketSaleDates': {
+          'end': ticketSaleDates.end.toIso8601String(),
+          'start': ticketSaleDates.start.toIso8601String(),
+        },
         'times': times.toJson(),
         'title': title,
         'type': type.toString(),
-        if (imageURL != null) 'imageURL': imageURL,
-        if (isEpilepsyFriendly != null) 'isEpilepsyFriendly': isEpilepsyFriendly,
-        if (isFamilyFriendly != null) 'isFamilyFriendly': isFamilyFriendly,
-        if (isHearingAidCompatible != null) 'isHearingAidCompatible': isHearingAidCompatible,
-        if (isLowSensoryFriendly != null) 'isLowSensoryFriendly': isLowSensoryFriendly,
-        if (isPetFriendly != null) 'isPetFriendly': isPetFriendly,
+        'venueCapacity': venueCapacity,
       };
 
   Event copyWith({
     DateTime? admissionStart,
+    String? companyId,
+    String? createdBy,
     DateTimeRange? dates,
     String? description,
-    bool? isFree,
-    bool? isOutdoor,
-    bool? isWheelchairAccessible,
-    Location? location,
-    TimeRange? times,
-    String? title,
-    EventType? type,
+    bool? doorTicketsAvailable,
+    String? id,
     String? imageURL,
     bool? isEpilepsyFriendly,
     bool? isFamilyFriendly,
+    bool? isFree,
     bool? isHearingAidCompatible,
     bool? isLowSensoryFriendly,
+    bool? isOutdoor,
     bool? isPetFriendly,
+    bool? isWheelchairAccessible,
+    Location? location,
+    int? maxTicketsAvailable,
+    Money? ticketPrice,
+    DateTimeRange? ticketSaleDates,
+    TimeRange? times,
+    String? title,
+    EventType? type,
+    int? venueCapacity,
   }) {
     return Event(
-      // Id, companyId and createdBy can't be changed
-      id: id,
-      companyId: companyId,
-      createdBy: createdBy,
       admissionStart: admissionStart ?? this.admissionStart,
+      companyId: companyId ?? this.companyId,
+      createdBy: createdBy ?? this.createdBy,
       dates: dates ?? this.dates,
       description: description ?? this.description,
-      isFree: isFree ?? this.isFree,
-      isOutdoor: isOutdoor ?? this.isOutdoor,
-      isWheelchairAccessible: isWheelchairAccessible ?? this.isWheelchairAccessible,
-      location: location ?? this.location,
-      times: times ?? this.times,
-      title: title ?? this.title,
-      type: type ?? this.type,
+      doorTicketsAvailable: doorTicketsAvailable ?? this.doorTicketsAvailable,
+      id: id ?? this.id,
       imageURL: imageURL ?? this.imageURL,
       isEpilepsyFriendly: isEpilepsyFriendly ?? this.isEpilepsyFriendly,
       isFamilyFriendly: isFamilyFriendly ?? this.isFamilyFriendly,
+      isFree: isFree ?? this.isFree,
       isHearingAidCompatible: isHearingAidCompatible ?? this.isHearingAidCompatible,
       isLowSensoryFriendly: isLowSensoryFriendly ?? this.isLowSensoryFriendly,
+      isOutdoor: isOutdoor ?? this.isOutdoor,
       isPetFriendly: isPetFriendly ?? this.isPetFriendly,
+      isWheelchairAccessible: isWheelchairAccessible ?? this.isWheelchairAccessible,
+      location: location ?? this.location,
+      maxTicketsAvailable: maxTicketsAvailable ?? this.maxTicketsAvailable,
+      ticketPrice: ticketPrice ?? this.ticketPrice,
+      ticketSaleDates: ticketSaleDates ?? this.ticketSaleDates,
+      times: times ?? this.times,
+      title: title ?? this.title,
+      type: type ?? this.type,
+      venueCapacity: venueCapacity ?? this.venueCapacity,
     );
   }
 
@@ -256,21 +295,26 @@ class Event implements Comparable<Event> {
           companyId == other.companyId &&
           createdBy == other.createdBy &&
           dates == other.dates &&
+          doorTicketsAvailable == other.doorTicketsAvailable &&
           description == other.description &&
           id == other.id &&
-          isFree == other.isFree &&
-          isOutdoor == other.isOutdoor &&
-          isWheelchairAccessible == other.isWheelchairAccessible &&
-          location == other.location &&
-          times == other.times &&
-          title == other.title &&
-          type == other.type &&
           imageURL == other.imageURL &&
+          isFree == other.isFree &&
           isEpilepsyFriendly == other.isEpilepsyFriendly &&
           isFamilyFriendly == other.isFamilyFriendly &&
           isHearingAidCompatible == other.isHearingAidCompatible &&
           isLowSensoryFriendly == other.isLowSensoryFriendly &&
-          isPetFriendly == other.isPetFriendly;
+          isPetFriendly == other.isPetFriendly &&
+          location == other.location &&
+          maxTicketsAvailable == other.maxTicketsAvailable &&
+          isOutdoor == other.isOutdoor &&
+          isWheelchairAccessible == other.isWheelchairAccessible &&
+          type == other.type &&
+          ticketSaleDates == other.ticketSaleDates &&
+          title == other.title &&
+          times == other.times &&
+          venueCapacity == other.venueCapacity &&
+          ticketPrice == other.ticketPrice;
 
   @override
   int get hashCode => Object.hash(
@@ -279,20 +323,21 @@ class Event implements Comparable<Event> {
         createdBy,
         dates,
         description,
+        doorTicketsAvailable,
         id,
-        isFree,
-        isOutdoor,
-        isWheelchairAccessible,
-        location,
-        times,
-        title,
-        type,
         imageURL,
         isEpilepsyFriendly,
         isFamilyFriendly,
+        isFree,
         isHearingAidCompatible,
         isLowSensoryFriendly,
+        isOutdoor,
         isPetFriendly,
+        isWheelchairAccessible,
+        location,
+        maxTicketsAvailable,
+        ticketSaleDates,
+        type,
       );
 
   @override

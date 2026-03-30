@@ -38,6 +38,7 @@ class HomeScreen extends StatelessWidget {
 							style: theme.textTheme.displayMedium?.copyWith(
 								color: Colors.white,
 								fontWeight: FontWeight.bold,
+                fontFamily: 'Unbounded',
 							),
 							textAlign: TextAlign.center,
 						),

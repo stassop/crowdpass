@@ -46,11 +46,11 @@ class App extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the authentication state to provide a unique key for MaterialApp
-    final user = ref.watch(authProvider).value;
+    // REMOVED: final user = ref.watch(authProvider).value;
+    // We don't want the entire MaterialApp to rebuild on auth changes.
 
     return MaterialApp(
-      key: ValueKey(user?.uid ?? 'no-user'),
+      // REMOVED: key: ValueKey(user?.uid ?? 'no-user'),
       debugShowCheckedModeBanner: false,
       title: 'CrowdPass',
       theme: ThemeData(
@@ -69,11 +69,6 @@ class App extends ConsumerWidget {
         tabBarTheme: const TabBarThemeData(
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-        ),
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(fontFamily: 'Unbounded'),
-          displayMedium: TextStyle(fontFamily: 'Unbounded'),
-          displaySmall: TextStyle(fontFamily: 'Unbounded'),
         ),
       ),
       home: const HomeScreen(),

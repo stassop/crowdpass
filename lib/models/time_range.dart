@@ -89,6 +89,33 @@ class TimeRange implements Comparable<TimeRange> {
            !other.end.isAfter(end);
   }
 
+  DateTimeRange toDateTimeRange(DateTime date) {
+    final startDateTime = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      start.hour,
+      start.minute,
+    );
+
+    final endDateTime = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      end.hour,
+      end.minute,
+    );
+
+    return DateTimeRange(start: startDateTime, end: endDateTime);
+  }
+
+  TimeRange fromDateTimeRange(DateTimeRange dateTimeRange) {
+    return TimeRange(
+      start: TimeOfDay.fromDateTime(dateTimeRange.start),
+      end: TimeOfDay.fromDateTime(dateTimeRange.end),
+    );
+  }
+
   // --- Comparable ---
 
   @override
@@ -172,11 +199,11 @@ class TimeRange implements Comparable<TimeRange> {
             endFormatted.length - endPeriod.length - 1,
           );
 
-      return '$startWithoutPeriod–$endWithoutPeriod $startPeriod';
+      return '$startWithoutPeriod-$endWithoutPeriod $startPeriod';
     }
 
     // Different periods
-    return '${timeFormatter.format(startDateTime)} – '
+    return '${timeFormatter.format(startDateTime)} - '
         '${timeFormatter.format(endDateTime)}';
   }
 
