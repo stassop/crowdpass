@@ -13,6 +13,7 @@ import 'package:crowdpass/widgets/editable_address_field.dart';
 import 'package:crowdpass/widgets/editable_date_range_field.dart';
 import 'package:crowdpass/widgets/editable_event_type_field.dart';
 import 'package:crowdpass/widgets/editable_money_field.dart';
+import 'package:crowdpass/widgets/editable_number_field.dart';
 import 'package:crowdpass/widgets/editable_switch_field.dart';
 import 'package:crowdpass/widgets/editable_text_field.dart';
 import 'package:crowdpass/widgets/editable_time_range_field.dart';
@@ -29,7 +30,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // Form fields
-  DateTime? _admissionStart;
   DateTimeRange? _dates;
   bool? _doorTicketsAvailable;
   String? _description;
@@ -48,7 +48,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   TimeRange? _times;
   String? _title;
   EventType? _type;
-  int? _venueCapacity;
   String? _imageURL;
 
   // Change tracking
@@ -78,7 +77,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   // Set fields from event
   void _resetFields(Event? event) {
     if (event == null) return;
-    _admissionStart = event.admissionStart;
     _dates = event.dates;
     _description = event.description;
     _doorTicketsAvailable = event.doorTicketsAvailable;
@@ -98,7 +96,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     _times = event.times;
     _title = event.title;
     _type = event.type;
-    _venueCapacity = event.venueCapacity;
     _updateHasChanged(event);
   }
 
@@ -116,13 +113,11 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     try {
       if (eventId == null) {
         await ref.read(eventNotifier.notifier).createEvent(
-          admissionStart: _admissionStart!,
           dates: _dates!,
           doorTicketsAvailable: _doorTicketsAvailable,
           description: _description!,
           maxTicketsAvailable: _maxTicketsAvailable,
           ticketSaleDates: _ticketSaleDates!,
-          venueCapacity: _venueCapacity,
           isFree: _isFree ?? false,
           isOutdoor: _isOutdoor ?? false,
           isWheelchairAccessible: _isWheelchairAccessible ?? false,
@@ -139,14 +134,12 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         );
       } else {
         await ref.read(eventNotifier.notifier).updateEvent(
-          admissionStart: _admissionStart!,
           dates: _dates!,
           doorTicketsAvailable: _doorTicketsAvailable,
           description: _description!,
           eventId: eventId,
           maxTicketsAvailable: _maxTicketsAvailable,
           ticketSaleDates: _ticketSaleDates!,
-          venueCapacity: _venueCapacity,
           isFree: _isFree ?? false,
           isOutdoor: _isOutdoor ?? false,
           isWheelchairAccessible: _isWheelchairAccessible ?? false,
@@ -249,7 +242,12 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    
+                    Text(
+                      'Event Details',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+
+                    const SizedBox(height: 16),
 
                     EditableTextField(
                       initialValue: _title,
@@ -325,20 +323,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
                     const SizedBox(height: 16),
 
-                    EditableMoneyField(
-                      initialMoney: _ticketPrice,
-                      isEditable: _isEditing,
-                      isCurrencyEditable: true,
-                      onChanged: (value) {
-                        setState(() {
-                          _ticketPrice = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
                     EditableDateRangeField(
                       initialValue: _dates,
                       isEditable: _isEditing,
@@ -365,7 +349,68 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                       },
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 24),
+
+                    Text(
+                      'Tickets',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    if (!(_isFree ?? false)) ...[
+                      EditableMoneyField(
+                        initialMoney: _ticketPrice,
+                        isEditable: _isEditing,
+                        isCurrencyEditable: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Ticket Price',
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _ticketPrice = value;
+                            _updateHasChanged(event);
+                          });
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      EditableDateRangeField(
+                        initialValue: _ticketSaleDates,
+                        isEditable: _isEditing,
+                        isRequired: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Ticket Sale Dates',
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _ticketSaleDates = value;
+                            _updateHasChanged(event);
+                          });
+                        },
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+
+                    EditableNumberField(
+                      initialValue: _maxTicketsAvailable,
+                      isEditable: _isEditing,
+                      hasDecimals: false,
+                      decoration: const InputDecoration(
+                        labelText: 'Max Tickets Available',
+                        prefixIcon: Icon(Icons.confirmation_number),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _maxTicketsAvailable = value.toInt();
+                          _updateHasChanged(event);
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
 
                     EditableSwitchField(
                       labelText: 'Free Event',
@@ -379,6 +424,28 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                         });
                       },
                     ),
+
+                    EditableSwitchField(
+                      labelText: 'Door Tickets Available',
+                      initialValue: _doorTicketsAvailable ?? false,
+                      isEditable: _isEditing,
+                      leading: const Icon(Icons.door_front_door),
+                      onChanged: (value) {
+                        setState(() {
+                          _doorTicketsAvailable = value;
+                          _updateHasChanged(event);
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    Text(
+                      'Venue Details',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+
+                    const SizedBox(height: 16),
                     
                     EditableSwitchField(
                       labelText: 'Outdoor Event',
@@ -486,7 +553,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text('Create Company'),
+                              : const Text('Create Event'),
                         ),
                       ),
                   ],

@@ -44,7 +44,6 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
 
   /// Creates a new event and automatically assigns the Firestore Doc ID.
   Future<void> createEvent({
-    required DateTime admissionStart,
     required DateTimeRange dates,
     required bool isFree,
     required bool isOutdoor,
@@ -89,7 +88,6 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         final docRef = firestore.collection('events').doc();
 
         final event = Event(
-          admissionStart: admissionStart,
           companyId: company.id,
           createdBy: user.uid,
           dates: dates,
@@ -111,7 +109,6 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
           ticketSaleDates: ticketSaleDates,
           title: title,
           times: times,
-          venueCapacity: venueCapacity,
         );
         await docRef.set(event.toJson());
       });
@@ -122,7 +119,6 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   }
 
   Future<void> updateEvent({
-    required DateTime admissionStart,
     required DateTimeRange dates,
     required bool isFree,
     required bool isOutdoor,
@@ -173,7 +169,6 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         }
 
         final updatedEvent = Event(
-          admissionStart: admissionStart,
           companyId: existingEvent.companyId,
           createdBy: existingEvent.createdBy,
           dates: dates,
@@ -195,7 +190,6 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
           ticketSaleDates: ticketSaleDates,
           title: title,
           times: times,
-          venueCapacity: venueCapacity,
         );
 
         await firestore

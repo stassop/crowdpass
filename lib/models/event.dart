@@ -9,13 +9,13 @@ enum EventCategory {
   art('Art', Icons.palette),
   performance('Performance', Icons.theater_comedy),
   film('Film', Icons.movie),
-  sports('Sports', Icons.sports_soccer),
+  sports('Sports', Icons.stadium),
   foodDrink('Food & Drink', Icons.restaurant),
   education('Education & Workshops', Icons.school),
   business('Business & Conferences', Icons.business_center),
   nightlife('Nightlife', Icons.nightlife),
   wellness('Wellness', Icons.spa),
-  festivals('Festivals', Icons.celebration),
+  festival('Festivals', Icons.festival),
   family('Family & Kids', Icons.family_restroom),
   other('Other', Icons.category);
 
@@ -43,9 +43,9 @@ enum EventType {
   djSet('DJ Set', EventCategory.nightlife),
 
   // FESTIVALS
-  musicFestival('Music Festival', EventCategory.festivals),
-  foodFestival('Food Festival', EventCategory.festivals),
-  filmFestival('Film Festival', EventCategory.festivals),
+  musicFestival('Music Festival', EventCategory.festival),
+  foodFestival('Food Festival', EventCategory.festival),
+  filmFestival('Film Festival', EventCategory.festival),
 
   // ART
   exhibition('Exhibition', EventCategory.art),
@@ -115,7 +115,6 @@ enum EventType {
 
 @immutable
 class Event implements Comparable<Event> {
-  final DateTime admissionStart;
   final String companyId;
   final String createdBy;
   final DateTimeRange dates;
@@ -137,11 +136,9 @@ class Event implements Comparable<Event> {
   final DateTimeRange ticketSaleDates;
   final String title;
   final TimeRange times;
-  final int? venueCapacity;
   final Money? ticketPrice;
 
   const Event({
-    required this.admissionStart,
     required this.companyId,
     required this.createdBy,
     required this.dates,
@@ -163,12 +160,10 @@ class Event implements Comparable<Event> {
     required this.ticketSaleDates,
     required this.title,
     required this.times,
-    this.venueCapacity,
     this.ticketPrice,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) => Event(
-        admissionStart: DateTime.tryParse(json['admissionStart']) ?? DateTime.now(),
         companyId: json['companyId'] as String,
         createdBy: json['createdBy'] as String,
         dates: DateTimeRange(
@@ -197,11 +192,9 @@ class Event implements Comparable<Event> {
         times: TimeRange.fromJson(json['times'] as Map<String, dynamic>),
         title: json['title'] as String,
         type: EventType.fromString(json['type'] as String),
-        venueCapacity: json['venueCapacity'] as int?,
       );
 
   Map<String, dynamic> toJson() => {
-        'admissionStart': admissionStart.toIso8601String(),
         'companyId': companyId,
         'createdBy': createdBy,
         'dates': {
@@ -230,11 +223,9 @@ class Event implements Comparable<Event> {
         'times': times.toJson(),
         'title': title,
         'type': type.toString(),
-        'venueCapacity': venueCapacity,
       };
 
   Event copyWith({
-    DateTime? admissionStart,
     String? companyId,
     String? createdBy,
     DateTimeRange? dates,
@@ -257,10 +248,8 @@ class Event implements Comparable<Event> {
     TimeRange? times,
     String? title,
     EventType? type,
-    int? venueCapacity,
   }) {
     return Event(
-      admissionStart: admissionStart ?? this.admissionStart,
       companyId: companyId ?? this.companyId,
       createdBy: createdBy ?? this.createdBy,
       dates: dates ?? this.dates,
@@ -283,7 +272,6 @@ class Event implements Comparable<Event> {
       times: times ?? this.times,
       title: title ?? this.title,
       type: type ?? this.type,
-      venueCapacity: venueCapacity ?? this.venueCapacity,
     );
   }
 
@@ -291,7 +279,6 @@ class Event implements Comparable<Event> {
       bool operator ==(Object other) =>
         identical(this, other) ||
         other is Event &&
-          admissionStart == other.admissionStart &&
           companyId == other.companyId &&
           createdBy == other.createdBy &&
           dates == other.dates &&
@@ -313,12 +300,10 @@ class Event implements Comparable<Event> {
           ticketSaleDates == other.ticketSaleDates &&
           title == other.title &&
           times == other.times &&
-          venueCapacity == other.venueCapacity &&
           ticketPrice == other.ticketPrice;
 
   @override
   int get hashCode => Object.hash(
-        admissionStart,
         companyId,
         createdBy,
         dates,

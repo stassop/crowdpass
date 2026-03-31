@@ -4,7 +4,7 @@ import 'package:crowdpass/models/event.dart';
 
 import 'package:crowdpass/widgets/editable_list_field.dart';
 
-class EditableEventTypeField extends StatelessWidget {
+class EditableEventTypeField extends StatefulWidget {
   final String? title;
   final bool isMultiple;
   final bool isEditable;
@@ -27,27 +27,56 @@ class EditableEventTypeField extends StatelessWidget {
   });
 
   @override
+  State<EditableEventTypeField> createState() => _EditableEventTypeFieldState();
+}
+
+class _EditableEventTypeFieldState extends State<EditableEventTypeField> {
+  late Set<EventType> _selectedEvents; // Local state for selected events
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedEvents =
+        widget.initialValue ?? {}; // Initialize with initialValue or empty set
+  }
+
+  void _onChanged(Set<EventType> value) {
+    setState(() {
+      _selectedEvents = value; // Update local state
+    });
+    widget.onChanged?.call(value); // Trigger external onChanged callback
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final EventType? firstSelected = _selectedEvents.isNotEmpty
+        ? _selectedEvents.first
+        : null;
+    final Icon? prefixIcon = firstSelected != null
+        ? Icon(firstSelected.category.icon) // Use the icon of the first selected event's category
+        : const Icon(Icons.category); // Default icon if no event is selected
+
     return EditableListField<EventType, EventCategory>(
       categorizedOptions: EventType.byCategory,
-      isMultiple: isMultiple,
-      isEditable: isEditable,
-      initialValue: initialValue,
-      title: title ?? 'Event Type',
+      isMultiple: widget.isMultiple,
+      isEditable: widget.isEditable,
+      initialValue: _selectedEvents,
+      title: widget.title ?? 'Event Type',
       getOptionLabel: (option) => option.label,
       getCategoryLabel: (category) => category.label,
       getCategoryIcon: (category) => Icon(category.icon),
-      decoration: (decoration ?? const InputDecoration()).copyWith(
-        prefixIcon: const Icon(Icons.event),
-        labelText: decoration?.labelText ?? 'Event Type',
+      decoration: (widget.decoration ?? const InputDecoration()).copyWith(
+        prefixIcon:
+            prefixIcon, // Use dynamic prefixIcon based on selected event
+        labelText: widget.decoration?.labelText ?? 'Event Type',
       ),
-      onChanged: onChanged,
+      onChanged: _onChanged,
       validator: (value) {
-        if (isRequired && value.isEmpty) {
+        if (widget.isRequired && value.isEmpty) {
           return 'Please select at least one event type';
         }
-        if (validator != null) {
-          return validator!(value);
+        if (widget.validator != null) {
+          return widget.validator!(value);
         }
         return null;
       },
