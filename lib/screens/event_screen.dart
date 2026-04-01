@@ -9,6 +9,7 @@ import 'package:crowdpass/models/time_range.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/event_provider.dart';
 
+import 'package:crowdpass/widgets/animated_app_bar.dart';
 import 'package:crowdpass/widgets/editable_address_field.dart';
 import 'package:crowdpass/widgets/editable_date_range_field.dart';
 import 'package:crowdpass/widgets/editable_event_type_field.dart';
@@ -35,7 +36,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   String? _description;
   bool? _isEpilepsyFriendly;
   bool? _isFamilyFriendly;
-  bool? _isFree;
+  bool _isFree = false;
   bool? _isHearingAidCompatible;
   bool? _isLowSensoryFriendly;
   bool? _isOutdoor;
@@ -58,7 +59,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     _hasChanged =
         _dates != event?.dates ||
         _description != event?.description ||
-        _imageURL != event?.imageURL;
+        _imageURL != event?.imageURL ||
         _isEpilepsyFriendly != event?.isEpilepsyFriendly ||
         _isFamilyFriendly != event?.isFamilyFriendly ||
         _isFree != event?.isFree ||
@@ -118,7 +119,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
           description: _description!,
           maxTicketsAvailable: _maxTicketsAvailable,
           ticketSaleDates: _ticketSaleDates!,
-          isFree: _isFree ?? false,
+          isFree: _isFree,
           isOutdoor: _isOutdoor ?? false,
           isWheelchairAccessible: _isWheelchairAccessible ?? false,
           location: _location!,
@@ -140,7 +141,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
           eventId: eventId,
           maxTicketsAvailable: _maxTicketsAvailable,
           ticketSaleDates: _ticketSaleDates!,
-          isFree: _isFree ?? false,
+          isFree: _isFree,
           isOutdoor: _isOutdoor ?? false,
           isWheelchairAccessible: _isWheelchairAccessible ?? false,
           location: _location!,
@@ -211,354 +212,361 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         }
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text(isCreating ? 'Create Event' : event.title),
-            actions: [
-              if (isOwner && !isCreating)
-                IconButton(
-                  onPressed: isLoading
-                      ? null
-                      : () {
-                          if (_isEditing && _hasChanged) {
-                            _createOrUpdate(event.id);
-                          } else {
-                            setState(() => _isEditing = !_isEditing);
-                          }
-                        },
-                  icon: Icon(
-                    _isEditing
-                        ? (_hasChanged ? Icons.check : Icons.close)
-                        : Icons.edit,
+          body: Form(
+            key: _formKey,
+            child: CustomScrollView(
+              slivers: [
+                AnimatedAppBar(
+                  // imageUrl: event.imageUrl, // Pass your image path/url here!
+                  title: _title,
+                  hintText: 'Event Title',
+                  leading: BackButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
                   ),
-                ),
-            ],
-          ),
-          body: SafeArea(
-            child: Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Event Details',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    EditableTextField(
-                      initialValue: _title,
-                      isEditable: _isEditing,
-                      decoration: const InputDecoration(
-                        labelText: 'Title',
-                        prefixIcon: Icon(Icons.title),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _title = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                      validator: (value) {
-                        return (value == null || value.isEmpty)
-                            ? 'Event title required'
-                            : null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    EditableTextField(
-                      initialValue: _description,
-                      isEditable: _isEditing,
-                      isMultiline: true,
-                      minLines: 2,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                        prefixIcon: Icon(Icons.description),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _description = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                      validator: (value) {
-                        return (value == null || value.isEmpty)
-                            ? 'Event description required'
-                            : null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    EditableEventTypeField(
-                      initialValue: _type != null ? {_type!} : {},
-                      isEditable: _isEditing,
-                      isRequired: true,
-                      onChanged: (value) {
-                        setState(() {
-                          _type = value.isNotEmpty ? value.first : null;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    EditableAddressField(
-                      location: _location,
-                      isEditable: _isEditing,
-                      isRequired: true,
-                      onChanged: (value) {
-                        setState(() {
-                          _location = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    EditableDateRangeField(
-                      initialValue: _dates,
-                      isEditable: _isEditing,
-                      isRequired: true,
-                      onChanged: (value) {
-                        setState(() {
-                          _dates = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    EditableTimeRangeField(
-                      initialValue: _times,
-                      isEditable: _isEditing,
-                      isRequired: true,
-                      onChanged: (value) {
-                        setState(() {
-                          _times = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    Text(
-                      'Tickets',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    if (!(_isFree ?? false)) ...[
-                      EditableMoneyField(
-                        initialMoney: _ticketPrice,
-                        isEditable: _isEditing,
-                        isCurrencyEditable: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Ticket Price',
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            _ticketPrice = value;
-                            _updateHasChanged(event);
-                          });
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      EditableDateRangeField(
-                        initialValue: _ticketSaleDates,
-                        isEditable: _isEditing,
-                        isRequired: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Ticket Sale Dates',
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            _ticketSaleDates = value;
-                            _updateHasChanged(event);
-                          });
-                        },
-                      ),
-                    ],
-
-                    const SizedBox(height: 16),
-
-                    EditableNumberField(
-                      initialValue: _maxTicketsAvailable,
-                      isEditable: _isEditing,
-                      hasDecimals: false,
-                      decoration: const InputDecoration(
-                        labelText: 'Max Tickets Available',
-                        prefixIcon: Icon(Icons.confirmation_number),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _maxTicketsAvailable = value.toInt();
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    EditableSwitchField(
-                      labelText: 'Free Event',
-                      initialValue: _isFree ?? false,
-                      isEditable: _isEditing,
-                      leading: const Icon(Icons.money_off),
-                      onChanged: (value) {
-                        setState(() {
-                          _isFree = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    EditableSwitchField(
-                      labelText: 'Door Tickets Available',
-                      initialValue: _doorTicketsAvailable ?? false,
-                      isEditable: _isEditing,
-                      leading: const Icon(Icons.door_front_door),
-                      onChanged: (value) {
-                        setState(() {
-                          _doorTicketsAvailable = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    Text(
-                      'Venue Details',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-
-                    const SizedBox(height: 16),
-                    
-                    EditableSwitchField(
-                      labelText: 'Outdoor Event',
-                      initialValue: _isOutdoor ?? false,
-                      isEditable: _isEditing,
-                      leading: const Icon(Icons.nature_people),
-                      onChanged: (value) {
-                        setState(() {
-                          _isOutdoor = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    EditableSwitchField(
-                      labelText: 'Wheelchair Accessible',
-                      initialValue: _isWheelchairAccessible ?? false,
-                      isEditable: _isEditing,
-                      leading: const Icon(Icons.accessible),
-                      onChanged: (value) {
-                        setState(() {
-                          _isWheelchairAccessible = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    EditableSwitchField(
-                      labelText: 'Epilepsy Friendly',
-                      initialValue: _isEpilepsyFriendly ?? false,
-                      isEditable: _isEditing,
-                      leading: const Icon(Icons.flash_off),
-                      onChanged: (value) {
-                        setState(() {
-                          _isEpilepsyFriendly = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    EditableSwitchField(
-                      labelText: 'Family Friendly',
-                      initialValue: _isFamilyFriendly ?? false,
-                      isEditable: _isEditing,
-                      leading: const Icon(Icons.family_restroom),
-                      onChanged: (value) {
-                        setState(() {
-                          _isFamilyFriendly = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    EditableSwitchField(
-                      labelText: 'Hearing Aid Compatible',
-                      initialValue: _isHearingAidCompatible ?? false,
-                      isEditable: _isEditing,
-                      leading: const Icon(Icons.hearing),
-                      onChanged: (value) {
-                        setState(() {
-                          _isHearingAidCompatible = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    EditableSwitchField(
-                      labelText: 'Low Sensory Friendly',
-                      initialValue: _isLowSensoryFriendly ?? false,
-                      isEditable: _isEditing,
-                      leading: const Icon(Icons.volume_off),
-                      onChanged: (value) {
-                        setState(() {
-                          _isLowSensoryFriendly = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    EditableSwitchField(
-                      labelText: 'Pet Friendly',
-                      initialValue: _isPetFriendly ?? false,
-                      isEditable: _isEditing,
-                      leading: const Icon(Icons.pets),
-                      onChanged: (value) {
-                        setState(() {
-                          _isPetFriendly = value;
-                          _updateHasChanged(event);
-                        });
-                      },
-                    ),
-
-                    if (isCreating)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0),
-                        child: ElevatedButton(
-                          onPressed: isLoading
-                              ? null
-                              : () => _createOrUpdate(null),
-                          child: isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Create Event'),
+                  actions: [
+                    if (isOwner && !isCreating)
+                      IconButton(
+                        onPressed: isLoading
+                            ? null
+                            : () {
+                                if (_isEditing && _hasChanged) {
+                                  _createOrUpdate(event.id);
+                                } else {
+                                  setState(() => _isEditing = !_isEditing);
+                                }
+                              },
+                        icon: Icon(
+                          _isEditing
+                              ? (_hasChanged ? Icons.check : Icons.close)
+                              : Icons.edit,
                         ),
                       ),
                   ],
+                  onTitleChanged: (value) {
+                    setState(() {
+                        _title = value;
+                        _updateHasChanged(event);
+                      });
+                    },
+                  onPhotoURLChanged: (value) {
+                    setState(() {
+                      _imageURL = value;
+                      _updateHasChanged(event);
+                    });
+                  },
+                  validator: (value) {
+                    return (value == null || value.isEmpty)
+                        ? 'Event title required'
+                        : null;
+                  },
                 ),
-              ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Event Details',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        EditableTextField(
+                          initialValue: _description,
+                          isEditable: _isEditing,
+                          isMultiline: true,
+                          minLines: 2,
+                          decoration: const InputDecoration(
+                            labelText: 'Description',
+                            prefixIcon: Icon(Icons.description),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _description = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                          validator: (value) {
+                            return (value == null || value.isEmpty)
+                                ? 'Event description required'
+                                : null;
+                          },
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        EditableEventTypeField(
+                          initialValue: _type != null ? {_type!} : {},
+                          isEditable: _isEditing,
+                          isRequired: true,
+                          onChanged: (value) {
+                            setState(() {
+                              _type = value.isNotEmpty ? value.first : null;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        EditableAddressField(
+                          location: _location,
+                          isEditable: _isEditing,
+                          isRequired: true,
+                          onChanged: (value) {
+                            setState(() {
+                              _location = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        EditableDateRangeField(
+                          initialValue: _dates,
+                          isEditable: _isEditing,
+                          isRequired: true,
+                          onChanged: (value) {
+                            setState(() {
+                              _dates = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        EditableTimeRangeField(
+                          initialValue: _times,
+                          isEditable: _isEditing,
+                          isRequired: true,
+                          onChanged: (value) {
+                            setState(() {
+                              _times = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        Text(
+                          'Tickets',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        if (_isFree == false)
+                          Column(
+                            children: [
+                              EditableMoneyField(
+                                initialMoney: _ticketPrice,
+                                isEditable: _isEditing,
+                                isCurrencyEditable: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'Ticket Price',
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _ticketPrice = value;
+                                    _updateHasChanged(event);
+                                  });
+                                },
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              EditableDateRangeField(
+                                initialValue: _ticketSaleDates,
+                                isEditable: _isEditing,
+                                isRequired: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'Ticket Sale Dates',
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _ticketSaleDates = value;
+                                    _updateHasChanged(event);
+                                  });
+                                },
+                              ),
+
+                              const SizedBox(height: 16),
+                            ],
+                          ),
+
+                        EditableNumberField(
+                          initialValue: _maxTicketsAvailable,
+                          isEditable: _isEditing,
+                          hasDecimals: false,
+                          decoration: const InputDecoration(
+                            labelText: 'Max Tickets Available',
+                            prefixIcon: Icon(Icons.confirmation_number),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _maxTicketsAvailable = value.toInt();
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        EditableSwitchField(
+                          labelText: 'Free Event',
+                          initialValue: _isFree ?? false,
+                          isEditable: _isEditing,
+                          leading: const Icon(Icons.money_off),
+                          onChanged: (value) {
+                            setState(() {
+                              _isFree = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        EditableSwitchField(
+                          labelText: 'Door Tickets Available',
+                          initialValue: _doorTicketsAvailable ?? false,
+                          isEditable: _isEditing,
+                          leading: const Icon(Icons.door_front_door),
+                          onChanged: (value) {
+                            setState(() {
+                              _doorTicketsAvailable = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        Text(
+                          'Venue Details',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+
+                        const SizedBox(height: 16),
+                        
+                        EditableSwitchField(
+                          labelText: 'Outdoor Event',
+                          initialValue: _isOutdoor ?? false,
+                          isEditable: _isEditing,
+                          leading: const Icon(Icons.nature_people),
+                          onChanged: (value) {
+                            setState(() {
+                              _isOutdoor = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        EditableSwitchField(
+                          labelText: 'Wheelchair Accessible',
+                          initialValue: _isWheelchairAccessible ?? false,
+                          isEditable: _isEditing,
+                          leading: const Icon(Icons.accessible),
+                          onChanged: (value) {
+                            setState(() {
+                              _isWheelchairAccessible = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        EditableSwitchField(
+                          labelText: 'Epilepsy Friendly',
+                          initialValue: _isEpilepsyFriendly ?? false,
+                          isEditable: _isEditing,
+                          leading: const Icon(Icons.flash_off),
+                          onChanged: (value) {
+                            setState(() {
+                              _isEpilepsyFriendly = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        EditableSwitchField(
+                          labelText: 'Family Friendly',
+                          initialValue: _isFamilyFriendly ?? false,
+                          isEditable: _isEditing,
+                          leading: const Icon(Icons.family_restroom),
+                          onChanged: (value) {
+                            setState(() {
+                              _isFamilyFriendly = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        EditableSwitchField(
+                          labelText: 'Hearing Aid Compatible',
+                          initialValue: _isHearingAidCompatible ?? false,
+                          isEditable: _isEditing,
+                          leading: const Icon(Icons.hearing),
+                          onChanged: (value) {
+                            setState(() {
+                              _isHearingAidCompatible = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        EditableSwitchField(
+                          labelText: 'Low Sensory Friendly',
+                          initialValue: _isLowSensoryFriendly ?? false,
+                          isEditable: _isEditing,
+                          leading: const Icon(Icons.volume_off),
+                          onChanged: (value) {
+                            setState(() {
+                              _isLowSensoryFriendly = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        EditableSwitchField(
+                          labelText: 'Pet Friendly',
+                          initialValue: _isPetFriendly ?? false,
+                          isEditable: _isEditing,
+                          leading: const Icon(Icons.pets),
+                          onChanged: (value) {
+                            setState(() {
+                              _isPetFriendly = value;
+                              _updateHasChanged(event);
+                            });
+                          },
+                        ),
+
+                        if (isCreating)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: ElevatedButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () => _createOrUpdate(null),
+                              child: isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Create Event'),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );
