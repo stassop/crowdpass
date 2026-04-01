@@ -9,6 +9,7 @@ import 'package:crowdpass/models/time_range.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/event_provider.dart';
 
+import 'package:crowdpass/widgets/animated_reveal.dart';
 import 'package:crowdpass/widgets/animated_app_bar.dart';
 import 'package:crowdpass/widgets/editable_address_field.dart';
 import 'package:crowdpass/widgets/editable_date_range_field.dart';
@@ -361,8 +362,9 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
                         const SizedBox(height: 16),
 
-                        if (_isFree == false)
-                          Column(
+                        AnimatedReveal(
+                          isOpen: _isFree == false,
+                          child: Column(
                             children: [
                               EditableMoneyField(
                                 initialMoney: _ticketPrice,
@@ -399,6 +401,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                               const SizedBox(height: 16),
                             ],
                           ),
+                        ),
 
                         EditableNumberField(
                           initialValue: _maxTicketsAvailable,
