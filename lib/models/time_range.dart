@@ -10,6 +10,10 @@ class TimeRange implements Comparable<TimeRange> {
     required this.end,
   });
 
+  // Helper to determine if the range crosses into the next day
+  bool get isOvernight => (end.hour < start.hour) || 
+                          (end.hour == start.hour && end.minute < start.minute);
+
   // --- Serialization ---
 
   factory TimeRange.fromJson(Map<String, dynamic> json) {
@@ -80,13 +84,23 @@ class TimeRange implements Comparable<TimeRange> {
 
   /// Returns true if [time] is within this range (inclusive)
   bool isTimeWithin(TimeOfDay time) {
-    return !time.isBefore(start) && !time.isAfter(end);
+    if (!isOvernight) {
+      return !time.isBefore(start) && !time.isAfter(end);
+    }
+    // Overnight logic: Time must be >= start OR <= end
+    // e.g., 10PM - 3AM: 11PM (true) or 1AM (true)
+    return !time.isBefore(start) || !time.isAfter(end);
   }
 
   /// Returns true if [other] is fully contained within this range
   bool isRangeWithin(TimeRange other) {
-    return !other.start.isBefore(start) &&
-           !other.end.isAfter(end);
+    // We use DateTime comparison to handle the day wrapping accurately
+    final refDate = DateTime(2026, 1, 1);
+    final thisFull = toDateTimeRange(refDate);
+    final otherFull = other.toDateTimeRange(refDate);
+
+    return (otherFull.start.isAtSameMomentAs(thisFull.start) || otherFull.start.isAfter(thisFull.start)) &&
+           (otherFull.end.isAtSameMomentAs(thisFull.end) || otherFull.end.isBefore(thisFull.end));
   }
 
   DateTimeRange toDateTimeRange(DateTime date) {
@@ -98,13 +112,18 @@ class TimeRange implements Comparable<TimeRange> {
       start.minute,
     );
 
-    final endDateTime = DateTime(
+    DateTime endDateTime = DateTime(
       date.year,
       date.month,
       date.day,
       end.hour,
       end.minute,
     );
+
+    // If the range is overnight, the end date must be the next day
+    if (isOvernight) {
+      endDateTime = endDateTime.add(const Duration(days: 1));
+    }
 
     return DateTimeRange(start: startDateTime, end: endDateTime);
   }

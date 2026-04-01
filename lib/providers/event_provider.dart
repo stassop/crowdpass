@@ -172,15 +172,17 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
 
   /// Deletes an event by ID.
   Future<void> deleteEvent(String eventId) async {
-    if (eventId.isEmpty)
+    if (eventId.isEmpty) {
       throw ArgumentError('Event ID cannot be empty for deletion.');
+    }
 
     state = const AsyncLoading();
     try {
       state = await AsyncValue.guard(() async {
         final user = await ref.read(authProvider.future);
-        if (user == null)
+        if (user == null) {
           throw Exception('User must be authenticated to delete an event.');
+        }
 
         final firestore = ref.read(firestoreProvider);
 

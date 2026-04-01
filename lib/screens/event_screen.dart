@@ -185,6 +185,74 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     }
   }
 
+  void _updateDatesAndTimes({
+    DateTimeRange? dates,
+    DateTimeRange? ticketSaleDates,
+    TimeRange? times,
+    bool doorTicketsAvailable = false,
+  }) {
+    // Capture the latest values, falling back to current state
+    final newDates = dates ?? _dates;
+    final newTicketSales = ticketSaleDates ?? _ticketSaleDates;
+    final newTimes = times ?? _times;
+
+    // Safety check for uninitialized state
+    if (newDates == null || newTicketSales == null || newTimes == null) return;
+
+    // Construct precise Event Start/End DateTimes
+    final eventStart = DateTime(
+      newDates.start.year, newDates.start.month, newDates.start.day,
+      newTimes.start.hour, newTimes.start.minute,
+    );
+
+    final eventEnd = DateTime(
+      newDates.end.year, newDates.end.month, newDates.end.day,
+      newTimes.end.hour, newTimes.end.minute,
+    );
+
+    final salesStart = DateTime(
+      newTicketSales.start.year, newTicketSales.start.month, newTicketSales.start.day,
+      0, 0,
+    );
+
+    // Determine ticket end time based on door availability
+    final salesEndTime = doorTicketsAvailable ? newTimes.end : newTimes.start;
+    
+    final salesEnd = DateTime(
+      newTicketSales.end.year, newTicketSales.end.month, newTicketSales.end.day,
+      salesEndTime.hour, salesEndTime.minute,
+    );
+
+    // 4. Validation Logic
+    String? errorMessage;
+
+    if (eventEnd.isBefore(eventStart) || eventEnd.isAtSameMomentAs(eventStart)) {
+      errorMessage = 'Event end must be after the start.';
+    } else if (salesEnd.isBefore(salesStart)) {
+      errorMessage = 'Ticket sales end must be after sales start.';
+    } else if (salesStart.isAfter(eventStart)) {
+      errorMessage = 'Ticket sales must start before the event starts.';
+    } else if (salesEnd.isAfter(eventEnd)) {
+      errorMessage = 'Ticket sales cannot end after the event ends.';
+    }
+
+    // 5. Execution
+    if (errorMessage != null) {
+      if (mounted) {
+        ErrorDialog.show(context, title: 'Schedule Error', message: errorMessage);
+      }
+      return;
+    }
+
+    setState(() {
+      _dates = newDates;
+      // We store the newly calculated DateTimes back into the range
+      _ticketSaleDates = DateTimeRange(start: salesStart, end: salesEnd);
+      _times = newTimes;
+      _doorTicketsAvailable = doorTicketsAvailable;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final eventId = ModalRoute.of(context)?.settings.arguments as String?;
@@ -338,10 +406,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           isEditable: _isEditing,
                           isRequired: true,
                           onChanged: (value) {
-                            setState(() {
-                              _dates = value;
-                              _updateHasChanged(event);
-                            });
+                            _updateDatesAndTimes(dates: value);
+                            _updateHasChanged(event);
                           },
                         ),
 
@@ -352,10 +418,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           isEditable: _isEditing,
                           isRequired: true,
                           onChanged: (value) {
-                            setState(() {
-                              _times = value;
-                              _updateHasChanged(event);
-                            });
+                            _updateDatesAndTimes(times: value);
+                            _updateHasChanged(event);
                           },
                         ),
 
@@ -375,6 +439,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                               EditableMoneyField(
                                 initialMoney: _ticketPrice,
                                 isEditable: _isEditing,
+                                isRequired: !_isFree,
                                 isCurrencyEditable: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Ticket Price',
@@ -392,15 +457,13 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                               EditableDateRangeField(
                                 initialValue: _ticketSaleDates,
                                 isEditable: _isEditing,
-                                isRequired: true,
+                                isRequired: !_isFree,
                                 decoration: const InputDecoration(
                                   labelText: 'Ticket Sale Dates',
                                 ),
                                 onChanged: (value) {
-                                  setState(() {
-                                    _ticketSaleDates = value;
-                                    _updateHasChanged(event);
-                                  });
+                                  _updateDatesAndTimes(ticketSaleDates: value);
+                                  _updateHasChanged(event);
                                 },
                               ),
 
@@ -446,10 +509,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           isEditable: _isEditing,
                           leading: const Icon(Icons.door_front_door),
                           onChanged: (value) {
-                            setState(() {
-                              _doorTicketsAvailable = value;
-                              _updateHasChanged(event);
-                            });
+                            _updateDatesAndTimes(doorTicketsAvailable: value);
+                            _updateHasChanged(event);
                           },
                         ),
 

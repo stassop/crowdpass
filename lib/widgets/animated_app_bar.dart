@@ -98,6 +98,9 @@ class _AnimatedAppBarState extends State<AnimatedAppBar> {
           titlePadding: const EdgeInsets.symmetric(horizontal: 64, vertical: 16),
           title: widget.isEditable
               ? TextFormField(
+                  autovalidateMode: widget.validator != null
+                      ? AutovalidateMode.onUserInteraction
+                      : AutovalidateMode.disabled,
                   controller: _textController,
                   onChanged: widget.onTitleChanged,
                   textAlign: TextAlign.center,

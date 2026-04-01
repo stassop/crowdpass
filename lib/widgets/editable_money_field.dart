@@ -18,6 +18,7 @@ class EditableMoneyField extends StatefulWidget {
     this.onChanged,
     this.textStyle,
     this.validator,
+    this.isRequired = false, // Default to false
   });
 
   final Money? initialMoney;
@@ -29,6 +30,7 @@ class EditableMoneyField extends StatefulWidget {
   final TextStyle? textStyle;
   final void Function(Money)? onChanged;
   final String? Function(Money)? validator;
+  final bool isRequired;
 
   @override
   State<EditableMoneyField> createState() => _EditableMoneyFieldState();
@@ -225,12 +227,17 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
           ],
           onChanged: _onTextChanged,
-          validator: (_) => widget.validator?.call(_money),
+          validator: (_) {
+            if (widget.isRequired && _amount == 0) {
+              return 'Amount is required';
+            }
+            return widget.validator?.call(_money);
+          },
           decoration: (widget.decoration ?? const InputDecoration()).copyWith(
             prefixIcon: widget.isEditable ? currencyMenu : _getCurrencyIcon(_currency),
           ),
         );
-      }
+      },
     );
   }
 }

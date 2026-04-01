@@ -59,7 +59,7 @@ class _EditableTimeRangeFieldState
     // 1. Pick Start Time
     final TimeOfDay? pickedStart = await showTimePicker(
       context: context,
-      initialTime: _timeRange?.start ?? TimeOfDay(hour: 6, minute: 0),
+      initialTime: _timeRange?.start ?? const TimeOfDay(hour: 6, minute: 0),
       helpText: widget.startTitle,
       builder: (context, child) {
         return Theme(
@@ -89,7 +89,7 @@ class _EditableTimeRangeFieldState
     // 2. Pick End Time
     final TimeOfDay? pickedEnd = await showTimePicker(
       context: context,
-      initialTime: _timeRange?.end ?? TimeOfDay(hour: 18, minute: 0),
+      initialTime: _timeRange?.end ?? const TimeOfDay(hour: 18, minute: 0),
       helpText: widget.endTitle,
       builder: (context, child) {
         return Theme(
@@ -117,8 +117,11 @@ class _EditableTimeRangeFieldState
     }
 
     // Validate range ordering
-    if (pickedEnd.compareTo(pickedStart) <= 0) {
-      _showSnackBar('End time must be after start time.');
+    // UPDATED: Allows overnight ranges (e.g. 10PM to 3AM).
+    // The only invalid state is when start and end are exactly the same.
+    if (pickedStart.hour == pickedEnd.hour && 
+        pickedStart.minute == pickedEnd.minute) {
+      _showSnackBar('End time cannot be the same as start time.');
       return;
     }
 
