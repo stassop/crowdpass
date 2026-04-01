@@ -119,25 +119,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   }
 
   Future<void> updateEvent({
-    required DateTimeRange dates,
-    required bool isFree,
-    required bool isOutdoor,
-    required bool isWheelchairAccessible,
-    required Location location,
-    required String description,
-    required String title,
-    required EventType type,
-    required TimeRange times,
-    required DateTimeRange ticketSaleDates,
-    required String eventId,
-    bool? doorTicketsAvailable,
-    bool? isEpilepsyFriendly,
-    bool? isFamilyFriendly,
-    bool? isHearingAidCompatible,
-    bool? isLowSensoryFriendly,
-    bool? isPetFriendly,
-    int? maxTicketsAvailable,
-    int? venueCapacity,
+    required Event updatedEvent, // Accept an Event object
     String? imagePath,
   }) async {
     state = const AsyncLoading();
@@ -149,7 +131,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         }
 
         final firestore = ref.read(firestoreProvider);
-        final docRef = firestore.collection('events').doc(eventId);
+        final docRef = firestore.collection('events').doc(updatedEvent.id);
         final snapshot = await docRef.get();
         if (!snapshot.exists) throw Exception('Event does not exist.');
 
@@ -168,34 +150,13 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
           );
         }
 
-        final updatedEvent = Event(
-          companyId: existingEvent.companyId,
-          createdBy: existingEvent.createdBy,
-          dates: dates,
-          doorTicketsAvailable: doorTicketsAvailable,
-          description: description,
-          id: eventId,
-          imageURL: imageURL,
-          isEpilepsyFriendly: isEpilepsyFriendly,
-          isFamilyFriendly: isFamilyFriendly,
-          isFree: isFree,
-          isHearingAidCompatible: isHearingAidCompatible,
-          isLowSensoryFriendly: isLowSensoryFriendly,
-          isOutdoor: isOutdoor,
-          isPetFriendly: isPetFriendly,
-          isWheelchairAccessible: isWheelchairAccessible,
-          location: location,
-          maxTicketsAvailable: maxTicketsAvailable,
-          type: type,
-          ticketSaleDates: ticketSaleDates,
-          title: title,
-          times: times,
-        );
+        // Create a new Event object with the updated imageURL
+        final eventToUpdate = updatedEvent.copyWith(imageURL: imageURL);
 
         await firestore
             .collection('events')
-            .doc(eventId)
-            .update(updatedEvent.toJson());
+            .doc(updatedEvent.id)
+            .update(eventToUpdate.toJson());
       });
     } catch (e, st) {
       state = AsyncValue.error(e, st);

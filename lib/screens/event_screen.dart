@@ -135,25 +135,31 @@ class _EventScreenState extends ConsumerState<EventScreen> {
           imagePath: _imageURL,
         );
       } else {
+        final event = ref.read(eventProvider(eventId)).value;
+        if (event == null) {
+          throw Exception('Event not found');
+        }
         await ref.read(eventNotifier.notifier).updateEvent(
-          dates: _dates!,
-          doorTicketsAvailable: _doorTicketsAvailable,
-          description: _description!,
-          eventId: eventId,
-          maxTicketsAvailable: _maxTicketsAvailable,
-          ticketSaleDates: _ticketSaleDates!,
-          isFree: _isFree,
-          isOutdoor: _isOutdoor ?? false,
-          isWheelchairAccessible: _isWheelchairAccessible ?? false,
-          location: _location!,
-          title: _title!,
-          type: _type!,
-          times: _times!,
-          isEpilepsyFriendly: _isEpilepsyFriendly,
-          isFamilyFriendly: _isFamilyFriendly,
-          isHearingAidCompatible: _isHearingAidCompatible,
-          isLowSensoryFriendly: _isLowSensoryFriendly,
-          isPetFriendly: _isPetFriendly,
+          updatedEvent: event.copyWith(
+            dates: _dates!,
+            doorTicketsAvailable: _doorTicketsAvailable,
+            description: _description!,
+            imageURL: _imageURL,
+            isEpilepsyFriendly: _isEpilepsyFriendly,
+            isFamilyFriendly: _isFamilyFriendly,
+            isFree: _isFree,
+            isHearingAidCompatible: _isHearingAidCompatible,
+            isLowSensoryFriendly: _isLowSensoryFriendly,
+            isOutdoor: _isOutdoor ?? false,
+            isPetFriendly: _isPetFriendly,
+            isWheelchairAccessible: _isWheelchairAccessible ?? false,
+            location: _location!,
+            maxTicketsAvailable: _maxTicketsAvailable,
+            type: _type!,
+            ticketSaleDates: _ticketSaleDates!,
+            title: _title!,
+            times: _times!,
+          ),
           imagePath: _imageURL,
         );
       }
@@ -423,7 +429,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
                         EditableSwitchField(
                           labelText: 'Free Event',
-                          initialValue: _isFree ?? false,
+                          initialValue: _isFree,
                           isEditable: _isEditing,
                           leading: const Icon(Icons.money_off),
                           onChanged: (value) {
