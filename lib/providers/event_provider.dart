@@ -12,7 +12,6 @@ import 'package:crowdpass/models/event.dart';
 import 'package:crowdpass/models/location.dart';
 import 'package:crowdpass/models/time_range.dart';
 
-/// 2. Data Stream Provider
 /// Watches a specific event by ID.
 /// Using .family allows you to pass the eventId as a parameter.
 final eventProvider = StreamProvider.family<Event?, String?>((ref, eventId) {
@@ -31,7 +30,6 @@ final eventProvider = StreamProvider.family<Event?, String?>((ref, eventId) {
   });
 });
 
-/// 3. Event Action Notifier
 /// Handles side effects (Create, Update, Delete).
 /// Inheriting from AsyncNotifier<void> allows us to track the loading/error
 /// state of these asynchronous operations.
@@ -45,16 +43,16 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   /// Creates a new event and automatically assigns the Firestore Doc ID.
   Future<void> createEvent({
     required DateTimeRange dates,
-    required bool isFree,
-    required bool isOutdoor,
-    required bool isWheelchairAccessible,
-    required Location location,
     required String description,
+    required Location location,
     required String title,
     required EventType type,
     required TimeRange times,
-    required DateTimeRange ticketSaleDates,
+    bool isFree = false, // No longer required
+    bool isOutdoor = false, // No longer required
+    bool isWheelchairAccessible = false, // No longer required
     bool? doorTicketsAvailable,
+    String? imagePath,
     bool? isEpilepsyFriendly,
     bool? isFamilyFriendly,
     bool? isHearingAidCompatible,
@@ -62,7 +60,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
     bool? isPetFriendly,
     int? maxTicketsAvailable,
     int? venueCapacity,
-    String? imagePath,
+    DateTimeRange? ticketSaleDates,
   }) async {
     state = const AsyncLoading();
     try {

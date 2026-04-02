@@ -40,9 +40,9 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   bool _isFree = false;
   bool? _isHearingAidCompatible;
   bool? _isLowSensoryFriendly;
-  bool? _isOutdoor;
+  bool _isOutdoor = false;
   bool? _isPetFriendly;
-  bool? _isWheelchairAccessible;
+  bool _isWheelchairAccessible = false;
   Location? _location;
   int? _maxTicketsAvailable;
   Money? _ticketPrice;
@@ -104,6 +104,26 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   Future<void> _createOrUpdate(String? eventId) async {
     if (!_formKey.currentState!.validate()) return;
 
+    // If the event isn't free, ensure ticket price and sale dates are provided
+    if (!_isFree) {
+      if (_ticketPrice == null) {
+        ErrorDialog.show(
+          context,
+          title: 'Validation Error',
+          message: 'Ticket price is required for paid events.',
+        );
+        return;
+      }
+      if (_ticketSaleDates == null) {
+        ErrorDialog.show(
+          context,
+          title: 'Validation Error',
+          message: 'Ticket sale dates are required for paid events.',
+        );
+        return;
+      }
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -121,8 +141,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
           maxTicketsAvailable: _maxTicketsAvailable,
           ticketSaleDates: _ticketSaleDates!,
           isFree: _isFree,
-          isOutdoor: _isOutdoor ?? false,
-          isWheelchairAccessible: _isWheelchairAccessible ?? false,
+          isOutdoor: _isOutdoor,
+          isWheelchairAccessible: _isWheelchairAccessible,
           location: _location!,
           title: _title!,
           type: _type!,
@@ -150,9 +170,9 @@ class _EventScreenState extends ConsumerState<EventScreen> {
             isFree: _isFree,
             isHearingAidCompatible: _isHearingAidCompatible,
             isLowSensoryFriendly: _isLowSensoryFriendly,
-            isOutdoor: _isOutdoor ?? false,
+            isOutdoor: _isOutdoor,
             isPetFriendly: _isPetFriendly,
-            isWheelchairAccessible: _isWheelchairAccessible ?? false,
+            isWheelchairAccessible: _isWheelchairAccessible,
             location: _location!,
             maxTicketsAvailable: _maxTicketsAvailable,
             type: _type!,
@@ -223,12 +243,15 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       salesEndTime.hour, salesEndTime.minute,
     );
 
+    // Ensure ticketSaleDates do not exceed event end
+    final adjustedSalesEnd = salesEnd.isAfter(eventEnd) ? eventEnd : salesEnd;
+
     // 4. Validation Logic
     String? errorMessage;
 
     if (eventEnd.isBefore(eventStart) || eventEnd.isAtSameMomentAs(eventStart)) {
       errorMessage = 'Event end must be after the start.';
-    } else if (salesEnd.isBefore(salesStart)) {
+    } else if (adjustedSalesEnd.isBefore(salesStart)) {
       errorMessage = 'Ticket sales end must be after sales start.';
     } else if (salesStart.isAfter(eventStart)) {
       errorMessage = 'Ticket sales must start before the event starts.';
@@ -246,8 +269,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
     setState(() {
       _dates = newDates;
-      // We store the newly calculated DateTimes back into the range
-      _ticketSaleDates = DateTimeRange(start: salesStart, end: salesEnd);
+      // Store the adjusted ticket sale dates
+      _ticketSaleDates = DateTimeRange(start: salesStart, end: adjustedSalesEnd);
       _times = newTimes;
       _doorTicketsAvailable = doorTicketsAvailable;
     });
@@ -293,7 +316,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
               slivers: [
                 AnimatedAppBar(
                   // imageUrl: event.imageUrl, // Pass your image path/url here!
-                  title: _title,
+                  title: _title ?? 'New Event',
                   hintText: 'Event Title',
                   leading: BackButton(
                     onPressed: () => Navigator.of(context).maybePop(),
@@ -525,7 +548,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                         
                         EditableSwitchField(
                           labelText: 'Outdoor Event',
-                          initialValue: _isOutdoor ?? false,
+                          initialValue: _isOutdoor,
                           isEditable: _isEditing,
                           leading: const Icon(Icons.nature_people),
                           onChanged: (value) {
@@ -538,7 +561,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
                         EditableSwitchField(
                           labelText: 'Wheelchair Accessible',
-                          initialValue: _isWheelchairAccessible ?? false,
+                          initialValue: _isWheelchairAccessible,
                           isEditable: _isEditing,
                           leading: const Icon(Icons.accessible),
                           onChanged: (value) {

@@ -118,25 +118,25 @@ class Event implements Comparable<Event> {
   final String companyId;
   final String createdBy;
   final DateTimeRange dates;
-  final bool? doorTicketsAvailable;
   final String description;
   final String id;
-  final String? imageURL;
   final bool isFree;
+  final bool isOutdoor;
+  final bool isWheelchairAccessible;
+  final Location location;
+  final TimeRange times;
+  final String title;
+  final EventType type;
+  final bool? doorTicketsAvailable;
+  final String? imageURL;
   final bool? isEpilepsyFriendly;
   final bool? isFamilyFriendly;
   final bool? isHearingAidCompatible;
   final bool? isLowSensoryFriendly;
   final bool? isPetFriendly;
-  final Location location;
   final int? maxTicketsAvailable;
-  final bool isOutdoor;
-  final bool isWheelchairAccessible;
-  final EventType type;
-  final DateTimeRange ticketSaleDates;
-  final String title;
-  final TimeRange times;
   final Money? ticketPrice;
+  final DateTimeRange? ticketSaleDates;
 
   const Event({
     required this.companyId,
@@ -144,14 +144,13 @@ class Event implements Comparable<Event> {
     required this.dates,
     required this.description,
     required this.id,
-    required this.isFree,
-    required this.isOutdoor,
-    required this.isWheelchairAccessible,
     required this.location,
-    required this.ticketSaleDates,
     required this.times,
     required this.title,
     required this.type,
+    this.isFree = false, // Default to false
+    this.isOutdoor = false, // Default to false
+    this.isWheelchairAccessible = false, // Default to false
     this.doorTicketsAvailable,
     this.imageURL,
     this.isEpilepsyFriendly,
@@ -161,6 +160,7 @@ class Event implements Comparable<Event> {
     this.isPetFriendly,
     this.maxTicketsAvailable,
     this.ticketPrice,
+    this.ticketSaleDates,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) => Event(
@@ -216,10 +216,12 @@ class Event implements Comparable<Event> {
         'location': location,
         'maxTicketsAvailable': maxTicketsAvailable,
         'ticketPrice': ticketPrice?.toJson(),
-        'ticketSaleDates': {
-          'end': ticketSaleDates.end.toIso8601String(),
-          'start': ticketSaleDates.start.toIso8601String(),
-        },
+        'ticketSaleDates': ticketSaleDates != null
+            ? {
+                'end': ticketSaleDates!.end.toIso8601String(),
+                'start': ticketSaleDates!.start.toIso8601String(),
+              }
+            : null,
         'times': times.toJson(),
         'title': title,
         'type': type.toString(),
