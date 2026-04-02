@@ -211,93 +211,103 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     TimeRange? times,
     bool? doorTicketsAvailable,
   }) {
-    // 1. Capture the latest values, falling back to current state
     final newDates = dates ?? _dates;
     final newTicketSales = ticketSalesDates ?? _ticketSalesDates;
     final newTimes = times ?? _times;
-    final newDoorTickets = doorTicketsAvailable ?? _doorTicketsAvailable ?? false;
+    final newDoorTickets =
+        doorTicketsAvailable ?? _doorTicketsAvailable ?? false;
 
-    // 2. Early exit for missing required fields
-    // We still update the state so the UI reflects the user's partial selection
+    setState(() {
+      _dates = newDates;
+      _ticketSalesDates = newTicketSales;
+      _times = newTimes;
+      _doorTicketsAvailable = newDoorTickets;
+    });
+
+    // Don't validate until all fields exist.
     if (newDates == null || newTicketSales == null || newTimes == null) {
-      setState(() {
-        _dates = newDates;
-        _ticketSalesDates = newTicketSales;
-        _times = newTimes;
-        _doorTicketsAvailable = newDoorTickets;
-      });
       return;
     }
 
-    // 3. Construct precise Event Start/End DateTimes
     final eventStart = DateTime(
-      newDates.start.year, newDates.start.month, newDates.start.day,
-      newTimes.start.hour, newTimes.start.minute,
+      newDates.start.year,
+      newDates.start.month,
+      newDates.start.day,
+      newTimes.start.hour,
+      newTimes.start.minute,
     );
 
     final eventEnd = DateTime(
-      newDates.end.year, newDates.end.month, newDates.end.day,
-      newTimes.end.hour, newTimes.end.minute,
+      newDates.end.year,
+      newDates.end.month,
+      newDates.end.day,
+      newTimes.end.hour,
+      newTimes.end.minute,
     );
 
-    // 4. Determine the absolute cutoff time based on door ticket availability
+    if (eventEnd.isBefore(eventStart) ||
+        eventEnd.isAtSameMomentAs(eventStart)) {
+      if (mounted) {
+        ErrorDialog.show(
+          context,
+          title: 'Schedule Error',
+          message: 'Event end must be after the start.',
+        );
+      }
+      return;
+    }
+
     final salesCutoffDateTime = newDoorTickets
         ? eventEnd.subtract(const Duration(minutes: 15))
         : eventStart.subtract(const Duration(minutes: 1));
 
-    // 5. Normalize Ticket Sales Start (Start of the day)
     final ticketSalesStart = DateTime(
-      newTicketSales.start.year, newTicketSales.start.month, newTicketSales.start.day,
+      newTicketSales.start.year,
+      newTicketSales.start.month,
+      newTicketSales.start.day,
       0, 0, 0,
     );
 
-    // 6. Calculate Ticket Sales End
-    // Start with the end of the selected day
-    DateTime calculatedSalesEnd = DateTime(
-      newTicketSales.end.year, newTicketSales.end.month, newTicketSales.end.day,
+    var ticketSalesEnd = DateTime(
+      newTicketSales.end.year,
+      newTicketSales.end.month,
+      newTicketSales.end.day,
       23, 59, 59,
     );
 
-    // CRITICAL FIX: If the selected end time/day is after the cutoff, force it to the cutoff
-    if (calculatedSalesEnd.isAfter(salesCutoffDateTime)) {
-      calculatedSalesEnd = salesCutoffDateTime;
+    if (ticketSalesEnd.year == salesCutoffDateTime.year &&
+        ticketSalesEnd.month == salesCutoffDateTime.month &&
+        ticketSalesEnd.day == salesCutoffDateTime.day) {
+      ticketSalesEnd = salesCutoffDateTime;
     }
 
-    // 7. Validation Logic
     String? errorMessage;
 
-    if (eventEnd.isBefore(eventStart) || eventEnd.isAtSameMomentAs(eventStart)) {
-      errorMessage = 'Event end must be after the start.';
-    } else if (ticketSalesStart.isAfter(calculatedSalesEnd)) {
+    if (ticketSalesStart.isAfter(ticketSalesEnd)) {
       errorMessage = 'Ticket sales start must be before sales end.';
-    } else if (calculatedSalesEnd.isAfter(salesCutoffDateTime)) {
-      // This is a safety fallback for the UI message
+    } else if (ticketSalesEnd.isAfter(salesCutoffDateTime)) {
       errorMessage = newDoorTickets
           ? 'Ticket sales end must be before event end.'
           : 'Ticket sales must end before the event starts.';
     }
 
-    // 8. Execution: Always update state
-    setState(() {
-      _dates = newDates;
-      _times = newTimes;
-      _doorTicketsAvailable = newDoorTickets;
-
-      // Safety check: DateTimeRange throws if start > end.
-      // If the range is invalid, we keep the original input for the state 
-      // so the user can see their "error" and fix it, but we avoid the crash.
-      if (ticketSalesStart.isBefore(calculatedSalesEnd) || 
-          ticketSalesStart.isAtSameMomentAs(calculatedSalesEnd)) {
-        _ticketSalesDates = DateTimeRange(start: ticketSalesStart, end: calculatedSalesEnd);
-      } else {
-        _ticketSalesDates = newTicketSales;
+    if (errorMessage != null) {
+      if (mounted) {
+        ErrorDialog.show(
+          context,
+          title: 'Schedule Error',
+          message: errorMessage,
+        );
       }
-    });
-
-    // 9. Show error dialog if necessary
-    if (errorMessage != null && mounted) {
-      ErrorDialog.show(context, title: 'Schedule Error', message: errorMessage);
+      return;
     }
+
+    setState(() {
+      _ticketSalesDates = DateTimeRange(
+        start: ticketSalesStart,
+        end: ticketSalesEnd,
+      );
+    });
   }
 
   @override
