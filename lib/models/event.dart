@@ -136,7 +136,7 @@ class Event implements Comparable<Event> {
   final bool? isPetFriendly;
   final int? maxTicketsAvailable;
   final Money? ticketPrice;
-  final DateTimeRange? ticketSaleDates;
+  final DateTimeRange? ticketSalesDates;
 
   const Event({
     required this.companyId,
@@ -160,7 +160,7 @@ class Event implements Comparable<Event> {
     this.isPetFriendly,
     this.maxTicketsAvailable,
     this.ticketPrice,
-    this.ticketSaleDates,
+    this.ticketSalesDates,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) => Event(
@@ -185,9 +185,9 @@ class Event implements Comparable<Event> {
         location: Location.fromJson(json['location'] as Map<String, dynamic>),
         maxTicketsAvailable: json['maxTicketsAvailable'] as int?,
         ticketPrice: json['ticketPrice'] != null ? Money.fromJson(json['ticketPrice']) : null,
-        ticketSaleDates: DateTimeRange(
-          start: DateTime.tryParse(json['ticketSaleDates']['start']) ?? DateTime.now(),
-          end: DateTime.tryParse(json['ticketSaleDates']['end']) ?? DateTime.now(),
+        ticketSalesDates: DateTimeRange(
+          start: DateTime.tryParse(json['ticketSalesDates']['start']) ?? DateTime.now(),
+          end: DateTime.tryParse(json['ticketSalesDates']['end']) ?? DateTime.now(),
         ),
         times: TimeRange.fromJson(json['times'] as Map<String, dynamic>),
         title: json['title'] as String,
@@ -216,10 +216,10 @@ class Event implements Comparable<Event> {
         'location': location,
         'maxTicketsAvailable': maxTicketsAvailable,
         'ticketPrice': ticketPrice?.toJson(),
-        'ticketSaleDates': ticketSaleDates != null
+        'ticketSalesDates': ticketSalesDates != null
             ? {
-                'end': ticketSaleDates!.end.toIso8601String(),
-                'start': ticketSaleDates!.start.toIso8601String(),
+                'end': ticketSalesDates!.end.toIso8601String(),
+                'start': ticketSalesDates!.start.toIso8601String(),
               }
             : null,
         'times': times.toJson(),
@@ -246,7 +246,7 @@ class Event implements Comparable<Event> {
     Location? location,
     int? maxTicketsAvailable,
     Money? ticketPrice,
-    DateTimeRange? ticketSaleDates,
+    DateTimeRange? ticketSalesDates,
     TimeRange? times,
     String? title,
     EventType? type,
@@ -270,7 +270,7 @@ class Event implements Comparable<Event> {
       location: location ?? this.location,
       maxTicketsAvailable: maxTicketsAvailable ?? this.maxTicketsAvailable,
       ticketPrice: ticketPrice ?? this.ticketPrice,
-      ticketSaleDates: ticketSaleDates ?? this.ticketSaleDates,
+      ticketSalesDates: ticketSalesDates ?? this.ticketSalesDates,
       times: times ?? this.times,
       title: title ?? this.title,
       type: type ?? this.type,
@@ -299,7 +299,7 @@ class Event implements Comparable<Event> {
           isOutdoor == other.isOutdoor &&
           isWheelchairAccessible == other.isWheelchairAccessible &&
           type == other.type &&
-          ticketSaleDates == other.ticketSaleDates &&
+          ticketSalesDates == other.ticketSalesDates &&
           title == other.title &&
           times == other.times &&
           ticketPrice == other.ticketPrice;
@@ -323,7 +323,7 @@ class Event implements Comparable<Event> {
         isWheelchairAccessible,
         location,
         maxTicketsAvailable,
-        ticketSaleDates,
+        ticketSalesDates,
         type,
       );
 

@@ -46,7 +46,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   Location? _location;
   int? _maxTicketsAvailable;
   Money? _ticketPrice;
-  DateTimeRange? _ticketSaleDates;
+  DateTimeRange? _ticketSalesDates;
   TimeRange? _times;
   String? _title;
   EventType? _type;
@@ -94,7 +94,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     _location = event.location;
     _maxTicketsAvailable = event.maxTicketsAvailable;
     _ticketPrice = event.ticketPrice;
-    _ticketSaleDates = event.ticketSaleDates;
+    _ticketSalesDates = event.ticketSalesDates;
     _times = event.times;
     _title = event.title;
     _type = event.type;
@@ -114,7 +114,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         );
         return;
       }
-      if (_ticketSaleDates == null) {
+      if (_ticketSalesDates == null) {
         ErrorDialog.show(
           context,
           title: 'Validation Error',
@@ -139,7 +139,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
           doorTicketsAvailable: _doorTicketsAvailable,
           description: _description!,
           maxTicketsAvailable: _maxTicketsAvailable,
-          ticketSaleDates: _ticketSaleDates!,
+          ticketSalesDates: _ticketSalesDates!,
           isFree: _isFree,
           isOutdoor: _isOutdoor,
           isWheelchairAccessible: _isWheelchairAccessible,
@@ -176,7 +176,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
             location: _location!,
             maxTicketsAvailable: _maxTicketsAvailable,
             type: _type!,
-            ticketSaleDates: _ticketSaleDates!,
+            ticketSalesDates: _ticketSalesDates!,
             title: _title!,
             times: _times!,
           ),
@@ -207,13 +207,13 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
   void _updateDatesAndTimes({
     DateTimeRange? dates,
-    DateTimeRange? ticketSaleDates,
+    DateTimeRange? ticketSalesDates,
     TimeRange? times,
     bool doorTicketsAvailable = false,
   }) {
     // Capture the latest values, falling back to current state
     final newDates = dates ?? _dates;
-    final newTicketSales = ticketSaleDates ?? _ticketSaleDates;
+    final newTicketSales = ticketSalesDates ?? _ticketSalesDates;
     final newTimes = times ?? _times;
 
     // Safety check for uninitialized state
@@ -230,36 +230,42 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       newTimes.end.hour, newTimes.end.minute,
     );
 
-    final salesStart = DateTime(
+    final ticketSalesStart = DateTime(
       newTicketSales.start.year, newTicketSales.start.month, newTicketSales.start.day,
-      0, 0,
+      0, 0, 0,
     );
 
-    // Determine ticket end time based on door availability
-    final salesEndTime = doorTicketsAvailable ? newTimes.end : newTimes.start;
-    
-    final salesEnd = DateTime(
+    // Default to the end of the selected day for ticket sales end
+    var ticketSalesEnd = DateTime(
       newTicketSales.end.year, newTicketSales.end.month, newTicketSales.end.day,
-      salesEndTime.hour, salesEndTime.minute,
+      23, 59, 59, // Set to end of day by default
     );
 
-    // Ensure ticketSaleDates do not exceed event end
-    final adjustedSalesEnd = salesEnd.isAfter(eventEnd) ? eventEnd : salesEnd;
+    // If the ticket sales and the event end on the same day, adjust ticket sales end time
+    if (newTicketSales.end.year == eventEnd.year &&
+        newTicketSales.end.month == eventEnd.month &&
+        newTicketSales.end.day == eventEnd.day) {
+      if (doorTicketsAvailable) {
+        // If door tickets are available, allow sales until event end minus 15 minutes
+        ticketSalesEnd = eventEnd.subtract(const Duration(minutes: 15));
+      } else {
+        // Otherwise, allow sales until event start minus 1 minute to prevent last-minute purchases
+        ticketSalesEnd = eventStart.subtract(const Duration(minutes: 1));
+      }
+    }
 
     // 4. Validation Logic
     String? errorMessage;
 
     if (eventEnd.isBefore(eventStart) || eventEnd.isAtSameMomentAs(eventStart)) {
       errorMessage = 'Event end must be after the start.';
-    } else if (adjustedSalesEnd.isBefore(salesStart)) {
-      errorMessage = 'Ticket sales end must be after sales start.';
-    } else if (salesStart.isAfter(eventStart)) {
-      errorMessage = 'Ticket sales must start before the event starts.';
-    } else if (salesEnd.isAfter(eventEnd)) {
-      errorMessage = 'Ticket sales cannot end after the event ends.';
+    } else if (ticketSalesStart.isAfter(ticketSalesEnd)) {
+      errorMessage = 'Ticket sales start must be before sales end.';
+    } else if (ticketSalesEnd.isAfter(eventEnd)) {
+      errorMessage = 'Ticket sales end must be before event end.';
     }
 
-    // 5. Execution
+    // Execution
     if (errorMessage != null) {
       if (mounted) {
         ErrorDialog.show(context, title: 'Schedule Error', message: errorMessage);
@@ -269,8 +275,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
     setState(() {
       _dates = newDates;
-      // Store the adjusted ticket sale dates
-      _ticketSaleDates = DateTimeRange(start: salesStart, end: adjustedSalesEnd);
+      _ticketSalesDates = DateTimeRange(start: ticketSalesStart, end: ticketSalesEnd);
       _times = newTimes;
       _doorTicketsAvailable = doorTicketsAvailable;
     });
@@ -478,14 +483,14 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                               const SizedBox(height: 16),
 
                               EditableDateRangeField(
-                                initialValue: _ticketSaleDates,
+                                initialValue: _ticketSalesDates,
                                 isEditable: _isEditing,
                                 isRequired: !_isFree,
                                 decoration: const InputDecoration(
                                   labelText: 'Ticket Sale Dates',
                                 ),
                                 onChanged: (value) {
-                                  _updateDatesAndTimes(ticketSaleDates: value);
+                                  _updateDatesAndTimes(ticketSalesDates: value);
                                   _updateHasChanged(event);
                                 },
                               ),

@@ -60,7 +60,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
     bool? isPetFriendly,
     int? maxTicketsAvailable,
     int? venueCapacity,
-    DateTimeRange? ticketSaleDates,
+    DateTimeRange? ticketSalesDates,
   }) async {
     state = const AsyncLoading();
     try {
@@ -104,7 +104,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
           location: location,
           maxTicketsAvailable: maxTicketsAvailable,
           type: type,
-          ticketSaleDates: ticketSaleDates,
+          ticketSalesDates: ticketSalesDates,
           title: title,
           times: times,
         );
