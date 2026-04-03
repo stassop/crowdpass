@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class Language implements Comparable<Language> {
   final String isoCode;
   final List<String> locales;
@@ -12,12 +14,19 @@ class Language implements Comparable<Language> {
   });
 
   factory Language.fromJson(Map<String, dynamic> json) {
-    return Language(
-      isoCode: json['isoCode'],
-      locales: List<String>.from(json['locales']),
-      name: json['name'],
-      nativeName: json['nativeName'],
-    );
+    try {
+      return Language(
+        isoCode: json['isoCode'],
+        locales: List<String>.from(json['locales']),
+        name: json['name'],
+        nativeName: json['nativeName'],
+      );
+    } catch (e) {
+      debugPrint('Language.fromJson failed with data: $json');
+      debugPrint('Language.fromJson error: $e');
+      debugPrintStack(stackTrace: StackTrace.current);
+      throw FormatException('Failed to parse Language from JSON: $e', e);
+    }
   }
 
   Map<String, dynamic> toJson() {

@@ -72,7 +72,9 @@ class Company implements Comparable<Company> {
     this.website,
   });
 
-  factory Company.fromJson(Map<String, dynamic> json) => Company(
+  factory Company.fromJson(Map<String, dynamic> json) {
+    try {
+      return Company(
         address: Location.fromJson(json['address'] as Map<String, dynamic>),
         createdBy: json['createdBy'] as String,
         email: json['email'] as String,
@@ -86,6 +88,13 @@ class Company implements Comparable<Company> {
         logoURL: json['logoURL'] as String?,
         website: json['website'] as String?,
       );
+    } catch (e, st) {
+      debugPrint('Company.fromJson failed with data: $json');
+      debugPrint('Company.fromJson error: $e');
+      debugPrintStack(stackTrace: st);
+      throw FormatException('Failed to parse Company from JSON: $e', e);
+    }
+  }
 
   Map<String, dynamic> toJson() => {
         'address': address.toJson(),

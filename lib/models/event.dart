@@ -163,12 +163,14 @@ class Event implements Comparable<Event> {
     this.ticketSalesDates,
   });
 
-  factory Event.fromJson(Map<String, dynamic> json) => Event(
+  factory Event.fromJson(Map<String, dynamic> json) {
+    try {
+      return Event(
         companyId: json['companyId'] as String,
         createdBy: json['createdBy'] as String,
         dates: DateTimeRange(
-          start: DateTime.tryParse(json['dates']['start']) ?? DateTime.now(),
-          end: DateTime.tryParse(json['dates']['end']) ?? DateTime.now(),
+          start: DateTime.tryParse(json['dates']['start'] as String) ?? DateTime.now(),
+          end: DateTime.tryParse(json['dates']['end'] as String) ?? DateTime.now(),
         ),
         description: json['description'] as String,
         doorTicketsAvailable: json['doorTicketsAvailable'] as bool?,
@@ -184,15 +186,32 @@ class Event implements Comparable<Event> {
         isWheelchairAccessible: json['isWheelchairAccessible'] as bool? ?? false,
         location: Location.fromJson(json['location'] as Map<String, dynamic>),
         maxTicketsAvailable: json['maxTicketsAvailable'] as int?,
-        ticketPrice: json['ticketPrice'] != null ? Money.fromJson(json['ticketPrice']) : null,
-        ticketSalesDates: DateTimeRange(
-          start: DateTime.tryParse(json['ticketSalesDates']['start']) ?? DateTime.now(),
-          end: DateTime.tryParse(json['ticketSalesDates']['end']) ?? DateTime.now(),
-        ),
+        ticketPrice: json['ticketPrice'] != null
+            ? Money.fromJson(json['ticketPrice'] as Map<String, dynamic>)
+            : null,
+        ticketSalesDates: json['ticketSalesDates'] != null
+            ? DateTimeRange(
+                start: DateTime.tryParse(
+                      json['ticketSalesDates']['start'] as String,
+                    ) ??
+                    DateTime.now(),
+                end: DateTime.tryParse(
+                      json['ticketSalesDates']['end'] as String,
+                    ) ??
+                    DateTime.now(),
+              )
+            : null,
         times: TimeRange.fromJson(json['times'] as Map<String, dynamic>),
         title: json['title'] as String,
         type: EventType.fromString(json['type'] as String),
       );
+    } catch (e, st) {
+      debugPrint('Event.fromJson failed with data: $json');
+      debugPrint('Event.fromJson error: $e');
+      debugPrintStack(stackTrace: st);
+      throw FormatException('Failed to parse Event from JSON: $e', e);
+    }
+  }
 
   Map<String, dynamic> toJson() => {
         'companyId': companyId,

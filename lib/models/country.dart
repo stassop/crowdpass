@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class Country implements Comparable<Country> {
   final String name;
   final String nativeName;
@@ -20,16 +22,23 @@ class Country implements Comparable<Country> {
   });
 
   factory Country.fromJson(Map<String, dynamic> json) {
-    return Country(
-      name: json['name'] as String,
-      nativeName: json['nativeName'] as String,
-      isoAlpha2Code: json['isoAlpha2Code'] as String,
-      isoAlpha3Code: json['isoAlpha3Code'] as String,
-      locales: List<String>.from(json['locales'] ?? []),
-      utcTimeZones: List<String>.from(json['utcTimeZones'] ?? []),
-      currencyCode: json['currencyCode'] as String,
-      phoneCode: json['phoneCode'] as String? ?? '',
-    );
+    try {
+      return Country(
+        name: json['name'] as String,
+        nativeName: json['nativeName'] as String,
+        isoAlpha2Code: json['isoAlpha2Code'] as String,
+        isoAlpha3Code: json['isoAlpha3Code'] as String,
+        locales: List<String>.from(json['locales'] ?? []),
+        utcTimeZones: List<String>.from(json['utcTimeZones'] ?? []),
+        currencyCode: json['currencyCode'] as String,
+        phoneCode: json['phoneCode'] as String? ?? '',
+      );
+    } catch (e, st) {
+      debugPrint('Country.fromJson failed with data: $json');
+      debugPrint('Country.fromJson error: $e');
+      debugPrintStack(stackTrace: st);
+      throw FormatException('Failed to parse Country from JSON: $e', e);
+    }
   }
 
   Map<String, dynamic> toJson() {

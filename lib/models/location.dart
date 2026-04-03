@@ -110,8 +110,10 @@ class Location {
         state: json['state'] as String?,
       );
     } catch (e) {
-      debugPrint('Error parsing Location from JSON: $e');
-      throw FormatException('Invalid Location JSON: $e\nJSON: $json');
+      debugPrint('Location.fromJson failed with data: $json');
+      debugPrint('Location.fromJson error: $e');
+      debugPrintStack(stackTrace: StackTrace.current);
+      throw FormatException('Failed to parse Location from JSON: $e', e);
     }
   }
 

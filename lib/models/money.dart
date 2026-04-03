@@ -48,15 +48,21 @@ class Currency {
   int get hashCode => isoCode.hashCode; // Updated hashCode
 
   factory Currency.fromJson(Map<String, dynamic> json) {
-    // Expect json to contain 'isoCode', 'name', 'symbol', 'nativeName', and 'countries'
-    return Currency(
-      isoCode: json['isoCode'] as String, // Updated key
-      name: json['name'] as String,
-      symbol: json['symbol'] as String,
-      nativeName: json['nativeName'] as String,
-      // Fixed: Using unmodifiable list to maintain strict immutability
-      countries: List<String>.unmodifiable(json['countries'] as List),
-    );
+    try {
+      return Currency(
+        isoCode: json['isoCode'] as String, // Updated key
+        name: json['name'] as String,
+        symbol: json['symbol'] as String,
+        nativeName: json['nativeName'] as String,
+        // Fixed: Using unmodifiable list to maintain strict immutability
+        countries: List<String>.unmodifiable(json['countries'] as List),
+      );
+    } catch (e, st) {
+      debugPrint('Currency.fromJson failed with data: $json');
+      debugPrint('Currency.fromJson error: $e');
+      debugPrintStack(stackTrace: st);
+      throw FormatException('Failed to parse Currency from JSON: $e', e);
+    }
   }
 
   Map<String, dynamic> toJson() => {

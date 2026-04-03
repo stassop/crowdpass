@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:crowdpass/models/country.dart';
 
 class UserProfile {
@@ -17,7 +19,9 @@ class UserProfile {
     this.photoURL,
   });
 
-  factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    try {
+      return UserProfile(
         uid: json['uid'] as String,
         displayName: json['displayName'] as String,
         email: json['email'] as String,
@@ -26,6 +30,13 @@ class UserProfile {
         country: Country.fromJson(json['country'] as Map<String, dynamic>),
         photoURL: json['photoURL'] as String?,
       );
+    } catch (e, st) {
+      debugPrint('UserProfile.fromJson failed with data: $json');
+      debugPrint('UserProfile.fromJson error: $e');
+      debugPrintStack(stackTrace: st);
+      throw FormatException('Failed to parse UserProfile from JSON: $e', e);
+    }
+  }
 
   Map<String, dynamic> toJson() => {
         'uid': uid,
