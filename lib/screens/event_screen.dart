@@ -105,23 +105,13 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     // If the event isn't free, ensure ticket price and sale dates are provided
-    if (!_isFree) {
-      if (_ticketPrice == null) {
-        ErrorDialog.show(
-          context,
-          title: 'Validation Error',
-          message: 'Ticket price is required for paid events.',
-        );
-        return;
-      }
-      if (_ticketSalesDates == null) {
-        ErrorDialog.show(
-          context,
-          title: 'Validation Error',
-          message: 'Ticket sale dates are required for paid events.',
-        );
-        return;
-      }
+    if (!_isFree && (_ticketPrice == null || _ticketPrice!.amount <= 0 || _ticketSalesDates == null)) {
+      ErrorDialog.show(
+        context,
+        title: 'Missing Ticket Info',
+        message: 'Paid events require a valid ticket price and sales dates.',
+      );
+      return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -205,10 +195,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     }
   }
 
-  void _updateDatesAndTimes({
-    DateTimeRange? dates,
+  void _updateTicketSalesDates({
     DateTimeRange? ticketSalesDates,
-    TimeRange? times,
     bool? doorTicketsAvailable,
   }) {
     final newDates = dates ?? _dates;
@@ -224,7 +212,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       _doorTicketsAvailable = newDoorTickets;
     });
 
-    // Don't validate until all fields exist.
+    // Don't validate until all required fields exist.
     if (newDates == null || newTicketSales == null || newTimes == null) {
       return;
     }
@@ -245,6 +233,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       newTimes.end.minute,
     );
 
+    // Event must end after it starts.
     if (eventEnd.isBefore(eventStart) ||
         eventEnd.isAtSameMomentAs(eventStart)) {
       if (mounted) {
@@ -257,9 +246,10 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       return;
     }
 
+    // Determine the latest allowed ticket sales moment.
     final salesCutoffDateTime = newDoorTickets
         ? eventEnd.subtract(const Duration(minutes: 15))
-        : eventStart.subtract(const Duration(minutes: 1));
+        : eventStart;
 
     final ticketSalesStart = DateTime(
       newTicketSales.start.year,
@@ -268,18 +258,12 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       0, 0, 0,
     );
 
-    var ticketSalesEnd = DateTime(
+    final ticketSalesEnd = DateTime(
       newTicketSales.end.year,
       newTicketSales.end.month,
       newTicketSales.end.day,
       23, 59, 59,
     );
-
-    if (ticketSalesEnd.year == salesCutoffDateTime.year &&
-        ticketSalesEnd.month == salesCutoffDateTime.month &&
-        ticketSalesEnd.day == salesCutoffDateTime.day) {
-      ticketSalesEnd = salesCutoffDateTime;
-    }
 
     String? errorMessage;
 
@@ -463,8 +447,10 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           isEditable: _isEditing,
                           isRequired: true,
                           onChanged: (value) {
-                            _updateDatesAndTimes(dates: value);
-                            _updateHasChanged(event);
+                            setState(() {
+                              _dates = value;
+                              _updateHasChanged(event);
+                            });
                           },
                         ),
 
@@ -475,8 +461,10 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           isEditable: _isEditing,
                           isRequired: true,
                           onChanged: (value) {
-                            _updateDatesAndTimes(times: value);
-                            _updateHasChanged(event);
+                            setState(() {
+                              _times = value;
+                              _updateHasChanged(event);
+                            });
                           },
                         ),
 
@@ -519,7 +507,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                                   labelText: 'Ticket Sale Dates',
                                 ),
                                 onChanged: (value) {
-                                  _updateDatesAndTimes(ticketSalesDates: value);
+                                  _updateTicketSalesDates(value);
                                   _updateHasChanged(event);
                                 },
                               ),
