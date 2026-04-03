@@ -195,8 +195,10 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     }
   }
 
-  void _updateTicketSalesDates({
+  void _updateDatesAndTimes({
+    DateTimeRange? dates,
     DateTimeRange? ticketSalesDates,
+    TimeRange? times,
     bool? doorTicketsAvailable,
   }) {
     final newDates = dates ?? _dates;
@@ -447,10 +449,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           isEditable: _isEditing,
                           isRequired: true,
                           onChanged: (value) {
-                            setState(() {
-                              _dates = value;
-                              _updateHasChanged(event);
-                            });
+                            _updateDatesAndTimes(dates: value);
+                            _updateHasChanged(event);
                           },
                         ),
 
@@ -461,10 +461,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           isEditable: _isEditing,
                           isRequired: true,
                           onChanged: (value) {
-                            setState(() {
-                              _times = value;
-                              _updateHasChanged(event);
-                            });
+                            _updateDatesAndTimes(times: value);
+                            _updateHasChanged(event);
                           },
                         ),
 
@@ -507,7 +505,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                                   labelText: 'Ticket Sale Dates',
                                 ),
                                 onChanged: (value) {
-                                  _updateTicketSalesDates(value);
+                                  _updateDatesAndTimes(ticketSalesDates: value);
                                   _updateHasChanged(event);
                                 },
                               ),
