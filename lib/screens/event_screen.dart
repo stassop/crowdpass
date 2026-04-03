@@ -214,8 +214,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       _doorTicketsAvailable = newDoorTickets;
     });
 
-    // Don't validate until all required fields exist.
-    if (newDates == null || newTicketSales == null || newTimes == null) {
+    // Don't validate until all required event fields exist.
+    if (newDates == null || newTimes == null) {
       return;
     }
 
@@ -236,22 +236,25 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     );
 
     // Event must end after it starts.
+    // If the user wants an overnight event, they should select a date range
+    // that includes the next day.
     if (eventEnd.isBefore(eventStart) ||
         eventEnd.isAtSameMomentAs(eventStart)) {
       if (mounted) {
         ErrorDialog.show(
           context,
           title: 'Schedule Error',
-          message: 'Event end must be after the start.',
+          message:
+              'Event end must be after the start. '
+              'If your event continues after midnight, select a wider date range.',
         );
       }
       return;
     }
 
-    // Determine the latest allowed ticket sales moment.
-    final salesCutoffDateTime = newDoorTickets
-        ? eventEnd.subtract(const Duration(minutes: 15))
-        : eventStart;
+    if (newTicketSales == null) {
+      return;
+    }
 
     final ticketSalesStart = DateTime(
       newTicketSales.start.year,
@@ -260,29 +263,29 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       0, 0, 0,
     );
 
-    final ticketSalesEnd = DateTime(
+    var ticketSalesEnd = DateTime(
       newTicketSales.end.year,
       newTicketSales.end.month,
       newTicketSales.end.day,
       23, 59, 59,
     );
 
-    String? errorMessage;
+    final salesCutoffDateTime = newDoorTickets
+        ? eventEnd.subtract(const Duration(minutes: 15))
+        : eventStart;
 
-    if (ticketSalesStart.isAfter(ticketSalesEnd)) {
-      errorMessage = 'Ticket sales start must be before sales end.';
-    } else if (ticketSalesEnd.isAfter(salesCutoffDateTime)) {
-      errorMessage = newDoorTickets
-          ? 'Ticket sales end must be before event end.'
-          : 'Ticket sales must end before the event starts.';
+    if (ticketSalesEnd.isAfter(salesCutoffDateTime)) {
+      ticketSalesEnd = salesCutoffDateTime;
     }
 
-    if (errorMessage != null) {
+    // Make sure ticket sales dates never exceed event dates
+    if (ticketSalesEnd.isAfter(eventEnd) ||
+        ticketSalesEnd.isBefore(ticketSalesStart)) {
       if (mounted) {
         ErrorDialog.show(
           context,
           title: 'Schedule Error',
-          message: errorMessage,
+          message: 'Ticket sales dates must be within the event dates.',
         );
       }
       return;
