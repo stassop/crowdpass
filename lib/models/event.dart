@@ -191,14 +191,8 @@ class Event implements Comparable<Event> {
             : null,
         ticketSalesDates: json['ticketSalesDates'] != null
             ? DateTimeRange(
-                start: DateTime.tryParse(
-                      json['ticketSalesDates']['start'] as String,
-                    ) ??
-                    DateTime.now(),
-                end: DateTime.tryParse(
-                      json['ticketSalesDates']['end'] as String,
-                    ) ??
-                    DateTime.now(),
+                start: DateTime.tryParse( json['ticketSalesDates']['start'] as String) ?? DateTime.now(),
+                end: DateTime.tryParse( json['ticketSalesDates']['end'] as String) ?? DateTime.now(),
               )
             : null,
         times: TimeRange.fromJson(json['times'] as Map<String, dynamic>),

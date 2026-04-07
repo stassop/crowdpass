@@ -522,6 +522,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           initialValue: _maxTicketsAvailable,
                           isEditable: _isEditing,
                           hasDecimals: false,
+                          isRequired: !_isFree,
                           decoration: const InputDecoration(
                             labelText: 'Max Tickets Available',
                             prefixIcon: Icon(Icons.confirmation_number),
@@ -540,6 +541,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           labelText: 'Free Event',
                           initialValue: _isFree,
                           isEditable: _isEditing,
+                          isRequired: true,
                           leading: const Icon(Icons.money_off),
                           onChanged: (value) {
                             setState(() {
@@ -553,6 +555,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           labelText: 'Door Tickets Available',
                           initialValue: _doorTicketsAvailable ?? false,
                           isEditable: _isEditing,
+                          isRequired: !_isFree,
                           leading: const Icon(Icons.door_front_door),
                           onChanged: (value) {
                             _updateDatesAndTimes(doorTicketsAvailable: value);
@@ -573,6 +576,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           labelText: 'Outdoor Event',
                           initialValue: _isOutdoor,
                           isEditable: _isEditing,
+                          isRequired: true,
                           leading: const Icon(Icons.nature_people),
                           onChanged: (value) {
                             setState(() {
@@ -586,6 +590,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           labelText: 'Wheelchair Accessible',
                           initialValue: _isWheelchairAccessible,
                           isEditable: _isEditing,
+                          isRequired: true,
                           leading: const Icon(Icons.accessible),
                           onChanged: (value) {
                             setState(() {
