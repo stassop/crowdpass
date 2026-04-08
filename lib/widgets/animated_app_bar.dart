@@ -119,16 +119,6 @@ class _AnimatedAppBarState extends State<AnimatedAppBar> {
                         color: theme.colorScheme.onPrimary,
                       ),
                     ),
-                    errorBorder: widget.validator != null
-                        ? const UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.redAccent,
-                            ),
-                          )
-                        : null,
-                    errorStyle: const TextStyle(
-                      color: Colors.redAccent,
-                    ),
                   ),
                   style: theme.textTheme.titleLarge?.copyWith(
                     color: theme.colorScheme.onPrimary,

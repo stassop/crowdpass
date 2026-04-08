@@ -4,17 +4,17 @@ class EditableSwitchField extends StatefulWidget {
   final String labelText;
   final Widget? leading;
   final bool isEditable;
-  final bool initialValue;
+  final bool? initialValue; // Allow null as an initial value
   final bool isRequired;
-  final ValueChanged<bool>? onChanged;
-  final String? Function(bool)? validator;
+  final ValueChanged<bool>? onChanged; // When changed always return a non-null bool
+  final String? Function(bool?)? validator;
 
   const EditableSwitchField({
     super.key,
     required this.isEditable,
     required this.labelText,
     required this.onChanged,
-    this.initialValue = false,
+    this.initialValue,
     this.leading,
     this.validator,
     this.isRequired = false,
@@ -25,7 +25,7 @@ class EditableSwitchField extends StatefulWidget {
 }
 
 class _EditableSwitchFieldState extends State<EditableSwitchField> {
-  late bool _value;
+  bool? _value; // Allow null as the internal value
 
   @override
   void initState() {
@@ -53,14 +53,14 @@ class _EditableSwitchFieldState extends State<EditableSwitchField> {
       color: theme.colorScheme.error,
     );
 
-    return FormField<bool>(
+    return FormField<bool?>(
       initialValue: _value,
       validator: (value) {
-        // isRequired means "must not be null" (false is allowed)
+        // If isRequired is true, null is not allowed
         if (widget.isRequired && value == null) {
           return 'This field is required.';
         }
-        return widget.validator?.call(value ?? false);
+        return widget.validator?.call(value);
       },
       builder: (field) {
         final errorText = field.errorText;
@@ -69,14 +69,14 @@ class _EditableSwitchFieldState extends State<EditableSwitchField> {
           return SwitchListTile(
             title: Text(widget.labelText),
             secondary: widget.leading,
-            value: _value,
+            value: _value ?? false, // Default to false for the switch
             activeThumbColor: theme.colorScheme.primary,
             onChanged: (newValue) {
               setState(() {
                 _value = newValue;
               });
               field.didChange(newValue);
-              widget.onChanged?.call(newValue);
+              widget.onChanged?.call(newValue); // Always return bool
             },
             subtitle: errorText != null
                 ? Text(errorText, style: errorTextStyle)
@@ -91,10 +91,9 @@ class _EditableSwitchFieldState extends State<EditableSwitchField> {
               ? Text(errorText, style: errorTextStyle)
               : null,
           trailing: Icon(
-            _value ? Icons.check : Icons.close,
-            size: 24.0,
-            color: _value
-                ? theme.colorScheme.primary
+            _value == true ? Icons.check : Icons.close,
+            color: _value == true
+                ? Colors.green // Green for true
                 : theme.colorScheme.error,
           ),
         );
