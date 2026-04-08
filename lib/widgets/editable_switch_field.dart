@@ -47,7 +47,7 @@ class _EditableSwitchFieldState extends State<EditableSwitchField> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     // Define the error style using the existing theme rather than inline properties
     final errorTextStyle = theme.textTheme.bodySmall?.copyWith(
       color: theme.colorScheme.error,
@@ -56,7 +56,8 @@ class _EditableSwitchFieldState extends State<EditableSwitchField> {
     return FormField<bool>(
       initialValue: _value,
       validator: (value) {
-        if (widget.isRequired && (value == null || value == false)) {
+        // isRequired means "must not be null" (false is allowed)
+        if (widget.isRequired && value == null) {
           return 'This field is required.';
         }
         return widget.validator?.call(value ?? false);
@@ -81,22 +82,22 @@ class _EditableSwitchFieldState extends State<EditableSwitchField> {
                 ? Text(errorText, style: errorTextStyle)
                 : null,
           );
-        } else {
-          return ListTile(
-            title: Text(widget.labelText),
-            leading: widget.leading,
-            subtitle: errorText != null
-                ? Text(errorText, style: errorTextStyle)
-                : null,
-            trailing: Icon(
-              _value ? Icons.check : Icons.close,
-              size: 24.0,
-              color: _value
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.error,
-            ),
-          );
         }
+
+        return ListTile(
+          title: Text(widget.labelText),
+          leading: widget.leading,
+          subtitle: errorText != null
+              ? Text(errorText, style: errorTextStyle)
+              : null,
+          trailing: Icon(
+            _value ? Icons.check : Icons.close,
+            size: 24.0,
+            color: _value
+                ? theme.colorScheme.primary
+                : theme.colorScheme.error,
+          ),
+        );
       },
     );
   }
