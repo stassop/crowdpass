@@ -39,7 +39,11 @@ class _EditableAddressFieldState extends State<EditableAddressField> {
   void didUpdateWidget(EditableAddressField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.location != oldWidget.location) {
-      setState(() => _selectedLocation = widget.location);
+      // Defer to avoid "setState() called during build" (e.g. when SearchController closes).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _selectedLocation = widget.location);
+      });
     }
   }
 
@@ -91,6 +95,7 @@ class _EditableAddressFieldState extends State<EditableAddressField> {
     return DebouncedSearchField<Location>(
       initialValue: _selectedLocation,
       isEditable: widget.isEditable,
+      hintText: 'Search for an address',
       validator: (value) {
         if (widget.isRequired && value == null) {
           return 'Please select a location';

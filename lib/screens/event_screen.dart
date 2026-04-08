@@ -56,6 +56,12 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   bool _isEditing = false;
   bool _hasChanged = false;
 
+  // Prevent infinite rebuild loops by only applying provider -> form state once per event.
+  String? _lastResetEventId;
+
+  // Auto-enable editing once for "new event" (no eventId).
+  bool _didInitCreateMode = false;
+
   void _updateHasChanged(Event? event) {
     _hasChanged =
         _dates != event?.dates ||
@@ -105,7 +111,10 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     // If the event isn't free, ensure ticket price and sale dates are provided
-    if (!_isFree && (_ticketPrice == null || _ticketPrice!.amount <= 0 || _ticketSalesDates == null)) {
+    if (!_isFree &&
+        (_ticketPrice == null ||
+            _ticketPrice!.amount <= 0 ||
+            _ticketSalesDates == null)) {
       ErrorDialog.show(
         context,
         title: 'Missing Ticket Info',
@@ -124,54 +133,58 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
     try {
       if (eventId == null) {
-        await ref.read(eventNotifier.notifier).createEvent(
-          dates: _dates!,
-          doorTicketsAvailable: _doorTicketsAvailable,
-          description: _description!,
-          maxTicketsAvailable: _maxTicketsAvailable,
-          ticketSalesDates: _ticketSalesDates!,
-          isFree: _isFree,
-          isOutdoor: _isOutdoor,
-          isWheelchairAccessible: _isWheelchairAccessible,
-          location: _location!,
-          title: _title!,
-          type: _type!,
-          times: _times!,
-          isEpilepsyFriendly: _isEpilepsyFriendly,
-          isFamilyFriendly: _isFamilyFriendly,
-          isHearingAidCompatible: _isHearingAidCompatible,
-          isLowSensoryFriendly: _isLowSensoryFriendly,
-          isPetFriendly: _isPetFriendly,
-          imagePath: _imageURL,
-        );
+        await ref
+            .read(eventNotifier.notifier)
+            .createEvent(
+              dates: _dates!,
+              doorTicketsAvailable: _doorTicketsAvailable,
+              description: _description!,
+              maxTicketsAvailable: _maxTicketsAvailable,
+              ticketSalesDates: _ticketSalesDates!,
+              isFree: _isFree,
+              isOutdoor: _isOutdoor,
+              isWheelchairAccessible: _isWheelchairAccessible,
+              location: _location!,
+              title: _title!,
+              type: _type!,
+              times: _times!,
+              isEpilepsyFriendly: _isEpilepsyFriendly,
+              isFamilyFriendly: _isFamilyFriendly,
+              isHearingAidCompatible: _isHearingAidCompatible,
+              isLowSensoryFriendly: _isLowSensoryFriendly,
+              isPetFriendly: _isPetFriendly,
+              imagePath: _imageURL,
+            );
       } else {
         final event = ref.read(eventProvider(eventId)).value;
         if (event == null) {
           throw Exception('Event not found');
         }
-        await ref.read(eventNotifier.notifier).updateEvent(
-          updatedEvent: event.copyWith(
-            dates: _dates!,
-            doorTicketsAvailable: _doorTicketsAvailable,
-            description: _description!,
-            imageURL: _imageURL,
-            isEpilepsyFriendly: _isEpilepsyFriendly,
-            isFamilyFriendly: _isFamilyFriendly,
-            isFree: _isFree,
-            isHearingAidCompatible: _isHearingAidCompatible,
-            isLowSensoryFriendly: _isLowSensoryFriendly,
-            isOutdoor: _isOutdoor,
-            isPetFriendly: _isPetFriendly,
-            isWheelchairAccessible: _isWheelchairAccessible,
-            location: _location!,
-            maxTicketsAvailable: _maxTicketsAvailable,
-            type: _type!,
-            ticketSalesDates: _ticketSalesDates!,
-            title: _title!,
-            times: _times!,
-          ),
-          imagePath: _imageURL,
-        );
+        await ref
+            .read(eventNotifier.notifier)
+            .updateEvent(
+              updatedEvent: event.copyWith(
+                dates: _dates!,
+                doorTicketsAvailable: _doorTicketsAvailable,
+                description: _description!,
+                imageURL: _imageURL,
+                isEpilepsyFriendly: _isEpilepsyFriendly,
+                isFamilyFriendly: _isFamilyFriendly,
+                isFree: _isFree,
+                isHearingAidCompatible: _isHearingAidCompatible,
+                isLowSensoryFriendly: _isLowSensoryFriendly,
+                isOutdoor: _isOutdoor,
+                isPetFriendly: _isPetFriendly,
+                isWheelchairAccessible: _isWheelchairAccessible,
+                location: _location!,
+                maxTicketsAvailable: _maxTicketsAvailable,
+                type: _type!,
+                ticketSalesDates: _ticketSalesDates!,
+                title: _title!,
+                times: _times!,
+              ),
+              imagePath: _imageURL,
+            );
       }
 
       if (mounted) {
@@ -260,14 +273,18 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       newTicketSales.start.year,
       newTicketSales.start.month,
       newTicketSales.start.day,
-      0, 0, 0,
+      0,
+      0,
+      0,
     );
 
     var ticketSalesEnd = DateTime(
       newTicketSales.end.year,
       newTicketSales.end.month,
       newTicketSales.end.day,
-      23, 59, 59,
+      23,
+      59,
+      59,
     );
 
     final salesCutoffDateTime = newDoorTickets
@@ -305,6 +322,9 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     final eventAsync = ref.watch(eventProvider(eventId));
     final user = ref.watch(authProvider).value;
 
+    // Determine whether we're creating a new event based on navigation.
+    final isCreatingByRoute = (eventId == null || eventId.isEmpty);
+
     return eventAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
@@ -318,19 +338,32 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         body: Center(child: Text('Auth Error: $err')),
       ),
       data: (event) {
-        // Set fields from company when new value arrives
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) setState(() => _resetFields(event));
-        });
-
-        final isCreating = event == null;
-        final isOwner = isCreating || (event.createdBy == user?.uid);
-        final isLoading = ref.watch(eventNotifier).isLoading;
-
-        // Auto-enable editing for new events
-        if (isCreating && !_isEditing) {
-          _isEditing = true;
+        // Auto-enable editing once for new events.
+        if (isCreatingByRoute && !_didInitCreateMode) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            setState(() {
+              _isEditing = true;
+              _didInitCreateMode = true;
+            });
+          });
         }
+
+        // Only reset fields when a real event arrives / changes.
+        final incomingId = event?.id;
+        if (incomingId != null && _lastResetEventId != incomingId) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            setState(() {
+              _resetFields(event);
+              _lastResetEventId = incomingId;
+            });
+          });
+        }
+
+        final isCreating = isCreatingByRoute;
+        final isOwner = isCreating || (event?.createdBy == user?.uid);
+        final isLoading = ref.watch(eventNotifier).isLoading;
 
         return Scaffold(
           body: Form(
@@ -345,7 +378,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   actions: [
-                    if (isOwner && !isCreating)
+                    if (isOwner && !isCreating && event != null)
                       IconButton(
                         onPressed: isLoading
                             ? null
@@ -365,10 +398,10 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                   ],
                   onTitleChanged: (value) {
                     setState(() {
-                        _title = value;
-                        _updateHasChanged(event);
-                      });
-                    },
+                      _title = value;
+                      _updateHasChanged(event);
+                    });
+                  },
                   onPhotoURLChanged: (value) {
                     setState(() {
                       _imageURL = value;
@@ -571,7 +604,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                         ),
 
                         const SizedBox(height: 16),
-                        
+
                         EditableSwitchField(
                           labelText: 'Outdoor Event',
                           initialValue: _isOutdoor,

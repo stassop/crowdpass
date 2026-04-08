@@ -3,11 +3,10 @@ import 'package:flutter/services.dart';
 
 import 'package:crowdpass/widgets/editable_text_field.dart';
 
-// Firestore limits and Web Safe Integer limits
+// Firestore uses 64-bit integers, but Flutter Web (JavaScript) 
+// has a safe integer limit of 2^53 - 1. 
 const num _defaultMin = 0;
-// 2^53 - 1 is the max safe integer in JavaScript (Flutter Web).
-// If you are purely native, you could use 9223372036854775807 (Dart's max int).
-const num _defaultMaxInt = 9007199254740991;
+const num _defaultMaxInt = 9007199254740991; 
 
 class EditableNumberField extends StatefulWidget {
   final num? min;
@@ -23,7 +22,7 @@ class EditableNumberField extends StatefulWidget {
   const EditableNumberField({
     super.key,
     this.min = _defaultMin,
-    this.max,
+    this.max = _defaultMaxInt,
     this.hasDecimals = false,
     this.decoration,
     this.initialValue,
@@ -46,7 +45,6 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
     super.initState();
     _value = widget.initialValue ?? 0;
 
-    // Don't show '0' if it's not required and has no initial value
     final initialText = (widget.initialValue == null && !widget.isRequired)
         ? ''
         : _value.toString();
@@ -77,7 +75,6 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine the absolute max based on whether it's a decimal or integer
     final num absoluteMax =
         widget.max ?? (widget.hasDecimals ? double.maxFinite : _defaultMaxInt);
 
@@ -89,11 +86,9 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
           ? const TextInputType.numberWithOptions(decimal: true)
           : TextInputType.number,
       inputFormatters: [
-        // Prevents letters and negative signs (enforcing min 0 at the keyboard level)
         FilteringTextInputFormatter.allow(
           RegExp(widget.hasDecimals ? r'[0-9.]' : r'[0-9]'),
         ),
-        // If decimals are allowed, prevent entering more than one decimal point
         if (widget.hasDecimals)
           TextInputFormatter.withFunction((oldValue, newValue) {
             final text = newValue.text;
@@ -102,6 +97,17 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
             }
             return newValue;
           }),
+        // Prevents entering a value that exceeds the absolute maximum
+        TextInputFormatter.withFunction((oldValue, newValue) {
+          if (newValue.text.isEmpty) return newValue;
+          final val = widget.hasDecimals 
+              ? double.tryParse(newValue.text) 
+              : int.tryParse(newValue.text);
+          if (val != null && val > absoluteMax) {
+            return oldValue;
+          }
+          return newValue;
+        }),
       ],
       onChanged: _onTextChanged,
       decoration: (widget.decoration ?? const InputDecoration()).copyWith(
@@ -113,14 +119,13 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
 
         if (isEmpty) {
           if (widget.isRequired) return 'This field is required';
-          return null; // Valid if empty and not required
+          return null;
         }
 
         final parsedValue = widget.hasDecimals
             ? double.tryParse(text)
             : int.tryParse(text);
 
-        // Custom validator takes precedence if provided
         if (widget.validator != null) {
           return widget.validator!(parsedValue);
         }
@@ -135,6 +140,7 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
           return 'Must be ≥ $effectiveMin';
         }
 
+        // Final boundary check upon submission
         if (parsedValue > absoluteMax) {
           return 'Must be ≤ $absoluteMax';
         }

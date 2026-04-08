@@ -73,7 +73,8 @@ class DebouncedSearchField<T> extends StatefulWidget {
   final String? hintText;
 
   @override
-  State<DebouncedSearchField<T>> createState() => _DebouncedSearchFieldState<T>();
+  State<DebouncedSearchField<T>> createState() =>
+      _DebouncedSearchFieldState<T>();
 }
 
 class _DebouncedSearchFieldState<T> extends State<DebouncedSearchField<T>> {
@@ -91,7 +92,7 @@ class _DebouncedSearchFieldState<T> extends State<DebouncedSearchField<T>> {
       (timer) {
         _activeTimer = timer;
         if (mounted) setState(() => _isLoading = true);
-        
+
         timer.future.whenComplete(() {
           if (mounted && _activeTimer == timer) {
             setState(() => _isLoading = false);
@@ -113,9 +114,14 @@ class _DebouncedSearchFieldState<T> extends State<DebouncedSearchField<T>> {
   void didUpdateWidget(DebouncedSearchField<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.initialValue != oldWidget.initialValue) {
-      _searchController.text = widget.initialValue != null
-          ? widget.getDisplayText(widget.initialValue!)
-          : '';
+      // Defer text updates to avoid SearchController notifications causing
+      // Form rebuilds during the build phase (e.g. when the search view closes).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _searchController.text = widget.initialValue != null
+            ? widget.getDisplayText(widget.initialValue!)
+            : '';
+      });
     }
   }
 
@@ -137,17 +143,24 @@ class _DebouncedSearchFieldState<T> extends State<DebouncedSearchField<T>> {
   }
 
   void _handleSelection(T? result, FormFieldState<T> field) {
-    field.didChange(result);
-    widget.onResultSelected(result);
-    if (result != null) {
-      _searchController.text = widget.getDisplayText(result);
-      if (!pastResults.contains(result)) {
-        pastResults.insert(0, result);
-        if (pastResults.length > 10) pastResults.removeLast();
+    // If this is triggered while Flutter is building (can happen when the
+    // SearchController dispatches notifications on close), defer form updates.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      field.didChange(result);
+      widget.onResultSelected(result);
+
+      if (result != null) {
+        _searchController.text = widget.getDisplayText(result);
+        if (!pastResults.contains(result)) {
+          pastResults.insert(0, result);
+          if (pastResults.length > 10) pastResults.removeLast();
+        }
+      } else {
+        _searchController.clear();
       }
-    } else {
-      _searchController.clear();
-    }
+    });
   }
 
   @override
@@ -168,29 +181,27 @@ class _DebouncedSearchFieldState<T> extends State<DebouncedSearchField<T>> {
                 if (!controller.isOpen) controller.openView();
                 if (value.isEmpty) _handleSelection(null, field);
               },
-              decoration: (widget.decoration ?? const InputDecoration())
-                  .copyWith(
-                    errorText: field.errorText,
-                    labelText: widget.decoration?.labelText ?? 'Search',
-                    prefixIcon:
-                        widget.decoration?.prefixIcon ??
-                        const Icon(Icons.search),
-                    suffixIcon:
-                        _searchController.text.isNotEmpty && widget.isEditable
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () => _handleSelection(null, field),
-                          )
-                        : null,
-                  ),
+              decoration: (widget.decoration ?? const InputDecoration()).copyWith(
+                errorText: field.errorText,
+                labelText: widget.decoration?.labelText ?? 'Search',
+                prefixIcon: widget.decoration?.prefixIcon ?? const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty && widget.isEditable
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () => _handleSelection(null, field),
+                      )
+                    : null,
+              ),
             );
           },
-          suggestionsBuilder: (BuildContext context, SearchController controller) async {
+          suggestionsBuilder:
+              (BuildContext context, SearchController controller) async {
             if (_isLoading) {
               return const [LinearProgressIndicator()];
             }
 
-            final Iterable<T>? results = await _debouncedSearch(controller.text);
+            final Iterable<T>? results =
+                await _debouncedSearch(controller.text);
 
             if (results != null && results.isNotEmpty) {
               return results.map((result) {
