@@ -33,7 +33,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
   // Form fields
   DateTimeRange? _dates;
-  bool? _doorTicketsAvailable;
+  bool _doorTicketsAvailable = false;
   String? _description;
   bool? _isEpilepsyFriendly;
   bool? _isFamilyFriendly;
@@ -214,95 +214,99 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     TimeRange? times,
     bool? doorTicketsAvailable,
   }) {
-    final newDates = dates ?? _dates;
-    final newTicketSales = ticketSalesDates ?? _ticketSalesDates;
-    final newTimes = times ?? _times;
-    final newDoorTickets =
-        doorTicketsAvailable ?? _doorTicketsAvailable ?? false;
+    dates ??= _dates;
+    ticketSalesDates ??= _ticketSalesDates;
+    times ??= _times;
+    doorTicketsAvailable ??= _doorTicketsAvailable;
 
     setState(() {
-      _dates = newDates;
-      _ticketSalesDates = newTicketSales;
-      _times = newTimes;
-      _doorTicketsAvailable = newDoorTickets;
+      _dates = dates;
+      _ticketSalesDates = ticketSalesDates;
+      _times = times;
+      _doorTicketsAvailable = doorTicketsAvailable ?? false;
     });
 
     // Don't validate until all required event fields exist.
-    if (newDates == null || newTimes == null) {
+    if (dates == null || times == null) {
       return;
     }
 
     final eventStart = DateTime(
-      newDates.start.year,
-      newDates.start.month,
-      newDates.start.day,
-      newTimes.start.hour,
-      newTimes.start.minute,
+      dates.start.year,
+      dates.start.month,
+      dates.start.day,
+      times.start.hour,
+      times.start.minute,
     );
 
     final eventEnd = DateTime(
-      newDates.end.year,
-      newDates.end.month,
-      newDates.end.day,
-      newTimes.end.hour,
-      newTimes.end.minute,
+      dates.end.year,
+      dates.end.month,
+      dates.end.day,
+      times.end.hour,
+      times.end.minute,
     );
 
     // Event must end after it starts.
-    // If the user wants an overnight event, they should select a date range
-    // that includes the next day.
-    if (eventEnd.isBefore(eventStart) ||
-        eventEnd.isAtSameMomentAs(eventStart)) {
+    if (eventEnd.isBefore(eventStart) || eventEnd.isAtSameMomentAs(eventStart)) {
       if (mounted) {
         ErrorDialog.show(
           context,
           title: 'Schedule Error',
-          message:
-              'Event end must be after the start. '
+          message: 'Event end must be after the start. '
               'If your event continues after midnight, select a wider date range.',
         );
       }
       return;
     }
 
-    if (newTicketSales == null) {
+    if (ticketSalesDates == null) {
       return;
     }
 
-    final ticketSalesStart = DateTime(
-      newTicketSales.start.year,
-      newTicketSales.start.month,
-      newTicketSales.start.day,
+    // Normalize sales dates to whole-day bounds first.
+    var ticketSalesStart = DateTime(
+      ticketSalesDates.start.year,
+      ticketSalesDates.start.month,
+      ticketSalesDates.start.day,
       0,
       0,
       0,
     );
 
     var ticketSalesEnd = DateTime(
-      newTicketSales.end.year,
-      newTicketSales.end.month,
-      newTicketSales.end.day,
+      ticketSalesDates.end.year,
+      ticketSalesDates.end.month,
+      ticketSalesDates.end.day,
       23,
       59,
       59,
     );
 
-    final salesCutoffDateTime = newDoorTickets
+    // If door tickets are available, 
+    // ticket sales can continue until 15 minutes before event end. 
+    // Otherwise, sales must end by event start.
+    final ticketSalesCutoff = doorTicketsAvailable
         ? eventEnd.subtract(const Duration(minutes: 15))
-        : eventStart;
+        : eventStart; 
 
-    if (ticketSalesEnd.isAfter(salesCutoffDateTime)) {
-      ticketSalesEnd = salesCutoffDateTime;
+    // Clamp end: must be <= cutoff (eventEnd-15, and also <= eventStart if no door tickets)
+    if (ticketSalesEnd.isAfter(ticketSalesCutoff)) {
+      ticketSalesEnd = ticketSalesCutoff;
     }
 
-    // Make sure ticket sales dates never exceed event dates
-    if (ticketSalesEnd.isAfter(eventEnd) ||
-        ticketSalesEnd.isBefore(ticketSalesStart)) {
+    // Validate final range
+    if (ticketSalesEnd.isBefore(ticketSalesStart) ||
+        ticketSalesEnd.isAtSameMomentAs(ticketSalesStart)) {
       if (mounted) {
         ErrorDialog.show(
           context,
           title: 'Schedule Error',
-          message: 'Ticket sales dates must be within the event dates.',
+          message:  doorTicketsAvailable
+              ? 'Ticket sales must end at least 15 minutes before the event ends, '
+                  'and sales cannot start after the event begins.'
+              : 'When door tickets are not available, ticket sales must end by the event start time, '
+                  'and sales cannot start after the event begins.',
         );
       }
       return;

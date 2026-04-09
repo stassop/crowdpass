@@ -127,7 +127,7 @@ class Event implements Comparable<Event> {
   final TimeRange times;
   final String title;
   final EventType type;
-  final bool? doorTicketsAvailable;
+  final bool doorTicketsAvailable;
   final String? imageURL;
   final bool? isEpilepsyFriendly;
   final bool? isFamilyFriendly;
@@ -151,7 +151,7 @@ class Event implements Comparable<Event> {
     this.isFree = false, // Default to false
     this.isOutdoor = false, // Default to false
     this.isWheelchairAccessible = false, // Default to false
-    this.doorTicketsAvailable,
+    this.doorTicketsAvailable = false, // Default to false
     this.imageURL,
     this.isEpilepsyFriendly,
     this.isFamilyFriendly,
@@ -173,7 +173,7 @@ class Event implements Comparable<Event> {
           end: DateTime.tryParse(json['dates']['end'] as String) ?? DateTime.now(),
         ),
         description: json['description'] as String,
-        doorTicketsAvailable: json['doorTicketsAvailable'] as bool?,
+        doorTicketsAvailable: json['doorTicketsAvailable'] as bool? ?? false,
         id: json['id'] as String,
         imageURL: json['imageURL'] as String?,
         isEpilepsyFriendly: json['isEpilepsyFriendly'] as bool?,
@@ -184,20 +184,26 @@ class Event implements Comparable<Event> {
         isOutdoor: json['isOutdoor'] as bool? ?? false,
         isPetFriendly: json['isPetFriendly'] as bool?,
         isWheelchairAccessible: json['isWheelchairAccessible'] as bool? ?? false,
-        location: Location.fromJson(json['location'] as Map<String, dynamic>),
+        location: json['location'] != null
+            ? Location.fromJson(json['location'] as Map<String, dynamic>)
+            : throw FormatException('Missing location field'),
         maxTicketsAvailable: json['maxTicketsAvailable'] as int?,
         ticketPrice: json['ticketPrice'] != null
             ? Money.fromJson(json['ticketPrice'] as Map<String, dynamic>)
             : null,
         ticketSalesDates: json['ticketSalesDates'] != null
             ? DateTimeRange(
-                start: DateTime.tryParse( json['ticketSalesDates']['start'] as String) ?? DateTime.now(),
-                end: DateTime.tryParse( json['ticketSalesDates']['end'] as String) ?? DateTime.now(),
+                start: DateTime.tryParse(json['ticketSalesDates']['start'] as String) ?? DateTime.now(),
+                end: DateTime.tryParse(json['ticketSalesDates']['end'] as String) ?? DateTime.now(),
               )
             : null,
-        times: TimeRange.fromJson(json['times'] as Map<String, dynamic>),
+        times: json['times'] != null
+            ? TimeRange.fromJson(json['times'] as Map<String, dynamic>)
+            : throw FormatException('Missing times field'),
         title: json['title'] as String,
-        type: EventType.fromString(json['type'] as String),
+        type: json['type'] != null
+            ? EventType.fromString(json['type'] as String)
+            : EventType.other,
       );
     } catch (e, st) {
       debugPrint('Event.fromJson failed with data: $json');

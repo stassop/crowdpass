@@ -51,7 +51,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
     bool isFree = false, // No longer required
     bool isOutdoor = false, // No longer required
     bool isWheelchairAccessible = false, // No longer required
-    bool? doorTicketsAvailable,
+    bool doorTicketsAvailable = false, // No longer required
     String? imagePath,
     bool? isEpilepsyFriendly,
     bool? isFamilyFriendly,
