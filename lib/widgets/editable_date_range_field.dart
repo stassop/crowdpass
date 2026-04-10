@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:crowdpass/widgets/editable_text_field.dart';
-
 import 'package:crowdpass/services/date_time_service.dart';
+import 'package:crowdpass/widgets/editable_text_field.dart';
 
 class EditableDateRangeField extends StatefulWidget {
   EditableDateRangeField({
@@ -32,13 +31,51 @@ class EditableDateRangeField extends StatefulWidget {
   final DateTime lastDate;
 
   @override
-  State<StatefulWidget> createState() => _DateRangeFieldState();
+  State<EditableDateRangeField> createState() => _DateRangeFieldState();
 }
 
 class _DateRangeFieldState extends State<EditableDateRangeField> {
   DateTimeRange? _dateRange;
+  late final TextEditingController _controller;
 
-  void _showDateTimeRangePicker() async {
+  bool _syncScheduled = false;
+
+  String _format(DateTimeRange? range) {
+    if (range == null) return '';
+    return DateTimeService.formatDateTimeRange(range);
+  }
+
+  void _syncTextController() {
+    final text = _format(_dateRange);
+    if (_controller.text == text) return;
+
+    _controller.value = _controller.value.copyWith(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+      composing: TextRange.empty,
+    );
+  }
+
+  void _syncController({required bool deferIfBuilding}) {
+    // If we're currently in build/layout/paint, a controller write can trigger
+    // Form/TextFormField notifications -> "markNeedsBuild during build".
+    // So coalesce one post-frame update.
+    if (deferIfBuilding) {
+      if (_syncScheduled) return;
+      _syncScheduled = true;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _syncScheduled = false;
+        if (!mounted) return;
+        _syncTextController();
+      });
+      return;
+    }
+
+    _syncTextController();
+  }
+
+  Future<void> _showDateTimeRangePicker() async {
     final DateTimeRange? pickedRange = await showDateRangePicker(
       context: context,
       initialDateRange: _dateRange,
@@ -48,7 +85,8 @@ class _DateRangeFieldState extends State<EditableDateRangeField> {
       helpText: widget.title,
       builder: (BuildContext context, Widget? child) {
         final animation = CurvedAnimation(
-          parent: ModalRoute.of(context)?.animation ?? const AlwaysStoppedAnimation(1),
+          parent: ModalRoute.of(context)?.animation ??
+              const AlwaysStoppedAnimation(1),
           curve: Curves.easeOut,
         );
         return AnimatedBuilder(
@@ -69,10 +107,16 @@ class _DateRangeFieldState extends State<EditableDateRangeField> {
       },
     );
 
+    if (!mounted) return;
+
     if (pickedRange != null && pickedRange != _dateRange) {
       setState(() {
         _dateRange = pickedRange;
       });
+
+      // After closing the picker route we're often mid-transition builds.
+      _syncController(deferIfBuilding: true);
+
       widget.onChanged?.call(pickedRange);
     }
   }
@@ -81,26 +125,32 @@ class _DateRangeFieldState extends State<EditableDateRangeField> {
   void initState() {
     super.initState();
     _dateRange = widget.initialValue;
+    _controller = TextEditingController(text: _format(_dateRange));
   }
 
   @override
   void didUpdateWidget(covariant EditableDateRangeField oldWidget) {
     super.didUpdateWidget(oldWidget);
+
     if (oldWidget.initialValue != widget.initialValue) {
-      setState(() {
-        _dateRange = widget.initialValue;
-      });
+      _dateRange = widget.initialValue;
+
+      // didUpdateWidget is called during rebuild; treat as "defer if building"
+      // to avoid Form markNeedsBuild assertions.
+      _syncController(deferIfBuilding: true);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final dateRangeText = _dateRange != null
-      ? DateTimeService.formatDateTimeRange(_dateRange!)
-      : null;
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return EditableTextField(
-      initialValue: dateRangeText,
+      controller: _controller,
       readOnly: true,
       textStyle: widget.textStyle,
       isEditable: widget.isEditable,
@@ -110,14 +160,14 @@ class _DateRangeFieldState extends State<EditableDateRangeField> {
       ),
       onTap: widget.isEditable ? _showDateTimeRangePicker : null,
       validator: (_) {
-          if (widget.isRequired && _dateRange == null) {
-            return 'Please select a date range';
-          }
-          if (widget.validator != null) {
-            return widget.validator!(_dateRange);
-          }
-          return null;
-        },
+        if (widget.isRequired && _dateRange == null) {
+          return 'Please select a date range';
+        }
+        if (widget.validator != null) {
+          return widget.validator!(_dateRange);
+        }
+        return null;
+      },
     );
   }
 }
