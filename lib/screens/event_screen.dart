@@ -323,9 +323,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     final eventAsync = ref.watch(eventProvider(eventId));
     final user = ref.watch(authProvider).value;
 
-    // Determine whether we're creating a new event based on navigation.
-    final isCreating = (eventId == null || eventId.isEmpty);
-
     return eventAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
@@ -341,6 +338,9 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       data: (event) {
         // Reset fields when event data changes
         _resetFields(event);
+
+        // Determine whether we're creating a new event 
+        final isCreating = eventId == null || eventId.isEmpty || event == null;
 
         // Auto-enable editing once for new events.
         if (isCreating) {
