@@ -56,16 +56,11 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   bool _isEditing = false;
   bool _hasChanged = false;
 
-  // Prevent infinite rebuild loops by only applying provider -> form state once per event.
-  String? _lastResetEventId;
-
-  // Auto-enable editing once for "new event" (no eventId).
-  bool _didInitCreateMode = false;
-
   void _updateHasChanged(Event? event) {
     _hasChanged =
         _dates != event?.dates ||
         _description != event?.description ||
+        _doorTicketsAvailable != event?.doorTicketsAvailable ||
         _imageURL != event?.imageURL ||
         _isEpilepsyFriendly != event?.isEpilepsyFriendly ||
         _isFamilyFriendly != event?.isFamilyFriendly ||
@@ -76,7 +71,9 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         _isPetFriendly != event?.isPetFriendly ||
         _isWheelchairAccessible != event?.isWheelchairAccessible ||
         _location != event?.location ||
+        _maxTicketsAvailable != event?.maxTicketsAvailable ||
         _ticketPrice != event?.ticketPrice ||
+        _ticketSalesDates != event?.ticketSalesDates ||
         _times != event?.times ||
         _title != event?.title ||
         _type != event?.type;
@@ -327,7 +324,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     final user = ref.watch(authProvider).value;
 
     // Determine whether we're creating a new event based on navigation.
-    final isCreatingByRoute = (eventId == null || eventId.isEmpty);
+    final isCreating = (eventId == null || eventId.isEmpty);
 
     return eventAsync.when(
       loading: () =>
@@ -343,29 +340,15 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       ),
       data: (event) {
         // Auto-enable editing once for new events.
-        if (isCreatingByRoute && !_didInitCreateMode) {
+        if (isCreating) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             setState(() {
               _isEditing = true;
-              _didInitCreateMode = true;
             });
           });
         }
 
-        // Only reset fields when a real event arrives / changes.
-        final incomingId = event?.id;
-        if (incomingId != null && _lastResetEventId != incomingId) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            setState(() {
-              _resetFields(event);
-              _lastResetEventId = incomingId;
-            });
-          });
-        }
-
-        final isCreating = isCreatingByRoute;
         final isOwner = isCreating || (event?.createdBy == user?.uid);
         final isLoading = ref.watch(eventNotifier).isLoading;
 
