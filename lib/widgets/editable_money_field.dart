@@ -47,12 +47,14 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
   @override
   void initState() {
     super.initState();
-    
-    _currency = widget.initialMoney?.currency ?? widget.initialCurrency ?? Currency.eur;
+
+    _currency = widget.initialMoney?.currency ??
+        widget.initialCurrency ??
+        Currency.eur;
     _amount = widget.initialMoney?.amount ?? widget.initialValue ?? 0.0;
 
     _controller = TextEditingController(
-      text: widget.isEditable ? _valueToString(_amount) : _money.toString(),
+      text: widget.isEditable ? _numberToString(_amount) : _money.toString(),
     );
 
     _currenciesFuture = _loadCurrencies();
@@ -60,32 +62,35 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
 
   Future<List<Currency>> _loadCurrencies() async {
     try {
-      final jsonString = await rootBundle.loadString('assets/json/currencies.json');
+      final jsonString =
+          await rootBundle.loadString('assets/json/currencies.json');
       final Map<String, dynamic> jsonData = jsonDecode(jsonString);
       final List<dynamic> currenciesRaw = jsonData['currencies'];
-      
-      final currencies = currenciesRaw.map((json) => Currency.fromJson(json)).toList();
+
+      final currencies =
+          currenciesRaw.map((json) => Currency.fromJson(json)).toList();
       final defaultCurrency = _findDefaultInList(currencies);
-      final target = widget.initialMoney?.currency ?? widget.initialCurrency;
+      final initialCurrency = widget.initialMoney?.currency ?? widget.initialCurrency;
 
       if (!mounted) return currencies;
 
-      final resolvedCurrency = target != null 
+      // Try to find the initial currency in the loaded list, fallback to default if not found
+      final resolvedCurrency = initialCurrency != null
           ? currencies.firstWhere(
-              (c) => c.isoCode == target.isoCode,
+              (c) => c.isoCode == initialCurrency.isoCode,
               orElse: () => defaultCurrency,
             )
           : defaultCurrency;
 
       if (_currency != resolvedCurrency) {
         _currency = resolvedCurrency;
-        
+
         // Update the controller so the UI reflects the correct currency symbol when read-only
         if (!widget.isEditable) {
-          _controller.text = _money.toString(); 
+          _controller.text = _money.toString();
         }
       }
-      
+
       return currencies;
     } catch (error) {
       debugPrint('Currency loading error: $error');
@@ -99,7 +104,7 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
     // First try to find a currency matching the user's locale
     final locale = Intl.getCurrentLocale();
     final countryCode = locale.contains('_') ? locale.split('_').last : '';
-    
+
     for (var c in currencies) {
       if (c.countries.contains(countryCode)) {
         return c;
@@ -120,16 +125,26 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
 
   Widget _getCurrencyIcon(Currency currency) {
     switch (currency.symbol) {
-      case '\$': return const Icon(Icons.attach_money);
-      case '€': return const Icon(Icons.euro_symbol);
-      case '£': return const Icon(Icons.currency_pound);
-      case '¥': return const Icon(Icons.currency_yen);
-      case '₹': return const Icon(Icons.currency_rupee);
-      case '₽': return const Icon(Icons.currency_ruble);
-      case '₺': return const Icon(Icons.currency_lira);
-      case '₣': return const Icon(Icons.currency_franc);
-      case 'Ұ': return const Icon(Icons.currency_yuan);
-      default: return const Icon(Icons.monetization_on);
+      case '\$':
+        return const Icon(Icons.attach_money);
+      case '€':
+        return const Icon(Icons.euro_symbol);
+      case '£':
+        return const Icon(Icons.currency_pound);
+      case '¥':
+        return const Icon(Icons.currency_yen);
+      case '₹':
+        return const Icon(Icons.currency_rupee);
+      case '₽':
+        return const Icon(Icons.currency_ruble);
+      case '₺':
+        return const Icon(Icons.currency_lira);
+      case '₣':
+        return const Icon(Icons.currency_franc);
+      case 'Ұ':
+        return const Icon(Icons.currency_yuan);
+      default:
+        return const Icon(Icons.monetization_on);
     }
   }
 
@@ -143,15 +158,17 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
   void didUpdateWidget(EditableMoneyField oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.initialMoney != oldWidget.initialMoney && widget.initialMoney != null) {
+    if (widget.initialMoney != oldWidget.initialMoney &&
+        widget.initialMoney != null) {
       _currency = widget.initialMoney!.currency;
       _amount = widget.initialMoney!.amount;
-      
-      final updatedText = widget.isEditable ? _valueToString(_amount) : _money.toString();
-      
+
+      final updatedText =
+          widget.isEditable ? _numberToString(_amount) : _money.toString();
+
       if (_controller.text != updatedText) {
         _controller.text = updatedText;
-        
+
         // FIX: Corrected cursor positioning using TextSelection.collapsed
         _controller.selection = TextSelection.collapsed(
           offset: _controller.text.length,
@@ -162,7 +179,12 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
 
   void _onCurrencyChanged(Currency currency) {
     setState(() => _currency = currency);
-    widget.onChanged?.call(_money);
+
+    // Defer notification to avoid triggering rebuild/validation during build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.onChanged?.call(_money);
+    });
   }
 
   void _onTextChanged(String text) {
@@ -171,12 +193,18 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
     final parsed = double.tryParse(text.replaceAll(',', '.')) ?? 0.0;
     if (parsed != _amount) {
       _amount = parsed;
-      widget.onChanged?.call(_money);
+
+      // Defer notification to avoid triggering rebuild/validation during build.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        widget.onChanged?.call(_money);
+      });
     }
   }
 
-  String _valueToString(double value) {
-    return value % 1 == 0 ? value.toInt().toString() : value.toString();
+  String _numberToString(double number) {
+    // Avoid unnecessary formatting while typing, only convert to int string if it's a whole number
+    return number % 1 == 0 ? number.toInt().toString() : number.toString();
   }
 
   @override
@@ -185,7 +213,8 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
       future: _currenciesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(height: 48, child: Center(child: CircularProgressIndicator()));
+          return const SizedBox(
+              height: 48, child: Center(child: CircularProgressIndicator()));
         } else if (snapshot.hasError) {
           return const Center(child: Text('Failed to load currencies'));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -234,7 +263,8 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
             return widget.validator?.call(_money);
           },
           decoration: (widget.decoration ?? const InputDecoration()).copyWith(
-            prefixIcon: widget.isEditable ? currencyMenu : _getCurrencyIcon(_currency),
+            prefixIcon:
+                widget.isEditable ? currencyMenu : _getCurrencyIcon(_currency),
           ),
         );
       },
