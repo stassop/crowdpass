@@ -35,6 +35,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   DateTimeRange? _dates;
   bool _doorTicketsAvailable = false;
   String? _description;
+  String? _imageURL;
   bool? _isEpilepsyFriendly;
   bool? _isFamilyFriendly;
   bool _isFree = false;
@@ -50,7 +51,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   TimeRange? _times;
   String? _title;
   EventType? _type;
-  String? _imageURL;
 
   // Change tracking
   bool _isEditing = false;
@@ -339,6 +339,9 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         body: Center(child: Text('Auth Error: $err')),
       ),
       data: (event) {
+        // Reset fields when event data changes
+        _resetFields(event);
+
         // Auto-enable editing once for new events.
         if (isCreating) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
