@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:crowdpass/widgets/editable_text_field.dart';
 
 // Firestore uses 64-bit integers, but Flutter Web (JavaScript) 
@@ -14,7 +13,7 @@ class EditableNumberField extends StatefulWidget {
   final bool hasDecimals;
   final InputDecoration? decoration;
   final num? initialValue;
-  final void Function(num)? onChanged;
+  final void Function(num?)? onChanged;
   final String? Function(num?)? validator;
   final bool isRequired;
   final bool isEditable;
@@ -38,16 +37,16 @@ class EditableNumberField extends StatefulWidget {
 
 class _EditableNumberFieldState extends State<EditableNumberField> {
   late TextEditingController _controller;
-  late num _value;
+  num? _value;
 
   @override
   void initState() {
     super.initState();
-    _value = widget.initialValue ?? 0;
+    _value = widget.initialValue;
 
     final initialText = (widget.initialValue == null && !widget.isRequired)
         ? ''
-        : _value.toString();
+        : (_value?.toString() ?? '');
 
     _controller = TextEditingController(text: initialText);
   }
@@ -59,17 +58,26 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
   }
 
   void _onTextChanged(String text) {
-    if (text.isEmpty) return;
-
-    final parsedValue = widget.hasDecimals
-        ? double.tryParse(text)
-        : int.tryParse(text);
-
-    if (parsedValue != null) {
-      setState(() {
-        _value = parsedValue;
+    if (text.isEmpty) {
+      _value = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onChanged?.call(null);
       });
-      widget.onChanged?.call(_value);
+      return;
+    }
+
+    if (text.endsWith('.') || text.endsWith(',')) return;
+
+    final formattedText = text.replaceAll(',', '.');
+    final parsedValue = widget.hasDecimals
+        ? double.tryParse(formattedText)
+        : int.tryParse(formattedText);
+
+    if (parsedValue != null && parsedValue != _value) {
+      setState(() => _value = parsedValue);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onChanged?.call(_value);
+      });
     }
   }
 
@@ -87,12 +95,13 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
           : TextInputType.number,
       inputFormatters: [
         FilteringTextInputFormatter.allow(
-          RegExp(widget.hasDecimals ? r'[0-9.]' : r'[0-9]'),
+          RegExp(widget.hasDecimals ? r'[0-9.,]' : r'[0-9]'),
         ),
+        // Prevents multiple decimal points or commas
         if (widget.hasDecimals)
           TextInputFormatter.withFunction((oldValue, newValue) {
             final text = newValue.text;
-            if (text.characters.where((c) => c == '.').length > 1) {
+            if (text.characters.where((c) => c == '.' || c == ',').length > 1) {
               return oldValue;
             }
             return newValue;
@@ -100,9 +109,13 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
         // Prevents entering a value that exceeds the absolute maximum
         TextInputFormatter.withFunction((oldValue, newValue) {
           if (newValue.text.isEmpty) return newValue;
+          
+          // Normalize for cross-region parsing during input
+          final normalized = newValue.text.replaceAll(',', '.');
           final val = widget.hasDecimals 
-              ? double.tryParse(newValue.text) 
-              : int.tryParse(newValue.text);
+              ? double.tryParse(normalized) 
+              : int.tryParse(normalized);
+              
           if (val != null && val > absoluteMax) {
             return oldValue;
           }
@@ -122,9 +135,10 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
           return null;
         }
 
+        final normalizedText = text.replaceAll(',', '.');
         final parsedValue = widget.hasDecimals
-            ? double.tryParse(text)
-            : int.tryParse(text);
+            ? double.tryParse(normalizedText)
+            : int.tryParse(normalizedText);
 
         if (widget.validator != null) {
           return widget.validator!(parsedValue);
@@ -140,7 +154,6 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
           return 'Must be ≥ $effectiveMin';
         }
 
-        // Final boundary check upon submission
         if (parsedValue > absoluteMax) {
           return 'Must be ≤ $absoluteMax';
         }

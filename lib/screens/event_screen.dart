@@ -368,7 +368,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   actions: [
-                    if (isOwner && !isCreating && event != null)
+                    if (isOwner && !isCreating)
                       IconButton(
                         onPressed: isLoading
                             ? null
@@ -552,7 +552,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           ),
                           onChanged: (value) {
                             setState(() {
-                              _maxTicketsAvailable = value.toInt();
+                              _maxTicketsAvailable = value?.toInt();
                               _updateHasChanged(event);
                             });
                           },

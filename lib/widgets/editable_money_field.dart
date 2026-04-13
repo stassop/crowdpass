@@ -4,13 +4,13 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 
 import 'package:crowdpass/models/money.dart';
-import 'package:crowdpass/widgets/editable_text_field.dart';
+import 'package:crowdpass/widgets/editable_number_field.dart';
 
 class EditableMoneyField extends StatefulWidget {
   const EditableMoneyField({
     super.key,
     this.initialMoney,
-    this.initialValue,
+    this.initialAmount,
     this.initialCurrency,
     this.decoration,
     this.isEditable = true,
@@ -22,7 +22,7 @@ class EditableMoneyField extends StatefulWidget {
   });
 
   final Money? initialMoney;
-  final double? initialValue;
+  final double? initialAmount;
   final Currency? initialCurrency;
   final bool isEditable;
   final bool isCurrencyEditable;
@@ -40,7 +40,6 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
   late Currency _currency;
   late double _amount;
   late final Future<List<Currency>> _currenciesFuture;
-  late final TextEditingController _controller;
 
   Money get _money => Money(amount: _amount, currency: _currency);
 
@@ -51,24 +50,18 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
     _currency = widget.initialMoney?.currency ??
         widget.initialCurrency ??
         Currency.eur;
-    _amount = widget.initialMoney?.amount ?? widget.initialValue ?? 0.0;
-
-    _controller = TextEditingController(
-      text: widget.isEditable ? _numberToString(_amount) : _money.toString(),
-    );
+    _amount = widget.initialMoney?.amount ?? widget.initialAmount ?? 0.0;
 
     _currenciesFuture = _loadCurrencies();
   }
 
   Future<List<Currency>> _loadCurrencies() async {
     try {
-      final jsonString =
-          await rootBundle.loadString('assets/json/currencies.json');
+      final jsonString = await rootBundle.loadString('assets/json/currencies.json');
       final Map<String, dynamic> jsonData = jsonDecode(jsonString);
       final List<dynamic> currenciesRaw = jsonData['currencies'];
 
-      final currencies =
-          currenciesRaw.map((json) => Currency.fromJson(json)).toList();
+      final currencies = currenciesRaw.map((json) => Currency.fromJson(json)).toList();
       final defaultCurrency = _findDefaultInList(currencies);
       final initialCurrency = widget.initialMoney?.currency ?? widget.initialCurrency;
 
@@ -77,18 +70,13 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
       // Try to find the initial currency in the loaded list, fallback to default if not found
       final resolvedCurrency = initialCurrency != null
           ? currencies.firstWhere(
-              (c) => c.isoCode == initialCurrency.isoCode,
+              (currency) => currency.isoCode == initialCurrency.isoCode,
               orElse: () => defaultCurrency,
             )
           : defaultCurrency;
 
       if (_currency != resolvedCurrency) {
         _currency = resolvedCurrency;
-
-        // Update the controller so the UI reflects the correct currency symbol when read-only
-        if (!widget.isEditable) {
-          _controller.text = _money.toString();
-        }
       }
 
       return currencies;
@@ -105,17 +93,17 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
     final locale = Intl.getCurrentLocale();
     final countryCode = locale.contains('_') ? locale.split('_').last : '';
 
-    for (var c in currencies) {
-      if (c.countries.contains(countryCode)) {
-        return c;
+    for (var currency in currencies) {
+      if (currency.countries.contains(countryCode)) {
+        return currency;
       }
     }
 
     // If no match, try to find a currency matching the local currency code
     final String? localCurrencyCode = NumberFormat().currencyName;
-    for (var c in currencies) {
-      if (c.isoCode == localCurrencyCode) {
-        return c;
+    for (var currency in currencies) {
+      if (currency.isoCode == localCurrencyCode) {
+        return currency;
       }
     }
 
@@ -148,35 +136,6 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
     }
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(EditableMoneyField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.initialMoney != oldWidget.initialMoney &&
-        widget.initialMoney != null) {
-      _currency = widget.initialMoney!.currency;
-      _amount = widget.initialMoney!.amount;
-
-      final updatedText =
-          widget.isEditable ? _numberToString(_amount) : _money.toString();
-
-      if (_controller.text != updatedText) {
-        _controller.text = updatedText;
-
-        // FIX: Corrected cursor positioning using TextSelection.collapsed
-        _controller.selection = TextSelection.collapsed(
-          offset: _controller.text.length,
-        );
-      }
-    }
-  }
-
   void _onCurrencyChanged(Currency currency) {
     setState(() => _currency = currency);
 
@@ -185,26 +144,6 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
       if (!mounted) return;
       widget.onChanged?.call(_money);
     });
-  }
-
-  void _onTextChanged(String text) {
-    if (text.endsWith('.') || text.endsWith(',')) return;
-
-    final parsed = double.tryParse(text.replaceAll(',', '.')) ?? 0.0;
-    if (parsed != _amount) {
-      _amount = parsed;
-
-      // Defer notification to avoid triggering rebuild/validation during build.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        widget.onChanged?.call(_money);
-      });
-    }
-  }
-
-  String _numberToString(double number) {
-    // Avoid unnecessary formatting while typing, only convert to int string if it's a whole number
-    return number % 1 == 0 ? number.toInt().toString() : number.toString();
   }
 
   @override
@@ -247,15 +186,14 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
           }).toList(),
         );
 
-        return EditableTextField(
-          controller: _controller,
+        return EditableNumberField(
           isEditable: widget.isEditable,
-          textStyle: widget.textStyle,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-          ],
-          onChanged: _onTextChanged,
+          hasDecimals: true,
+          initialValue: _amount,
+          onChanged: (value) {
+            setState(() => _amount = value?.toDouble() ?? 0.0);
+            widget.onChanged?.call(_money);
+          },
           validator: (_) {
             if (widget.isRequired && _amount == 0) {
               return 'Amount is required';
