@@ -9,6 +9,7 @@ import 'package:crowdpass/providers/company_provider.dart';
 import 'package:crowdpass/providers/firestore_provider.dart';
 
 import 'package:crowdpass/models/event.dart';
+import 'package:crowdpass/models/money.dart';
 import 'package:crowdpass/models/location.dart';
 import 'package:crowdpass/models/time_range.dart';
 
@@ -48,19 +49,20 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
     required String title,
     required EventType type,
     required TimeRange times,
-    bool isFree = false, // No longer required
-    bool isOutdoor = false, // No longer required
-    bool isWheelchairAccessible = false, // No longer required
     bool doorTicketsAvailable = false, // No longer required
     String? imagePath,
     bool? isEpilepsyFriendly,
+    bool isFree = false, // No longer required
     bool? isFamilyFriendly,
     bool? isHearingAidCompatible,
+    bool isOutdoor = false, // No longer required
     bool? isLowSensoryFriendly,
     bool? isPetFriendly,
+    bool isWheelchairAccessible = false, // No longer required
     int? maxTicketsAvailable,
-    int? venueCapacity,
+    Money? ticketPrice, // No longer required
     DateTimeRange? ticketSalesDates,
+    int? venueCapacity,
   }) async {
     state = const AsyncLoading();
     try {
@@ -69,6 +71,8 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         if (user == null) {
           throw Exception('User must be authenticated to create an event.');
         }
+
+        print('Creating event with title: $title, created by user: ${user.uid}');
 
         final company = await ref.read(companyProvider(null).future);
         if (company == null) {

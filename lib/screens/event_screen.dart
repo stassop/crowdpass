@@ -55,6 +55,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   // Change tracking
   bool _isEditing = false;
   bool _hasChanged = false;
+  bool _isInitialized = false;
 
   void _updateHasChanged(Event? event) {
     _hasChanged =
@@ -81,7 +82,9 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
   // Set fields from event
   void _resetFields(Event? event) {
-    if (event == null) return;
+    if (event == null || _isInitialized) return;
+    
+    _isInitialized = true;
     _dates = event.dates;
     _description = event.description;
     _doorTicketsAvailable = event.doorTicketsAvailable;
@@ -134,23 +137,24 @@ class _EventScreenState extends ConsumerState<EventScreen> {
             .read(eventNotifier.notifier)
             .createEvent(
               dates: _dates!,
-              doorTicketsAvailable: _doorTicketsAvailable,
               description: _description!,
-              maxTicketsAvailable: _maxTicketsAvailable,
-              ticketSalesDates: _ticketSalesDates!,
-              isFree: _isFree,
-              isOutdoor: _isOutdoor,
-              isWheelchairAccessible: _isWheelchairAccessible,
-              location: _location!,
-              title: _title!,
-              type: _type!,
-              times: _times!,
+              doorTicketsAvailable: _doorTicketsAvailable,
+              imagePath: _imageURL,
               isEpilepsyFriendly: _isEpilepsyFriendly,
               isFamilyFriendly: _isFamilyFriendly,
+              isFree: _isFree,
               isHearingAidCompatible: _isHearingAidCompatible,
               isLowSensoryFriendly: _isLowSensoryFriendly,
+              isOutdoor: _isOutdoor,
               isPetFriendly: _isPetFriendly,
-              imagePath: _imageURL,
+              isWheelchairAccessible: _isWheelchairAccessible,
+              location: _location!,
+              maxTicketsAvailable: _maxTicketsAvailable,
+              ticketPrice: _ticketPrice,
+              ticketSalesDates: _ticketSalesDates,
+              times: _times!,
+              title: _title!,
+              type: _type!,
             );
       } else {
         final event = ref.read(eventProvider(eventId)).value;
@@ -162,8 +166,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
             .updateEvent(
               updatedEvent: event.copyWith(
                 dates: _dates!,
-                doorTicketsAvailable: _doorTicketsAvailable,
                 description: _description!,
+                doorTicketsAvailable: _doorTicketsAvailable,
                 imageURL: _imageURL,
                 isEpilepsyFriendly: _isEpilepsyFriendly,
                 isFamilyFriendly: _isFamilyFriendly,
@@ -175,10 +179,11 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                 isWheelchairAccessible: _isWheelchairAccessible,
                 location: _location!,
                 maxTicketsAvailable: _maxTicketsAvailable,
-                type: _type!,
-                ticketSalesDates: _ticketSalesDates!,
-                title: _title!,
+                ticketPrice: _ticketPrice,
+                ticketSalesDates: _ticketSalesDates,
                 times: _times!,
+                title: _title!,
+                type: _type!,
               ),
               imagePath: _imageURL,
             );
