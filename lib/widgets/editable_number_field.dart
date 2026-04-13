@@ -21,7 +21,7 @@ class EditableNumberField extends StatefulWidget {
   const EditableNumberField({
     super.key,
     this.min = _defaultMin,
-    this.max = _defaultMaxInt,
+    this.max, // Let build() handle the default assignment to avoid capping decimals at max int
     this.hasDecimals = false,
     this.decoration,
     this.initialValue,
@@ -66,9 +66,14 @@ class _EditableNumberFieldState extends State<EditableNumberField> {
       return;
     }
 
-    if (text.endsWith('.') || text.endsWith(',')) return;
+    String textToParse = text;
+    // Strip trailing dot/comma for parsing so we can still notify the parent of the integer value
+    if (textToParse.endsWith('.') || textToParse.endsWith(',')) {
+      textToParse = textToParse.substring(0, textToParse.length - 1);
+      if (textToParse.isEmpty) return; // e.g. user just typed "."
+    }
 
-    final formattedText = text.replaceAll(',', '.');
+    final formattedText = textToParse.replaceAll(',', '.');
     final parsedValue = widget.hasDecimals
         ? double.tryParse(formattedText)
         : int.tryParse(formattedText);
