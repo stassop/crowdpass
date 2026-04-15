@@ -108,7 +108,12 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   }
 
   Future<void> _createOrUpdate(String? eventId) async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill out all required fields.')),
+      );
+      return;
+    }
 
     // If the event isn't free, ensure ticket price and sale dates are provided
     if (!_isFree &&
@@ -133,28 +138,29 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
     try {
       if (eventId == null) {
+        print('Creating new event with title: $_title');
         await ref
             .read(eventNotifier.notifier)
             .createEvent(
               dates: _dates!,
-              description: _description!,
               doorTicketsAvailable: _doorTicketsAvailable,
-              imagePath: _imageURL,
-              isEpilepsyFriendly: _isEpilepsyFriendly,
-              isFamilyFriendly: _isFamilyFriendly,
-              isFree: _isFree,
-              isHearingAidCompatible: _isHearingAidCompatible,
-              isLowSensoryFriendly: _isLowSensoryFriendly,
-              isOutdoor: _isOutdoor,
-              isPetFriendly: _isPetFriendly,
-              isWheelchairAccessible: _isWheelchairAccessible,
-              location: _location!,
+              description: _description!,
               maxTicketsAvailable: _maxTicketsAvailable,
               ticketPrice: _ticketPrice,
               ticketSalesDates: _ticketSalesDates,
-              times: _times!,
+              isFree: _isFree,
+              isOutdoor: _isOutdoor,
+              isWheelchairAccessible: _isWheelchairAccessible,
+              location: _location!,
               title: _title!,
               type: _type!,
+              times: _times!,
+              isEpilepsyFriendly: _isEpilepsyFriendly,
+              isFamilyFriendly: _isFamilyFriendly,
+              isHearingAidCompatible: _isHearingAidCompatible,
+              isLowSensoryFriendly: _isLowSensoryFriendly,
+              isPetFriendly: _isPetFriendly,
+              imagePath: _imageURL,
             );
       } else {
         final event = ref.read(eventProvider(eventId)).value;
@@ -166,8 +172,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
             .updateEvent(
               updatedEvent: event.copyWith(
                 dates: _dates!,
-                description: _description!,
                 doorTicketsAvailable: _doorTicketsAvailable,
+                description: _description!,
                 imageURL: _imageURL,
                 isEpilepsyFriendly: _isEpilepsyFriendly,
                 isFamilyFriendly: _isFamilyFriendly,
@@ -180,10 +186,10 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                 location: _location!,
                 maxTicketsAvailable: _maxTicketsAvailable,
                 ticketPrice: _ticketPrice,
-                ticketSalesDates: _ticketSalesDates,
-                times: _times!,
-                title: _title!,
                 type: _type!,
+                ticketSalesDates: _ticketSalesDates,
+                title: _title!,
+                times: _times!,
               ),
               imagePath: _imageURL,
             );
@@ -366,8 +372,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
             child: CustomScrollView(
               slivers: [
                 AnimatedAppBar(
-                  // imageUrl: event.imageUrl, // Pass your image path/url here!
-                  title: _title ?? 'New Event',
+                  imageUrl: _imageURL,
+                  title: _title,
                   hintText: 'Event Title',
                   leading: BackButton(
                     onPressed: () => Navigator.of(context).maybePop(),
@@ -581,7 +587,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
                         EditableSwitchField(
                           labelText: 'Door Tickets Available',
-                          initialValue: _doorTicketsAvailable ?? false,
+                          initialValue: _doorTicketsAvailable,
                           isEditable: _isEditing,
                           isRequired: !_isFree,
                           leading: const Icon(Icons.door_front_door),

@@ -107,6 +107,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
           isWheelchairAccessible: isWheelchairAccessible,
           location: location,
           maxTicketsAvailable: maxTicketsAvailable,
+          ticketPrice: ticketPrice, 
           type: type,
           ticketSalesDates: ticketSalesDates,
           title: title,
