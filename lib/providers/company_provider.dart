@@ -63,43 +63,42 @@ class CompanyAsyncNotifier extends AsyncNotifier<void> {
   }) async {
     state = const AsyncLoading();
     try {
-      state = await AsyncValue.guard(() async {
-        final user = await ref.read(authProvider.future);
-        if (user == null) throw Exception('Authenticated user not found.');
+      final user = ref.read(authProvider).value;
+      if (user == null) throw Exception('Authenticated user not found.');
 
-        final firestore = ref.read(firestoreProvider);
+      final firestore = ref.read(firestoreProvider);
 
-        // Check if user already has a company
-        final existingCompany = await ref.read(companyProvider(null).future);
-        if (existingCompany != null) throw Exception('User already has a company.');
+      // Check if user already has a company
+      final existingCompany = ref.read(companyProvider(null)).value;
+      if (existingCompany != null) throw Exception('User already has a company.');
 
-        final docRef = firestore.collection('companies').doc();
+      final docRef = firestore.collection('companies').doc();
 
-        String? logoURL;
-        if (logoPath != null) {
-          logoURL = await ImageFileService.uploadImage(
-            logoPath,
-            'companies/${docRef.id}/logo',
-          );
-        }
-
-        final newCompany = Company(
-          id: docRef.id,
-          ownerId: user.uid,
-          createdBy: user.uid,
-          logoURL: logoURL,
-          address: address,
-          email: email,
-          name: name,
-          industry: industry,
-          phone: phone,
-          vatNumber: vatNumber,
-          iban: iban,
-          website: website,
+      String? logoURL;
+      if (logoPath != null) {
+        logoURL = await ImageFileService.uploadImage(
+          logoPath,
+          'companies/${docRef.id}/logo',
         );
+      }
 
-        await docRef.set(newCompany.toJson());
-      });
+      final newCompany = Company(
+        id: docRef.id,
+        ownerId: user.uid,
+        createdBy: user.uid,
+        logoURL: logoURL,
+        address: address,
+        email: email,
+        name: name,
+        industry: industry,
+        phone: phone,
+        vatNumber: vatNumber,
+        iban: iban,
+        website: website,
+      );
+
+      await docRef.set(newCompany.toJson());
+      state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
@@ -122,42 +121,41 @@ class CompanyAsyncNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
 
     try {
-      state = await AsyncValue.guard(() async {
-        final user = await ref.read(authProvider.future);
-        final firestore = ref.read(firestoreProvider);
-        final docRef = firestore.collection('companies').doc(companyId);
+      final user = ref.read(authProvider).value;
+      final firestore = ref.read(firestoreProvider);
+      final docRef = firestore.collection('companies').doc(companyId);
 
-        final snapshot = await docRef.get();
-        if (!snapshot.exists) throw Exception('Company not found.');
+      final snapshot = await docRef.get();
+      if (!snapshot.exists) throw Exception('Company not found.');
 
-        final data = snapshot.data()!;
-        final oldCompany = Company.fromJson(data);
+      final data = snapshot.data()!;
+      final oldCompany = Company.fromJson(data);
 
-        if (oldCompany.ownerId != user?.uid) {
-          throw Exception('Access Denied: You do not own this company.');
-        }
+      if (oldCompany.ownerId != user?.uid) {
+        throw Exception('Access Denied: You do not own this company.');
+      }
 
-        String? logoURL;
-        if (logoPath != null) {
-          logoURL = await ImageFileService.uploadImage(
-            logoPath,
-            'companies/${companyId}/logo',
-          );
-        }
+      String? logoURL;
+      if (logoPath != null) {
+        logoURL = await ImageFileService.uploadImage(
+          logoPath,
+          'companies/${companyId}/logo',
+        );
+      }
 
-        await docRef.update(oldCompany.copyWith(
-          address: address,
-          email: email ?? oldCompany.email,
-          name: name,
-          industry: industry,
-          ownerId: ownerId,
-          phone: phone,
-          vatNumber: vatNumber,
-          iban: iban,
-          logoURL: logoURL,
-          website: website,
-        ).toJson());
-      });
+      await docRef.update(oldCompany.copyWith(
+        address: address,
+        email: email ?? oldCompany.email,
+        name: name,
+        industry: industry,
+        ownerId: ownerId,
+        phone: phone,
+        vatNumber: vatNumber,
+        iban: iban,
+        logoURL: logoURL,
+        website: website,
+      ).toJson());
+      state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
@@ -169,23 +167,22 @@ class CompanyAsyncNotifier extends AsyncNotifier<void> {
 
     state = const AsyncLoading();
     try {
-      state = await AsyncValue.guard(() async {
-        final user = await ref.read(authProvider.future);
-        final firestore = ref.read(firestoreProvider);
-        final docRef = firestore.collection('companies').doc(companyId);
+      final user = ref.read(authProvider).value;
+      final firestore = ref.read(firestoreProvider);
+      final docRef = firestore.collection('companies').doc(companyId);
 
-        final snapshot = await docRef.get();
-        if (!snapshot.exists) throw Exception('Company not found.');
+      final snapshot = await docRef.get();
+      if (!snapshot.exists) throw Exception('Company not found.');
 
-        final data = snapshot.data()!;
-        final company = Company.fromJson(data);
+      final data = snapshot.data()!;
+      final company = Company.fromJson(data);
 
-        if (company.ownerId != user?.uid) {
-          throw Exception('Access Denied: You do not own this company.');
-        }
+      if (company.ownerId != user?.uid) {
+        throw Exception('Access Denied: You do not own this company.');
+      }
 
-        await docRef.delete();
-      });
+      await docRef.delete();
+      state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;

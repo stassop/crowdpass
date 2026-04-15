@@ -51,31 +51,31 @@ class UserProfileNotifier extends AsyncNotifier<void> {
     required Country country,
     String? photoURL,
   }) async {
+    state = const AsyncLoading();
     try {
-      state = await AsyncValue.guard(() async {
-        final user = ref.read(firebaseAuthProvider).currentUser;
-        if (user == null) {
-          throw Exception('User must be logged in to perform this action.');
-        }
-        final uid = user.uid;
+      final user = ref.read(firebaseAuthProvider).currentUser;
+      if (user == null) {
+        throw Exception('User must be logged in to perform this action.');
+      }
+      final uid = user.uid;
 
-        final userProfile = UserProfile(
-          uid: uid,
-          displayName: displayName,
-          email: email,
-          phone: phone,
-          country: country,
-          photoURL: photoURL,
-        );
+      final userProfile = UserProfile(
+        uid: uid,
+        displayName: displayName,
+        email: email,
+        phone: phone,
+        country: country,
+        photoURL: photoURL,
+      );
 
-        await ref
-            .read(firestoreProvider)
-            .collection('users')
-            .doc(uid)
-            .set(userProfile.toJson(), SetOptions(merge: true));
-      });
-    } catch (e) {
-      // Optionally log or handle error here
+      await ref
+          .read(firestoreProvider)
+          .collection('users')
+          .doc(uid)
+          .set(userProfile.toJson(), SetOptions(merge: true));
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
       rethrow;
     }
   }
@@ -87,49 +87,49 @@ class UserProfileNotifier extends AsyncNotifier<void> {
     String? phone,
     Country? country,
   }) async {
+    state = const AsyncLoading();
     try {
-      state = await AsyncValue.guard(() async {
-        final user = ref.read(firebaseAuthProvider).currentUser;
-        if (user == null) {
-          throw Exception('User must be logged in to perform this action.');
-        }
-        final uid = user.uid;
+      final user = ref.read(firebaseAuthProvider).currentUser;
+      if (user == null) {
+        throw Exception('User must be logged in to perform this action.');
+      }
+      final uid = user.uid;
 
-        final updates = <String, dynamic>{
-          if (displayName != null) 'displayName': displayName,
-          if (photoURL != null) 'photoURL': photoURL,
-          if (email != null) 'email': email,
-          if (phone != null) 'phone': phone,
-          if (country != null) 'country': country.toJson(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        };
+      final updates = <String, dynamic>{
+        if (displayName != null) 'displayName': displayName,
+        if (photoURL != null) 'photoURL': photoURL,
+        if (email != null) 'email': email,
+        if (phone != null) 'phone': phone,
+        if (country != null) 'country': country.toJson(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
 
-        if (updates.isNotEmpty) {
-          await ref
-              .read(firestoreProvider)
-              .collection('users')
-              .doc(uid)
-              .update(updates);
-        }
-      });
-    } catch (e) {
-      // Optionally log or handle error here
+      if (updates.isNotEmpty) {
+        await ref
+            .read(firestoreProvider)
+            .collection('users')
+            .doc(uid)
+            .update(updates);
+      }
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
       rethrow;
     }
   }
 
   Future<void> deleteUserProfile() async {
+    state = const AsyncLoading();
     try {
-      state = await AsyncValue.guard(() async {
-        final user = ref.read(firebaseAuthProvider).currentUser;
-        if (user == null) {
-          throw Exception('User must be logged in to perform this action.');
-        }
-        final uid = user.uid;
-        await ref.read(firestoreProvider).collection('users').doc(uid).delete();
-      });
-    } catch (e) {
-      // Optionally log or handle error here
+      final user = ref.read(firebaseAuthProvider).currentUser;
+      if (user == null) {
+        throw Exception('User must be logged in to perform this action.');
+      }
+      final uid = user.uid;
+      await ref.read(firestoreProvider).collection('users').doc(uid).delete();
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
       rethrow;
     }
   }
