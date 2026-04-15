@@ -62,6 +62,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
       // Listen to the ACTION state (success/error/loading)
       ref.listen<AsyncValue<void>>(authNotifier, (previous, next) {
+        if (previous == null || previous.isLoading == false) return;
+
         next.whenOrNull(
           data: (_) {
             if (!mounted) return;

@@ -21,7 +21,7 @@ final authProvider = StreamProvider<User?>((ref) {
 /// This tracks the STATE OF THE ACTION (Loading, Success, Error), not the user data.
 class AuthNotifier extends AsyncNotifier<void> {
   @override
-  Future<void> build() async {}
+  FutureOr<void> build() {}
 
   /// SIGN UP
   Future<void> signUp({

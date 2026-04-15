@@ -41,6 +41,7 @@ class DrawerMenu extends ConsumerWidget {
                           icon: const Icon(Icons.login),
                           label: const Text('Sign In'),
                           onPressed: () {
+                            Navigator.pop(context);
                             Navigator.pushNamed(context, '/sign_in/');
                           },
                         ),
@@ -49,6 +50,7 @@ class DrawerMenu extends ConsumerWidget {
                           icon: const Icon(Icons.person_add),
                           label: const Text('Create Account'),
                           onPressed: () {
+                            Navigator.pop(context);
                             Navigator.pushNamed(context, '/sign_up/');
                           },
                         ),

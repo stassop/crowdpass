@@ -41,6 +41,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
     // Listen for errors or successful login to trigger side effects
     ref.listen<AsyncValue<void>>(authNotifier, (previous, next) {
+      if (previous == null || previous.isLoading == false) return;
+
       next.whenOrNull(
         error: (error, stackTrace) {
           if (!mounted) return;
