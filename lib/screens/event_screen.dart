@@ -138,7 +138,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
     try {
       if (eventId == null) {
-        print('Creating new event with title: $_title');
         await ref
             .read(eventNotifier.notifier)
             .createEvent(

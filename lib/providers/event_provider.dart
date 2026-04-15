@@ -66,55 +66,55 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   }) async {
     state = const AsyncLoading();
     try {
-      state = await AsyncValue.guard(() async {
-        final user = await ref.read(authProvider.future);
-        if (user == null) {
-          throw Exception('User must be authenticated to create an event.');
-        }
+      final user = ref.read(authProvider).value;
+      if (user == null) {
+        throw Exception('User must be authenticated to create an event.');
+      }
 
-        print('Creating event with title: $title, created by user: ${user.uid}');
+      print('Creating event with title: $title, created by user: ${user.uid}');
 
-        final company = await ref.read(companyProvider(null).future);
-        if (company == null) {
-          throw Exception('Only company owners can create events.');
-        }
+      final company = ref.read(companyProvider(null)).value;
+      if (company == null) {
+        throw Exception('Only company owners can create events.');
+      }
 
-        String? imageURL;
-        if (imagePath != null && imagePath.isNotEmpty) {
-          imageURL = await ImageFileService.uploadImage(
-            imagePath,
-            'events/${company.id}/images',
-          );
-        }
-        final firestore = ref.read(firestoreProvider);
-        final docRef = firestore.collection('events').doc();
-
-        final event = Event(
-          companyId: company.id,
-          createdBy: user.uid,
-          dates: dates,
-          doorTicketsAvailable: doorTicketsAvailable,
-          description: description,
-          id: docRef.id,
-          imageURL: imageURL,
-          isEpilepsyFriendly: isEpilepsyFriendly,
-          isFamilyFriendly: isFamilyFriendly,
-          isFree: isFree,
-          isHearingAidCompatible: isHearingAidCompatible,
-          isLowSensoryFriendly: isLowSensoryFriendly,
-          isOutdoor: isOutdoor,
-          isPetFriendly: isPetFriendly,
-          isWheelchairAccessible: isWheelchairAccessible,
-          location: location,
-          maxTicketsAvailable: maxTicketsAvailable,
-          ticketPrice: ticketPrice, 
-          type: type,
-          ticketSalesDates: ticketSalesDates,
-          title: title,
-          times: times,
+      String? imageURL;
+      if (imagePath != null && imagePath.isNotEmpty) {
+        imageURL = await ImageFileService.uploadImage(
+          imagePath,
+          'events/${company.id}/images',
         );
-        await docRef.set(event.toJson());
-      });
+      }
+      final firestore = ref.read(firestoreProvider);
+      final docRef = firestore.collection('events').doc();
+
+      final event = Event(
+        companyId: company.id,
+        createdBy: user.uid,
+        dates: dates,
+        doorTicketsAvailable: doorTicketsAvailable,
+        description: description,
+        id: docRef.id,
+        imageURL: imageURL,
+        isEpilepsyFriendly: isEpilepsyFriendly,
+        isFamilyFriendly: isFamilyFriendly,
+        isFree: isFree,
+        isHearingAidCompatible: isHearingAidCompatible,
+        isLowSensoryFriendly: isLowSensoryFriendly,
+        isOutdoor: isOutdoor,
+        isPetFriendly: isPetFriendly,
+        isWheelchairAccessible: isWheelchairAccessible,
+        location: location,
+        maxTicketsAvailable: maxTicketsAvailable,
+        ticketPrice: ticketPrice, 
+        type: type,
+        ticketSalesDates: ticketSalesDates,
+        title: title,
+        times: times,
+      );
+      await docRef.set(event.toJson());
+      
+      state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
@@ -127,40 +127,40 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   }) async {
     state = const AsyncLoading();
     try {
-      state = await AsyncValue.guard(() async {
-        final user = await ref.read(authProvider.future);
-        if (user == null) {
-          throw Exception('User must be authenticated to update an event.');
-        }
+      final user = ref.read(authProvider).value;
+      if (user == null) {
+        throw Exception('User must be authenticated to update an event.');
+      }
 
-        final firestore = ref.read(firestoreProvider);
-        final docRef = firestore.collection('events').doc(updatedEvent.id);
-        final snapshot = await docRef.get();
-        if (!snapshot.exists) throw Exception('Event does not exist.');
+      final firestore = ref.read(firestoreProvider);
+      final docRef = firestore.collection('events').doc(updatedEvent.id);
+      final snapshot = await docRef.get();
+      if (!snapshot.exists) throw Exception('Event does not exist.');
 
-        final existingEvent = Event.fromJson(snapshot.data()!);
-        if (existingEvent.createdBy != user.uid) {
-          throw Exception(
-            'User does not have permission to update this event.',
-          );
-        }
+      final existingEvent = Event.fromJson(snapshot.data()!);
+      if (existingEvent.createdBy != user.uid) {
+        throw Exception(
+          'User does not have permission to update this event.',
+        );
+      }
 
-        String? imageURL = existingEvent.imageURL;
-        if (imagePath != null && imagePath.isNotEmpty) {
-          imageURL = await ImageFileService.uploadImage(
-            imagePath,
-            'events/${existingEvent.companyId}/images',
-          );
-        }
+      String? imageURL = existingEvent.imageURL;
+      if (imagePath != null && imagePath.isNotEmpty) {
+        imageURL = await ImageFileService.uploadImage(
+          imagePath,
+          'events/${existingEvent.companyId}/images',
+        );
+      }
 
-        // Create a new Event object with the updated imageURL
-        final eventToUpdate = updatedEvent.copyWith(imageURL: imageURL);
+      // Create a new Event object with the updated imageURL
+      final eventToUpdate = updatedEvent.copyWith(imageURL: imageURL);
 
-        await firestore
-            .collection('events')
-            .doc(updatedEvent.id)
-            .update(eventToUpdate.toJson());
-      });
+      await firestore
+          .collection('events')
+          .doc(updatedEvent.id)
+          .update(eventToUpdate.toJson());
+          
+      state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
@@ -181,24 +181,24 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
 
     state = const AsyncLoading();
     try {
-      state = await AsyncValue.guard(() async {
-        final user = await ref.read(authProvider.future);
-        if (user == null) {
-          throw Exception('User must be authenticated to delete an event.');
-        }
+      final user = ref.read(authProvider).value;
+      if (user == null) {
+        throw Exception('User must be authenticated to delete an event.');
+      }
 
-        final firestore = ref.read(firestoreProvider);
+      final firestore = ref.read(firestoreProvider);
 
-        // Get the existing event to ensure it exists and to check permissions if needed
-        final docRef = firestore.collection('events').doc(eventId);
-        final snapshot = await docRef.get();
-        if (!snapshot.exists) throw Exception('Event does not exist.');
+      // Get the existing event to ensure it exists and to check permissions if needed
+      final docRef = firestore.collection('events').doc(eventId);
+      final snapshot = await docRef.get();
+      if (!snapshot.exists) throw Exception('Event does not exist.');
 
-        // Optionally, check if the user is the creator of the event
-        // This logic is commented out until the 'createdBy' field is reliably available
+      // Optionally, check if the user is the creator of the event
+      // This logic is commented out until the 'createdBy' field is reliably available
 
-        await docRef.delete();
-      });
+      await docRef.delete();
+      
+      state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;

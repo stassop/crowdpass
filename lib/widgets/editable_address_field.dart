@@ -46,7 +46,10 @@ class _EditableAddressFieldState extends State<EditableAddressField> {
     if (widget.location != oldWidget.location) {
       _selectedLocation = widget.location;
       // This ensures the FormField internal state updates when the parent prop changes
-      _fieldKey.currentState?.didChange(widget.location);
+      // We wrap it in addPostFrameCallback to prevent "setState() called during build" errors
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _fieldKey.currentState?.didChange(widget.location);
+      });
     }
   }
 
@@ -121,7 +124,11 @@ class _EditableAddressFieldState extends State<EditableAddressField> {
                 border: const OutlineInputBorder(),
                 errorText: state.errorText,
                 prefixIcon: _isLocating
-                    ? const CircularProgressIndicator()
+                    ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : IconButton(
                         icon: Icon(Icons.my_location, color: theme.colorScheme.primary),
                         onPressed: widget.isEditable ? _getCurrentLocation : null,
