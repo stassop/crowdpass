@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -61,8 +62,12 @@ class AuthNotifier extends AsyncNotifier<void> {
 
       // Delete old profile photos if a new one was uploaded (cleanup)
       if (photoURL != null) {
-        final oldImages = await ImageFileService.listImages('users/${user.uid}/profile_photo');
-        await ImageFileService.deleteImages(oldImages);
+        final allImages = await ImageFileService.listImages('users/${user.uid}/profile_photo');
+        final oldImages = allImages.where((url) => url != photoURL).toList();
+        
+        if (oldImages.isNotEmpty) {
+          await ImageFileService.deleteImages(oldImages);
+        }
       }
 
       await Future.wait([
@@ -172,8 +177,12 @@ class AuthNotifier extends AsyncNotifier<void> {
 
       // Delete old profile photos if a new one was uploaded (cleanup)
       if (photoURL != null) {
-        final oldImages = await ImageFileService.listImages('users/${user.uid}/profile_photo');
-        await ImageFileService.deleteImages(oldImages);
+        final allImages = await ImageFileService.listImages('users/${user.uid}/profile_photo');
+        final oldImages = allImages.where((url) => url != photoURL).toList();
+        
+        if (oldImages.isNotEmpty) {
+          await ImageFileService.deleteImages(oldImages);
+        }
       }
 
       if (displayName != null) {

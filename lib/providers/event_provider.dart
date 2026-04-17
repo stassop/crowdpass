@@ -71,11 +71,9 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         throw Exception('User must be authenticated to create an event.');
       }
 
-      print('Creating event with title: $title, created by user: ${user.uid}');
-
       final company = ref.read(companyProvider(null)).value;
       if (company == null) {
-        throw Exception('Only company owners can create events.');
+        throw Exception('Only company owners can create events. Create a company first.');
       }
 
       String? imageURL;

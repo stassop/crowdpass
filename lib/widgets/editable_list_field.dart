@@ -133,8 +133,9 @@ class _EditableListFieldState<T, C> extends State<EditableListField<T, C>> {
                   children: [
                     TextButton.icon(
                       onPressed: () {
-                        if (_isChanged)
+                        if (_isChanged) {
                           widget.onChanged?.call(_selectedOptions);
+                        }
                         Navigator.of(context).pop();
                       },
                       icon: Icon(_isChanged ? Icons.check : Icons.close),

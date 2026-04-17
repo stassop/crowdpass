@@ -8,6 +8,7 @@ import 'package:crowdpass/models/time_range.dart';
 
 import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/event_provider.dart';
+import 'package:crowdpass/providers/company_provider.dart';
 
 import 'package:crowdpass/widgets/animated_reveal.dart';
 import 'package:crowdpass/widgets/animated_app_bar.dart';
@@ -352,6 +353,39 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         // Determine whether we're creating a new event 
         final isCreating = eventId == null || eventId.isEmpty || event == null;
 
+        // If user has no company, show a button that takes them to the company creation screen
+        if (isCreating) {
+          final company = ref.watch(companyProvider(null)).value;
+          if (company == null) {
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text('Create Event'),
+                leading: BackButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+              ),
+              body: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'You need a company to create events.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pushNamed('/company/');
+                      },
+                      child: const Text('Create Company'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+        }
+
         // Auto-enable editing once for new events.
         if (isCreating) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -362,7 +396,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
           });
         }
 
-        final isOwner = isCreating || (event?.createdBy == user?.uid);
+        final isOwner = isCreating || (event.createdBy == user?.uid);
         final isLoading = ref.watch(eventNotifier).isLoading;
 
         return Scaffold(
