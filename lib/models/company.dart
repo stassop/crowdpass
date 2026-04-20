@@ -47,13 +47,13 @@ class Company implements Comparable<Company> {
   final Location address;
   final String createdBy;
   final String email;
-  final String iban;
   final String id;
   final Industry industry;
   final String name;
   final String ownerId;
   final String phone;
   final String vatNumber;
+  final String? iban; // Optional properties follow required ones
   final String? logoURL;
   final String? website;
 
@@ -61,13 +61,13 @@ class Company implements Comparable<Company> {
     required this.address,
     required this.createdBy,
     required this.email,
-    required this.iban,
     required this.id,
     required this.industry,
     required this.name,
     required this.ownerId,
     required this.phone,
     required this.vatNumber,
+    this.iban,
     this.logoURL,
     this.website,
   });
@@ -78,13 +78,13 @@ class Company implements Comparable<Company> {
         address: Location.fromJson(json['address'] as Map<String, dynamic>),
         createdBy: json['createdBy'] as String,
         email: json['email'] as String,
-        iban: json['iban'] as String,
         id: json['id'] as String,
         industry: Industry.fromString(json['industry'] as String),
         name: json['name'] as String,
         ownerId: json['ownerId'] as String,
         phone: json['phone'] as String,
         vatNumber: json['vatNumber'] as String,
+        iban: json['iban'] as String?,
         logoURL: json['logoURL'] as String?,
         website: json['website'] as String?,
       );
@@ -100,75 +100,76 @@ class Company implements Comparable<Company> {
         'address': address.toJson(),
         'createdBy': createdBy,
         'email': email,
-        'iban': iban,
         'id': id,
         'industry': industry.name,
         'name': name,
         'ownerId': ownerId,
         'phone': phone,
         'vatNumber': vatNumber,
+        if (iban != null) 'iban': iban,
         if (logoURL != null) 'logoURL': logoURL,
         if (website != null) 'website': website,
       };
 
   Company copyWith({
     Location? address,
+    String? createdBy,
     String? email,
-    String? iban,
+    String? id,
     Industry? industry,
     String? name,
     String? ownerId,
     String? phone,
     String? vatNumber,
+    String? iban,
     String? logoURL,
     String? website,
   }) {
     return Company(
-      // Id and createdBy can't be changed
-      id: id,
-      createdBy: createdBy,
       address: address ?? this.address,
+      createdBy: createdBy ?? this.createdBy,
       email: email ?? this.email,
-      iban: iban ?? this.iban,
+      id: id ?? this.id,
       industry: industry ?? this.industry,
       name: name ?? this.name,
       ownerId: ownerId ?? this.ownerId,
       phone: phone ?? this.phone,
       vatNumber: vatNumber ?? this.vatNumber,
+      iban: iban ?? this.iban,
       logoURL: logoURL ?? this.logoURL,
       website: website ?? this.website,
     );
   }
 
   @override
-    bool operator ==(Object other) =>
+  bool operator ==(Object other) =>
       identical(this, other) ||
       other is Company &&
-        address == other.address &&
-        createdBy == other.createdBy &&
-        email == other.email &&
-        iban == other.iban &&
-        id == other.id &&
-        industry == other.industry &&
-        name == other.name &&
-        ownerId == other.ownerId &&
-        phone == other.phone &&
-        vatNumber == other.vatNumber &&
-        logoURL == other.logoURL &&
-        website == other.website;
+          address == other.address &&
+          createdBy == other.createdBy &&
+          email == other.email &&
+          id == other.id &&
+          industry == other.industry &&
+          name == other.name &&
+          ownerId == other.ownerId &&
+          phone == other.phone &&
+          vatNumber == other.vatNumber &&
+          iban == other.iban &&
+          logoURL == other.logoURL &&
+          website == other.website;
 
   @override
   int get hashCode => Object.hash(
         address,
         createdBy,
         email,
-        iban,
         id,
         industry,
         name,
         ownerId,
         phone,
         vatNumber,
+        iban,
         logoURL,
         website,
       );

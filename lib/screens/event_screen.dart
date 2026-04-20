@@ -353,37 +353,39 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         // Determine whether we're creating a new event 
         final isCreating = eventId == null || eventId.isEmpty || event == null;
 
+        // Company is either null, current user's company (if creating), or event's company (if editing)
+        final company = isCreating
+            ? ref.watch(companyProvider(null)).value
+            : ref.watch(companyProvider(event.companyId)).value;
+
         // If user has no company, show a button that takes them to the company creation screen
-        if (isCreating) {
-          final company = ref.watch(companyProvider(null)).value;
-          if (company == null) {
-            return Scaffold(
-              appBar: AppBar(
-                title: const Text('Create Event'),
-                leading: BackButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                ),
+        if (isCreating && company == null) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Create Event'),
+              leading: BackButton(
+                onPressed: () => Navigator.of(context).maybePop(),
               ),
-              body: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'You need a company to create events.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pushNamed('/company/');
-                      },
-                      child: const Text('Create Company'),
-                    ),
-                  ],
-                ),
+            ),
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'You need a company to create events.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed('/company/');
+                    },
+                    child: const Text('Create Company'),
+                  ),
+                ],
               ),
-            );
-          }
+            ),
+          );
         }
 
         // Auto-enable editing once for new events.
@@ -425,7 +427,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                               },
                         icon: Icon(
                           _isEditing
-                              ? (_hasChanged ? Icons.check : Icons.close)
+                              ? (_hasChanged ? Icons.check : Icons.edit_off)
                               : Icons.edit,
                         ),
                       ),

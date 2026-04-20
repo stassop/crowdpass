@@ -10,6 +10,8 @@ import 'package:crowdpass/widgets/editable_text_field.dart';
 import 'package:crowdpass/widgets/editable_website_field.dart';
 import 'package:crowdpass/widgets/error_dialog.dart';
 import 'package:crowdpass/widgets/user_avatar.dart';
+import 'package:crowdpass/widgets/editable_email_field.dart';
+import 'package:crowdpass/widgets/editable_iban_field.dart';
 import 'package:crowdpass/widgets/editable_address_field.dart';
 import 'package:crowdpass/widgets/editable_list_field.dart';
 import 'package:crowdpass/widgets/editable_phone_field.dart';
@@ -192,7 +194,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                             },
                       icon: Icon(
                         _isEditing
-                            ? (_hasChanged ? Icons.check : Icons.close)
+                            ? (_hasChanged ? Icons.check : Icons.edit_off)
                             : Icons.edit,
                       ),
                     ),
@@ -262,6 +264,29 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                           isRequired: true,
                           onChanged: (value) => setState(() {
                             _phone = value;
+                            _updateHasChanged(company);
+                          }),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        EditableEmailField(
+                          initialValue: _email,
+                          isEditable: _isEditing,
+                          isRequired: true,
+                          onChanged: (value) => setState(() {
+                            _email = value;
+                            _updateHasChanged(company);
+                          }),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        EditableIBANField(
+                          initialValue: _iban,
+                          isEditable: _isEditing,
+                          onChanged: (value) => setState(() {
+                            _iban = value;
                             _updateHasChanged(company);
                           }),
                         ),

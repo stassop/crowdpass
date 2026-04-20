@@ -172,7 +172,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         )
                       : Icon(
                           _isEditing
-                              ? (hasChanged ? Icons.check : Icons.close)
+                              ? (hasChanged ? Icons.check : Icons.edit_off)
                               : Icons.edit,
                         ),
                 ),

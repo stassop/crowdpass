@@ -57,7 +57,7 @@ class CompanyAsyncNotifier extends AsyncNotifier<void> {
     required Industry industry,
     required String phone,
     required String vatNumber,
-    required String iban,
+    String? iban,
     String? logoPath,
     String? website,
   }) async {
@@ -83,17 +83,17 @@ class CompanyAsyncNotifier extends AsyncNotifier<void> {
       }
 
       final newCompany = Company(
-        id: docRef.id,
-        ownerId: user.uid,
-        createdBy: user.uid,
-        logoURL: logoURL,
         address: address,
+        createdBy: user.uid,
         email: email,
-        name: name,
+        iban: iban,
+        id: docRef.id,
         industry: industry,
+        logoURL: logoURL,
+        name: name,
+        ownerId: user.uid,
         phone: phone,
         vatNumber: vatNumber,
-        iban: iban,
         website: website,
       );
 
@@ -109,13 +109,13 @@ class CompanyAsyncNotifier extends AsyncNotifier<void> {
     required String companyId,
     Location? address,
     String? email,
-    String? name,
+    String? iban,
     Industry? industry,
+    String? logoPath,
+    String? name,
+    String? ownerId,
     String? phone,
     String? vatNumber,
-    String? ownerId,
-    String? iban,
-    String? logoPath,
     String? website,
   }) async {
     state = const AsyncLoading();
