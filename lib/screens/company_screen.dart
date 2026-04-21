@@ -56,6 +56,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
   // Set fields from company
   void _resetFields(Company? company) {
     if (company == null) return;
+
     _name = company.name;
     _industry = company.industry;
     _address = company.address;
@@ -66,6 +67,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
     _ownerId = company.ownerId;
     _iban = company.iban;
     _logoURL = company.logoURL;
+
     _updateHasChanged(company);
   }
 
@@ -124,9 +126,12 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authAsync = ref.watch(authProvider);
+    final companyId = ModalRoute.of(context)?.settings.arguments as String?;
 
-    return authAsync.when(
+    final user = ref.watch(authProvider).value;
+    final companyAsync = ref.watch(companyProvider(companyId));
+
+    return companyAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, _) => Scaffold(
@@ -136,234 +141,206 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
             onPressed: () => Navigator.of(context).maybePop(),
           ),
         ),
-        body: Center(child: Text('Auth Error: $err')),
+        body: Center(child: Text('Error: $err')),
       ),
-      data: (user) {
-        if (user == null) return _buildAuthPlaceholder();
+      data: (company) {
+        _resetFields(company);
 
-        final argsId = ModalRoute.of(context)?.settings.arguments as String?;
-        // Now passing argsId (which can be null) directly.
-        // If null, the provider fetches the current user's company.
-        final companyAsync = ref.watch(companyProvider(argsId));
-
-        return companyAsync.when(
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (err, _) => Scaffold(
+        if (company == null && companyId != null) {
+          return Scaffold(
             appBar: AppBar(
-              title: const Text('Error'),
+              title: const Text('Company Not Found'),
               leading: BackButton(
                 onPressed: () => Navigator.of(context).maybePop(),
               ),
             ),
-            body: Center(child: Text('Error: $err')),
-          ),
-          data: (company) {
-            // Set fields from company when new value arrives
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) setState(() => _resetFields(company));
-            });
+            body: const Center(child: Text('Company not found')),
+          );
+        }
 
-            final isCreating = company == null;
-            final isOwner = isCreating || (company.ownerId == user.uid);
-            final isLoading = ref.watch(companyNotifier).isLoading;
+        final isCreating = companyId == null || company == null;
+        final isOwner = isCreating || company.ownerId == user?.uid;
+        final isLoading = ref.watch(companyNotifier).isLoading;
 
-            // Auto-enable editing for new companies
-            if (isCreating && !_isEditing) {
-              _isEditing = true;
-            }
+        // Auto-enable editing for new companies
+        if (isCreating && !_isEditing) {
+          _isEditing = true;
+        }
 
-            return Scaffold(
-              appBar: AppBar(
-                title: Text(
-                  isCreating
-                      ? 'Create Company'
-                      : company.name,
-                ),
-                actions: [
-                  if (isOwner && !isCreating)
-                    IconButton(
-                      onPressed: isLoading
-                          ? null
-                          : () {
-                              if (_isEditing && _hasChanged) {
-                                _createOrUpdate(company.id);
-                              } else {
-                                setState(() => _isEditing = !_isEditing);
-                              }
-                            },
-                      icon: Icon(
-                        _isEditing
-                            ? (_hasChanged ? Icons.check : Icons.edit_off)
-                            : Icons.edit,
-                      ),
-                    ),
-                ],
-              ),
-              body: Form(
-                key: _formKey,
-                child: SafeArea(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Center(
-                          child: UserAvatar.medium(
-                            isEditable: _isEditing,
-                            photoURL: _logoURL,
-                            labelText: 'Company Name',
-                            displayName: _name,
-                            onNameChanged: (value) => setState(() {
-                              _name = value;
-                              _updateHasChanged(company);
-                            }),
-                            onPhotoChanged: (value) => setState(() {
-                              _logoURL = value;
-                              _updateHasChanged(company);
-                            }),
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Industry Field
-                        EditableListField<Industry, Set<Industry>>(
-                          initialValue: _industry != null ? {_industry!} : {},
-                          isEditable: _isEditing,
-                          options: Industry.values.toSet(),
-                          getOptionLabel: (i) => i.label,
-                          title: 'Industry',
-                          decoration: const InputDecoration(
-                            prefixIcon: Icon(Icons.factory),
-                          ),
-                          onChanged: (value) => setState(() {
-                            _industry = value.firstOrNull;
-                            _updateHasChanged(company);
-                          }),
-                          validator: (value) => value.isEmpty ? 'Industry required' : null,
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        EditableAddressField(
-                          location: _address,
-                          isEditable: _isEditing,
-                          onChanged: (value) => setState(() {
-                            _address = value;
-                            _updateHasChanged(company);
-                          }),
-                          validator: (value) => value == null ? 'Address required' : null,
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        EditablePhoneField(
-                          initialValue: _phone,
-                          isEditable: _isEditing,
-                          isRequired: true,
-                          onChanged: (value) => setState(() {
-                            _phone = value;
-                            _updateHasChanged(company);
-                          }),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        EditableEmailField(
-                          initialValue: _email,
-                          isEditable: _isEditing,
-                          isRequired: true,
-                          onChanged: (value) => setState(() {
-                            _email = value;
-                            _updateHasChanged(company);
-                          }),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        EditableIBANField(
-                          initialValue: _iban,
-                          isEditable: _isEditing,
-                          onChanged: (value) => setState(() {
-                            _iban = value;
-                            _updateHasChanged(company);
-                          }),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        EditableTextField(
-                          initialValue: _vatNumber,
-                          isEditable: _isEditing,
-                          decoration: const InputDecoration(
-                            labelText: 'VAT Number',
-                            prefixIcon: Icon(Icons.business),
-                            hintText: 'e.g. DE123456789',
-                          ),
-                          onChanged: (value) => setState(() {
-                            _vatNumber = value;
-                            _updateHasChanged(company);
-                          }),
-                          validator: (value) => (value == null || value.isEmpty)
-                              ? 'VAT required'
-                              : null,
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        EditableWebsiteField(
-                          initialValue: _website,
-                          isEditable: _isEditing,
-                          onChanged: (value) => setState(() {
-                            _website = value;
-                            _updateHasChanged(company);
-                          }),
-                        ),
-
-                        if (isCreating)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16.0),
-                            child: ElevatedButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () => _createOrUpdate(null),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text('Create Company'),
-                            ),
-                          ),
-                      ],
-                    ),
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              isCreating
+                  ? 'Create Company'
+                  : company.name,
+            ),
+            actions: [
+              if (isOwner && !isCreating)
+                IconButton(
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          if (_isEditing && _hasChanged) {
+                            _createOrUpdate(company.id);
+                          } else {
+                            setState(() => _isEditing = !_isEditing);
+                          }
+                        },
+                  icon: Icon(
+                    _isEditing
+                        ? (_hasChanged ? Icons.check : Icons.edit_off)
+                        : Icons.edit,
                   ),
                 ),
+            ],
+          ),
+          body: Form(
+            key: _formKey,
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: UserAvatar.medium(
+                        isEditable: _isEditing,
+                        photoURL: _logoURL,
+                        labelText: 'Company Name',
+                        displayName: _name,
+                        onNameChanged: (value) => setState(() {
+                          _name = value;
+                          _updateHasChanged(company);
+                        }),
+                        onPhotoChanged: (value) => setState(() {
+                          _logoURL = value;
+                          _updateHasChanged(company);
+                        }),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Industry Field
+                    EditableListField<Industry, Set<Industry>>(
+                      initialValue: _industry != null ? {_industry!} : {},
+                      isEditable: _isEditing,
+                      options: Industry.values.toSet(),
+                      getOptionLabel: (i) => i.label,
+                      title: 'Industry',
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.factory),
+                      ),
+                      onChanged: (value) => setState(() {
+                        _industry = value.firstOrNull;
+                        _updateHasChanged(company);
+                      }),
+                      validator: (value) => value.isEmpty ? 'Industry required' : null,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    EditableAddressField(
+                      location: _address,
+                      isEditable: _isEditing,
+                      onChanged: (value) => setState(() {
+                        _address = value;
+                        _updateHasChanged(company);
+                      }),
+                      validator: (value) => value == null ? 'Address required' : null,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    EditablePhoneField(
+                      initialValue: _phone,
+                      isEditable: _isEditing,
+                      isRequired: true,
+                      onChanged: (value) => setState(() {
+                        _phone = value;
+                        _updateHasChanged(company);
+                      }),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    EditableEmailField(
+                      initialValue: _email,
+                      isEditable: _isEditing,
+                      isRequired: true,
+                      onChanged: (value) => setState(() {
+                        _email = value;
+                        _updateHasChanged(company);
+                      }),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    EditableIBANField(
+                      initialValue: _iban,
+                      isEditable: _isEditing,
+                      onChanged: (value) => setState(() {
+                        _iban = value;
+                        _updateHasChanged(company);
+                      }),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    EditableTextField(
+                      initialValue: _vatNumber,
+                      isEditable: _isEditing,
+                      decoration: const InputDecoration(
+                        labelText: 'VAT Number',
+                        prefixIcon: Icon(Icons.business),
+                        hintText: 'e.g. DE123456789',
+                      ),
+                      onChanged: (value) => setState(() {
+                        _vatNumber = value;
+                        _updateHasChanged(company);
+                      }),
+                      validator: (value) => (value == null || value.isEmpty)
+                          ? 'VAT required'
+                          : null,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    EditableWebsiteField(
+                      initialValue: _website,
+                      isEditable: _isEditing,
+                      onChanged: (value) => setState(() {
+                        _website = value;
+                        _updateHasChanged(company);
+                      }),
+                    ),
+
+                    if (isCreating)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: ElevatedButton(
+                          onPressed: isLoading
+                              ? null
+                              : () => _createOrUpdate(null),
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Create Company'),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            );
-          },
+            ),
+          ),
         );
       },
     );
   }
-
-  Widget _buildAuthPlaceholder() {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/sign_in/'),
-              child: const Text('Sign In'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
+

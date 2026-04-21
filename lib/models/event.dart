@@ -232,7 +232,7 @@ class Event implements Comparable<Event> {
         'isOutdoor': isOutdoor,
         'isPetFriendly': isPetFriendly,
         'isWheelchairAccessible': isWheelchairAccessible,
-        'location': location,
+        'location': location.toJson(),
         'maxTicketsAvailable': maxTicketsAvailable,
         'ticketPrice': ticketPrice?.toJson(),
         'ticketSalesDates': ticketSalesDates != null

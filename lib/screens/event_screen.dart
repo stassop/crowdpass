@@ -31,6 +31,7 @@ class EventScreen extends ConsumerStatefulWidget {
 
 class _EventScreenState extends ConsumerState<EventScreen> {
   final _formKey = GlobalKey<FormState>();
+  late String? _eventId;
 
   // Form fields
   DateTimeRange? _dates;
@@ -56,7 +57,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   // Change tracking
   bool _isEditing = false;
   bool _hasChanged = false;
-  bool _isInitialized = false;
 
   void _updateHasChanged(Event? event) {
     _hasChanged =
@@ -83,9 +83,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
   // Set fields from event
   void _resetFields(Event? event) {
-    if (event == null || _isInitialized) return;
-    
-    _isInitialized = true;
+    if (event == null) return;
+
     _dates = event.dates;
     _description = event.description;
     _doorTicketsAvailable = event.doorTicketsAvailable;
@@ -105,10 +104,11 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     _times = event.times;
     _title = event.title;
     _type = event.type;
+
     _updateHasChanged(event);
   }
 
-  Future<void> _createOrUpdate(String? eventId) async {
+  Future<void> _createOrUpdate() async {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill out all required fields.')),
@@ -132,14 +132,14 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          eventId == null ? 'Creating event...' : 'Updating event...',
+          _eventId == null ? 'Creating event...' : 'Updating event...',
         ),
       ),
     );
 
     try {
-      if (eventId == null) {
-        await ref
+      if (_eventId == null) {
+        final newEventId = await ref
             .read(eventNotifier.notifier)
             .createEvent(
               dates: _dates!,
@@ -162,8 +162,11 @@ class _EventScreenState extends ConsumerState<EventScreen> {
               isPetFriendly: _isPetFriendly,
               imagePath: _imageURL,
             );
+        setState(() {
+          _eventId = newEventId;
+        });
       } else {
-        final event = ref.read(eventProvider(eventId)).value;
+        final event = ref.read(eventProvider(_eventId)).value;
         if (event == null) {
           throw Exception('Event not found');
         }
@@ -329,9 +332,17 @@ class _EventScreenState extends ConsumerState<EventScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newEventId = ModalRoute.of(context)?.settings.arguments as String?;
+    if (newEventId != _eventId && newEventId != null) {
+      _eventId = newEventId;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final eventId = ModalRoute.of(context)?.settings.arguments as String?;
-    final eventAsync = ref.watch(eventProvider(eventId));
+    final eventAsync = ref.watch(eventProvider(_eventId));
     final user = ref.watch(authProvider).value;
 
     return eventAsync.when(
@@ -351,7 +362,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         _resetFields(event);
 
         // Determine whether we're creating a new event 
-        final isCreating = eventId == null || eventId.isEmpty || event == null;
+        final isCreating = _eventId == null || _eventId!.isEmpty || event == null;
 
         // Company is either null, current user's company (if creating), or event's company (if editing)
         final company = isCreating
@@ -420,7 +431,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                             ? null
                             : () {
                                 if (_isEditing && _hasChanged) {
-                                  _createOrUpdate(event.id);
+                                  _createOrUpdate();
                                 } else {
                                   setState(() => _isEditing = !_isEditing);
                                 }
@@ -740,7 +751,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                             child: ElevatedButton(
                               onPressed: isLoading
                                   ? null
-                                  : () => _createOrUpdate(null),
+                                  : () => _createOrUpdate(),
                               child: isLoading
                                   ? const SizedBox(
                                       height: 20,

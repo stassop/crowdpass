@@ -42,7 +42,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   }
 
   /// Creates a new event and automatically assigns the Firestore Doc ID.
-  Future<void> createEvent({
+  Future<String?> createEvent({
     required DateTimeRange dates,
     required String description,
     required Location location,
@@ -85,6 +85,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
       }
       final firestore = ref.read(firestoreProvider);
       final docRef = firestore.collection('events').doc();
+      final eventId = docRef.id; // Get the auto-generated ID before creating the event
 
       final event = Event(
         companyId: company.id,
@@ -92,7 +93,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         dates: dates,
         doorTicketsAvailable: doorTicketsAvailable,
         description: description,
-        id: docRef.id,
+        id: eventId,
         imageURL: imageURL,
         isEpilepsyFriendly: isEpilepsyFriendly,
         isFamilyFriendly: isFamilyFriendly,
@@ -113,6 +114,8 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
       await docRef.set(event.toJson());
       
       state = const AsyncData(null);
+
+      return eventId; // Return the new event ID for navigation or further actions
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
