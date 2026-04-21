@@ -170,12 +170,6 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   // Removed stray lines from previous broken patch
 
   Future<void> cancelEvent(String eventId) async {
-    // This method can be implemented to set a 'cancelled' flag on the event
-    // instead of deleting it, depending on your application's requirements.
-  }
-
-  /// Deletes an event by ID.
-  Future<void> deleteEvent(String eventId) async {
     if (eventId.isEmpty) {
       throw ArgumentError('Event ID cannot be empty for deletion.');
     }

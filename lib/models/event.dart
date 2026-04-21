@@ -137,6 +137,7 @@ class Event implements Comparable<Event> {
   final int? maxTicketsAvailable;
   final Money? ticketPrice;
   final DateTimeRange? ticketSalesDates;
+  final bool isCanceled; // New property
 
   const Event({
     required this.companyId,
@@ -161,6 +162,7 @@ class Event implements Comparable<Event> {
     this.maxTicketsAvailable,
     this.ticketPrice,
     this.ticketSalesDates,
+    this.isCanceled = false, // Default to false
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
@@ -204,6 +206,7 @@ class Event implements Comparable<Event> {
         type: json['type'] != null
             ? EventType.fromString(json['type'] as String)
             : EventType.other,
+        isCanceled: json['isCanceled'] as bool? ?? false, // New property
       );
     } catch (e, st) {
       debugPrint('Event.fromJson failed with data: $json');
@@ -244,6 +247,7 @@ class Event implements Comparable<Event> {
         'times': times.toJson(),
         'title': title,
         'type': type.toString(),
+        'isCanceled': isCanceled, // New property
       };
 
   Event copyWith({
@@ -269,6 +273,7 @@ class Event implements Comparable<Event> {
     TimeRange? times,
     String? title,
     EventType? type,
+    bool? isCanceled, // New property
   }) {
     return Event(
       companyId: companyId ?? this.companyId,
@@ -293,6 +298,7 @@ class Event implements Comparable<Event> {
       times: times ?? this.times,
       title: title ?? this.title,
       type: type ?? this.type,
+      isCanceled: isCanceled ?? this.isCanceled, // New property
     );
   }
 
@@ -321,7 +327,8 @@ class Event implements Comparable<Event> {
           ticketSalesDates == other.ticketSalesDates &&
           title == other.title &&
           times == other.times &&
-          ticketPrice == other.ticketPrice;
+          ticketPrice == other.ticketPrice &&
+          isCanceled == other.isCanceled; // New property
 
   @override
   int get hashCode => Object.hash(
@@ -344,6 +351,7 @@ class Event implements Comparable<Event> {
         maxTicketsAvailable,
         ticketSalesDates,
         type,
+        isCanceled, // New property
       );
 
   @override

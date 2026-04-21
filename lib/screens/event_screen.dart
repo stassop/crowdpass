@@ -31,7 +31,7 @@ class EventScreen extends ConsumerStatefulWidget {
 
 class _EventScreenState extends ConsumerState<EventScreen> {
   final _formKey = GlobalKey<FormState>();
-  late String? _eventId;
+  String? _eventId;
 
   // Form fields
   DateTimeRange? _dates;
@@ -56,30 +56,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
   // Change tracking
   bool _isEditing = false;
-  bool _hasChanged = false;
-
-  void _updateHasChanged(Event? event) {
-    _hasChanged =
-        _dates != event?.dates ||
-        _description != event?.description ||
-        _doorTicketsAvailable != event?.doorTicketsAvailable ||
-        _imageURL != event?.imageURL ||
-        _isEpilepsyFriendly != event?.isEpilepsyFriendly ||
-        _isFamilyFriendly != event?.isFamilyFriendly ||
-        _isFree != event?.isFree ||
-        _isHearingAidCompatible != event?.isHearingAidCompatible ||
-        _isLowSensoryFriendly != event?.isLowSensoryFriendly ||
-        _isOutdoor != event?.isOutdoor ||
-        _isPetFriendly != event?.isPetFriendly ||
-        _isWheelchairAccessible != event?.isWheelchairAccessible ||
-        _location != event?.location ||
-        _maxTicketsAvailable != event?.maxTicketsAvailable ||
-        _ticketPrice != event?.ticketPrice ||
-        _ticketSalesDates != event?.ticketSalesDates ||
-        _times != event?.times ||
-        _title != event?.title ||
-        _type != event?.type;
-  }
 
   // Set fields from event
   void _resetFields(Event? event) {
@@ -104,8 +80,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     _times = event.times;
     _title = event.title;
     _type = event.type;
-
-    _updateHasChanged(event);
   }
 
   Future<void> _createOrUpdate() async {
@@ -215,6 +189,54 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     } finally {
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+    }
+  }
+
+  void _cancelEvent() async {
+    // Make sure there's an event to cancel
+    if (_eventId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No event to cancel.')),
+      );
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Event'),
+        content: const Text('Are you sure you want to cancel this event? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Yes, Cancel Event'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await ref.read(eventNotifier.notifier).cancelEvent(_eventId!);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Event cancelled successfully.')),
+          );
+          Navigator.of(context).pop(); // Go back after cancellation
+        }
+      } catch (e) {
+        if (mounted) {
+          ErrorDialog.show(
+            context,
+            title: 'Failed to cancel event',
+            message: e.toString(),
+          );
+        }
       }
     }
   }
@@ -364,6 +386,29 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         // Determine whether we're creating a new event 
         final isCreating = _eventId == null || _eventId!.isEmpty || event == null;
 
+        // If the event is null (e.g. invalid ID), show an error message
+        final hasChanged = !isCreating && (
+          _dates != event.dates ||
+          _description != event.description ||
+          _doorTicketsAvailable != event.doorTicketsAvailable ||
+          _imageURL != event.imageURL ||
+          _isEpilepsyFriendly != event.isEpilepsyFriendly ||
+          _isFamilyFriendly != event.isFamilyFriendly ||
+          _isFree != event.isFree ||
+          _isHearingAidCompatible != event.isHearingAidCompatible ||
+          _isLowSensoryFriendly != event.isLowSensoryFriendly ||
+          _isOutdoor != event.isOutdoor ||
+          _isPetFriendly != event.isPetFriendly ||
+          _isWheelchairAccessible != event.isWheelchairAccessible ||
+          _location != event.location ||
+          _maxTicketsAvailable != event.maxTicketsAvailable ||
+          _ticketPrice != event.ticketPrice ||
+          _ticketSalesDates != event.ticketSalesDates ||
+          _times != event.times ||
+          _title != event.title ||
+          _type != event.type
+        );
+
         // Company is either null, current user's company (if creating), or event's company (if editing)
         final company = isCreating
             ? ref.watch(companyProvider(null)).value
@@ -399,18 +444,21 @@ class _EventScreenState extends ConsumerState<EventScreen> {
           );
         }
 
-        // Auto-enable editing once for new events.
-        if (isCreating) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            setState(() {
-              _isEditing = true;
-            });
-          });
+        // Auto-enable editing for new companies
+        if (isCreating && !_isEditing) {
+          _isEditing = true;
         }
 
         final isOwner = isCreating || (event.createdBy == user?.uid);
         final isLoading = ref.watch(eventNotifier).isLoading;
+
+        final hasStarted = event != null &&
+             event.dates.start.isBefore(DateTime.now());
+        final ticketSalesStarted = event != null &&
+            event.ticketSalesDates != null &&
+            event.ticketSalesDates!.start.isBefore(DateTime.now());
+
+        final theme = Theme.of(context);
 
         return Scaffold(
           body: Form(
@@ -425,12 +473,12 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   actions: [
-                    if (isOwner && !isCreating)
+                    if (isOwner && !isCreating && !ticketSalesStarted)
                       IconButton(
                         onPressed: isLoading
                             ? null
                             : () {
-                                if (_isEditing && _hasChanged) {
+                                if (_isEditing && hasChanged) {
                                   _createOrUpdate();
                                 } else {
                                   setState(() => _isEditing = !_isEditing);
@@ -438,7 +486,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                               },
                         icon: Icon(
                           _isEditing
-                              ? (_hasChanged ? Icons.check : Icons.edit_off)
+                              ? (hasChanged ? Icons.check : Icons.edit_off)
                               : Icons.edit,
                         ),
                       ),
@@ -446,13 +494,11 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                   onTitleChanged: (value) {
                     setState(() {
                       _title = value;
-                      _updateHasChanged(event);
                     });
                   },
                   onPhotoURLChanged: (value) {
                     setState(() {
                       _imageURL = value;
-                      _updateHasChanged(event);
                     });
                   },
                   validator: (value) {
@@ -487,7 +533,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _description = value;
-                              _updateHasChanged(event);
                             });
                           },
                           validator: (value) {
@@ -506,7 +551,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _type = value.isNotEmpty ? value.first : null;
-                              _updateHasChanged(event);
                             });
                           },
                         ),
@@ -520,7 +564,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _location = value;
-                              _updateHasChanged(event);
                             });
                           },
                         ),
@@ -533,7 +576,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           isRequired: true,
                           onChanged: (value) {
                             _updateDatesAndTimes(dates: value);
-                            _updateHasChanged(event);
                           },
                         ),
 
@@ -545,7 +587,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           isRequired: true,
                           onChanged: (value) {
                             _updateDatesAndTimes(times: value);
-                            _updateHasChanged(event);
                           },
                         ),
 
@@ -573,7 +614,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                                 onChanged: (value) {
                                   setState(() {
                                     _ticketPrice = value;
-                                    _updateHasChanged(event);
                                   });
                                 },
                               ),
@@ -589,7 +629,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                                 ),
                                 onChanged: (value) {
                                   _updateDatesAndTimes(ticketSalesDates: value);
-                                  _updateHasChanged(event);
                                 },
                               ),
 
@@ -610,7 +649,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _maxTicketsAvailable = value?.toInt();
-                              _updateHasChanged(event);
                             });
                           },
                         ),
@@ -626,7 +664,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _isFree = value;
-                              _updateHasChanged(event);
                             });
                           },
                         ),
@@ -639,7 +676,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           leading: const Icon(Icons.door_front_door),
                           onChanged: (value) {
                             _updateDatesAndTimes(doorTicketsAvailable: value);
-                            _updateHasChanged(event);
                           },
                         ),
 
@@ -661,7 +697,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _isOutdoor = value;
-                              _updateHasChanged(event);
                             });
                           },
                         ),
@@ -675,7 +710,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _isWheelchairAccessible = value;
-                              _updateHasChanged(event);
                             });
                           },
                         ),
@@ -688,7 +722,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _isEpilepsyFriendly = value;
-                              _updateHasChanged(event);
                             });
                           },
                         ),
@@ -701,7 +734,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _isFamilyFriendly = value;
-                              _updateHasChanged(event);
                             });
                           },
                         ),
@@ -714,7 +746,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _isHearingAidCompatible = value;
-                              _updateHasChanged(event);
                             });
                           },
                         ),
@@ -727,7 +758,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _isLowSensoryFriendly = value;
-                              _updateHasChanged(event);
                             });
                           },
                         ),
@@ -740,27 +770,35 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           onChanged: (value) {
                             setState(() {
                               _isPetFriendly = value;
-                              _updateHasChanged(event);
                             });
                           },
                         ),
 
-                        if (isCreating)
+                        if (isCreating || _isEditing)
                           Padding(
                             padding: const EdgeInsets.only(top: 16.0),
-                            child: ElevatedButton(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.save),
+                              label: Text(isCreating ? 'Create Event' : 'Save Changes'),
                               onPressed: isLoading
                                   ? null
                                   : () => _createOrUpdate(),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text('Create Event'),
+                            ),
+                          ),
+
+                        if (!isCreating && !hasStarted)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.cancel),
+                              label: const Text('Cancel Event'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.error,
+                                foregroundColor: theme.colorScheme.onError,
+                              ),
+                              onPressed: isLoading
+                                  ? null
+                                  : () => _cancelEvent(),
                             ),
                           ),
                       ],

@@ -147,6 +147,8 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
             (_country != null && _country != userProfile.country) ||
             (_password != null && _password!.isNotEmpty);
 
+        final theme = Theme.of(context);
+
         return Scaffold(
           appBar: AppBar(
             title: Text(isMe ? 'My Profile' : '${userProfile.displayName}\'s Profile'),
@@ -233,10 +235,8 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         label: const Text('Delete Account'),
                         onPressed: isLoading ? null : _deleteAccount,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.error,
-                          foregroundColor: Theme.of(
-                            context,
-                          ).colorScheme.onError,
+                          backgroundColor: theme.colorScheme.error,
+                          foregroundColor: theme.colorScheme.onError,
                         ),
                       ),
                     ],
