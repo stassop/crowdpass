@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:crowdpass/models/company.dart';
 import 'package:crowdpass/models/event.dart';
 
 import 'package:crowdpass/providers/company_provider.dart';
-import 'package:crowdpass/providers/event_provider.dart';
+import 'package:crowdpass/providers/company_events_provider.dart'; // Ensure correct import for companyEventsProvider
 
 import 'package:crowdpass/widgets/refreshable_list.dart';
 
@@ -91,25 +90,36 @@ class _EventList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the new NotifierProvider state
+    final state = ref.watch(companyEventsProvider);
+    final notifier = ref.read(companyEventsProvider.notifier);
+
+    // Filter events locally based on the tab's type requirement
+    final filteredEvents = state.events.where((event) {
+      final now = DateTime.now();
+      switch (eventType) {
+        case EventTypeFilter.past:
+          return event.dates.end.isBefore(now) && event.isCanceled != true;
+        case EventTypeFilter.current:
+          return event.dates.start.isBefore(now) && event.dates.end.isAfter(now) && event.isCanceled != true;
+        case EventTypeFilter.upcoming:
+          return event.dates.start.isAfter(now) && event.isCanceled != true;
+        case EventTypeFilter.canceled:
+          return event.isCanceled == true;
+      }
+    }).toList();
+
     return RefreshableList<Event>(
-      provider: companyEventsProvider(companyId),
-      filter: (event) {
-        final now = DateTime.now();
-        switch (eventType) {
-          case EventTypeFilter.past:
-            return event.dates.end.isBefore(now) && event.isCanceled != true;
-          case EventTypeFilter.current:
-            return event.dates.start.isBefore(now) && event.dates.end.isAfter(now) && event.isCanceled != true;
-          case EventTypeFilter.upcoming:
-            return event.dates.start.isAfter(now) && event.isCanceled != true;
-          case EventTypeFilter.canceled:
-            return event.isCanceled == true;
-        }
-      },
-      itemBuilder: (context, event) => ListTile(
-        title: Text(event.name),
+      items: filteredEvents,
+      hasMore: state.hasMore,
+      isLoading: state.isLoading,
+      onRefresh: () async => notifier.refresh(),
+      onLoadMore: () async => notifier.loadMore(),
+      tileBuilder: (context, event, index) => ListTile(
+        title: Text(event.title),
         subtitle: Text('${event.dates.start} - ${event.dates.end}'),
         onTap: () => Navigator.pushNamed(context, '/event/', arguments: event.id),
       ),
     );
+  }
 }

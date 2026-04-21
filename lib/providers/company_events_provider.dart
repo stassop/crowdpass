@@ -1,44 +1,91 @@
 import 'dart:async';
-
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:crowdpass/models/event.dart';
+import 'package:crowdpass/providers/company_provider.dart';
 
-import 'package:crowdpass/providers/company_provider.dart'; // Import CompanyProvider
+class CompanyEventsState {
+  final List<Event> events;
+  final bool isLoading;
+  final bool hasMore;
+  final Object? error;
 
-class CompanyEventsNotifier extends AsyncNotifier<List<Event>> {
+  CompanyEventsState({
+    this.events = const [],
+    this.isLoading = false,
+    this.hasMore = true,
+    this.error,
+  });
+
+  CompanyEventsState copyWith({
+    List<Event>? events,
+    bool? isLoading,
+    bool? hasMore,
+    Object? error,
+  }) {
+    return CompanyEventsState(
+      events: events ?? this.events,
+      isLoading: isLoading ?? this.isLoading,
+      hasMore: hasMore ?? this.hasMore,
+      error: error,
+    );
+  }
+}
+
+class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static const int pageSize = 20;
+  
   QueryDocumentSnapshot? _lastDocument;
-  bool _hasMore = true;
-  final int _pageSize = 20;
-
-  late final String? companyId; // Make companyId nullable
+  String? _companyId;
 
   @override
-  FutureOr<List<Event>> build() {
-    final company = ref.watch(companyProvider(companyId)).value;
-    if (company == null) {
-      // If no company or company ID is found, return an empty list
-      return [];
-    }
-    companyId = company.id; // Get the company ID
-    return _fetchEvents(isRefresh: true);
+  CompanyEventsState build() {
+    // Watch the company provider to get the current company
+    // We use Future.microtask to delay the fetch until after the initial build completes
+    Future.microtask(() {
+      final company = ref.read(companyProvider(null)).value; // Or however you retrieve the current company ID
+      if (company != null) {
+        _companyId = company.id;
+        refresh();
+      } else {
+        state = state.copyWith(error: 'Company not found.');
+      }
+    });
+
+    return CompanyEventsState();
   }
 
-  Future<List<Event>> _fetchEvents({bool isRefresh = false}) async {
+  Future<void> refresh() async {
+    _lastDocument = null;
+    state = state.copyWith(hasMore: true, error: null);
+    await _fetchEvents(isRefresh: true);
+  }
+
+  Future<void> loadMore() async {
+    if (!state.hasMore || state.isLoading) return;
+    await _fetchEvents(isRefresh: false);
+  }
+
+  Future<void> _fetchEvents({bool isRefresh = false}) async {
+    if (_companyId == null) return;
+    if (state.isLoading) return;
+
+    state = state.copyWith(isLoading: true, error: null);
+
     if (isRefresh) {
       _lastDocument = null;
-      _hasMore = true;
+      state = state.copyWith(events: []);
     }
 
     try {
       final now = DateTime.now();
-      var query = FirebaseFirestore.instance
+      var query = _firestore
           .collection('events')
-          .where('companyId', isEqualTo: companyId)
+          .where('companyId', isEqualTo: _companyId)
           .orderBy('dates.start')
-          .limit(_pageSize);
+          .limit(pageSize);
 
       if (_lastDocument != null) {
         query = query.startAfterDocument(_lastDocument!);
@@ -46,50 +93,51 @@ class CompanyEventsNotifier extends AsyncNotifier<List<Event>> {
 
       final snapshot = await query.get();
 
-      if (snapshot.docs.length < _pageSize) {
-        _hasMore = false;
+      if (snapshot.docs.isEmpty) {
+        state = state.copyWith(hasMore: false, isLoading: false);
+        return;
       }
 
-      if (snapshot.docs.isNotEmpty) {
-        _lastDocument = snapshot.docs.last;
-      }
+      _lastDocument = snapshot.docs.last;
 
       final fetchedEvents = snapshot.docs
-          .map((doc) => Event.fromJson(doc.data()))
+          .map((doc) {
+            final data = doc.data();
+            // Assuming Event.fromJson handles the ID if needed, 
+            // or you might need to pass doc.id depending on your model.
+            return Event.fromJson(data);
+          })
           .toList();
 
-      return fetchedEvents.where((event) {
+      // Filter events based on original business logic
+      final validEvents = fetchedEvents.where((event) {
         if (event.isCanceled == true) return false;
-
         final eventStart = event.dates.start;
         final eventEnd = event.dates.end;
-
         return eventEnd.isAfter(now) && eventStart.isBefore(now);
       }).toList();
+
+      final updatedEvents = isRefresh
+          ? validEvents
+          : [...state.events, ...validEvents];
+
+      state = state.copyWith(
+        events: updatedEvents,
+        hasMore: snapshot.docs.length == pageSize,
+        isLoading: false,
+      );
     } catch (e) {
-      throw Exception('Failed to fetch events: $e');
+      debugPrint('Error fetching company events: $e');
+      state = state.copyWith(
+        error: e,
+        hasMore: false,
+        isLoading: false,
+      );
     }
-  }
-
-  Future<void> loadMore() async {
-    if (!_hasMore || state.isLoading) return;
-
-    state = const AsyncLoading<List<Event>>().copyWithPrevious(state);
-
-    state = await AsyncValue.guard(() async {
-      final newEvents = await _fetchEvents();
-      final previousEvents = state.whenData((value) => value).value ?? [];
-      return [...previousEvents, ...newEvents];
-    });
-  }
-
-  Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetchEvents(isRefresh: true));
   }
 }
 
 final companyEventsProvider =
-    AsyncNotifierProvider.autoDispose<CompanyEventsNotifier, List<Event>>(
-  () => CompanyEventsNotifier(),
+    NotifierProvider<CompanyEventsNotifier, CompanyEventsState>(
+  CompanyEventsNotifier.new,
 );
