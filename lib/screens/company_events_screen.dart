@@ -7,6 +7,8 @@ import 'package:crowdpass/models/event.dart';
 import 'package:crowdpass/providers/company_provider.dart';
 import 'package:crowdpass/providers/event_provider.dart';
 
+import 'package:crowdpass/widgets/refreshable_list.dart';
+
 class CompanyEventsScreen extends ConsumerStatefulWidget {
   const CompanyEventsScreen({super.key});
 
@@ -89,35 +91,25 @@ class _EventList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final eventsAsync = ref.watch(eventProvider(companyId, eventType));
-
-    return eventsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('Error: $err')),
-      data: (events) {
-        if (events.isEmpty) {
-          return const Center(child: Text('No events found.'));
+    return RefreshableList<Event>(
+      provider: companyEventsProvider(companyId),
+      filter: (event) {
+        final now = DateTime.now();
+        switch (eventType) {
+          case EventTypeFilter.past:
+            return event.dates.end.isBefore(now) && event.isCanceled != true;
+          case EventTypeFilter.current:
+            return event.dates.start.isBefore(now) && event.dates.end.isAfter(now) && event.isCanceled != true;
+          case EventTypeFilter.upcoming:
+            return event.dates.start.isAfter(now) && event.isCanceled != true;
+          case EventTypeFilter.canceled:
+            return event.isCanceled == true;
         }
-
-        return RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(eventProvider(companyId, eventType));
-          },
-          child: ListView.builder(
-            itemCount: events.length,
-            itemBuilder: (context, index) {
-              final event = events[index];
-              return ListTile(
-                title: Text(event.title),
-                subtitle: Text('${event.dates.start} - ${event.dates.end}'),
-                onTap: () {
-                  Navigator.of(context).pushNamed('/event_details', arguments: event.id);
-                },
-              );
-            },
-          ),
-        );
       },
+      itemBuilder: (context, event) => ListTile(
+        title: Text(event.name),
+        subtitle: Text('${event.dates.start} - ${event.dates.end}'),
+        onTap: () => Navigator.pushNamed(context, '/event/', arguments: event.id),
+      ),
     );
-  }
 }
