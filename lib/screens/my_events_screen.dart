@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crowdpass/models/event.dart';
 
 import 'package:crowdpass/providers/company_provider.dart';
-import 'package:crowdpass/providers/my_events_provider.dart'; // Ensure correct import for companyEventsProvider
+import 'package:crowdpass/providers/company_events_provider.dart'; // Ensure correct import for companyEventsProvider
 
 import 'package:crowdpass/widgets/refreshable_list.dart';
 

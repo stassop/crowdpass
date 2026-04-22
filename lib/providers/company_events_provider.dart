@@ -2,32 +2,61 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// Assuming Event model is defined elsewhere
 import 'package:crowdpass/models/event.dart';
-import 'package:crowdpass/providers/company_provider.dart';
 
 class CompanyEventsState {
-  final List<Event> events;
-  final bool isLoading;
-  final bool hasMore;
+  final List<Event> currentEvents;
+  final List<Event> upcomingEvents;
+  final List<Event> pastEvents;
+  final List<Event> canceledEvents;
+  final bool isLoadingCurrent;
+  final bool isLoadingUpcoming;
+  final bool isLoadingPast;
+  final bool hasMoreCurrent;
+  final bool hasMoreUpcoming;
+  final bool hasMorePast;
   final Object? error;
 
   CompanyEventsState({
-    this.events = const [],
-    this.isLoading = false,
-    this.hasMore = true,
+    this.currentEvents = const [],
+    this.upcomingEvents = const [],
+    this.pastEvents = const [],
+    this.canceledEvents = const [],
+    this.isLoadingCurrent = false,
+    this.isLoadingUpcoming = false,
+    this.isLoadingPast = false,
+    this.hasMoreCurrent = true,
+    this.hasMoreUpcoming = true,
+    this.hasMorePast = true,
     this.error,
   });
 
   CompanyEventsState copyWith({
-    List<Event>? events,
-    bool? isLoading,
-    bool? hasMore,
+    List<Event>? currentEvents,
+    List<Event>? upcomingEvents,
+    List<Event>? pastEvents,
+    List<Event>? canceledEvents,
+    bool? isLoadingCurrent,
+    bool? isLoadingUpcoming,
+    bool? isLoadingPast,
+    bool? hasMoreCurrent,
+    bool? hasMoreUpcoming,
+    bool? hasMorePast,
     Object? error,
   }) {
     return CompanyEventsState(
-      events: events ?? this.events,
-      isLoading: isLoading ?? this.isLoading,
-      hasMore: hasMore ?? this.hasMore,
+      currentEvents: currentEvents ?? this.currentEvents,
+      upcomingEvents: upcomingEvents ?? this.upcomingEvents,
+      pastEvents: pastEvents ?? this.pastEvents,
+      canceledEvents: canceledEvents ?? this.canceledEvents,
+      isLoadingCurrent: isLoadingCurrent ?? this.isLoadingCurrent,
+      isLoadingUpcoming: isLoadingUpcoming ?? this.isLoadingUpcoming,
+      isLoadingPast: isLoadingPast ?? this.isLoadingPast,
+      hasMoreCurrent: hasMoreCurrent ?? this.hasMoreCurrent,
+      hasMoreUpcoming: hasMoreUpcoming ?? this.hasMoreUpcoming,
+      hasMorePast: hasMorePast ?? this.hasMorePast,
       error: error,
     );
   }
@@ -36,108 +65,195 @@ class CompanyEventsState {
 class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const int pageSize = 20;
-  
-  QueryDocumentSnapshot? _lastDocument;
-  String? _companyId;
+
+  // Cached lists for event IDs by category
+  List<String> _currentEventIds = [];
+  List<String> _upcomingEventIds = [];
+  List<String> _pastEventIds = [];
+  late final String companyId; // Company ID passed from the family argument
+
+  // Initialize the notifier with a specific companyId
+  CompanyEventsNotifier(this.companyId);
 
   @override
   CompanyEventsState build() {
-    // Watch the company provider to get the current company
-    // We use Future.microtask to delay the fetch until after the initial build completes
-    Future.microtask(() {
-      final company = ref.read(companyProvider(null)).value; // Or however you retrieve the current company ID
-      if (company != null) {
-        _companyId = company.id;
-        refresh();
-      } else {
-        state = state.copyWith(error: 'Company not found.');
-      }
-    });
-
+    Future.microtask(() => refreshAllEvents(clearIds: true));
     return CompanyEventsState();
   }
 
-  Future<void> refresh() async {
-    _lastDocument = null;
-    state = state.copyWith(hasMore: true, error: null);
-    await _fetchEvents(isRefresh: true);
+  Future<void> _refreshEventIds() async {
+    state = state.copyWith(error: null);
+
+    await Future.wait([
+      _fetchSingleIdList('currentEvents', 'createdAt', (ids) => _currentEventIds = ids, fetchCurrentEvents),
+      _fetchSingleIdList('upcomingEvents', 'createdAt', (ids) => _upcomingEventIds = ids, fetchUpcomingEvents),
+      _fetchSingleIdList('pastEvents', 'createdAt', (ids) => _pastEventIds = ids, fetchPastEvents),
+    ]);
   }
 
-  Future<void> loadMore() async {
-    if (!state.hasMore || state.isLoading) return;
-    await _fetchEvents(isRefresh: false);
+  Future<void> _fetchSingleIdList(
+    String collectionName,
+    String orderByField,
+    void Function(List<String>) onUpdate,
+    Future<void> Function({bool refresh}) fetchFunction,
+  ) async {
+    try {
+      final snapshot = await _firestore
+          .collection('companies')
+          .doc(companyId)
+          .collection(collectionName)
+          .orderBy(orderByField, descending: true)
+          .get();
+
+      final newIds = snapshot.docs.map((doc) => doc.id).toList();
+      onUpdate(newIds);
+
+      // Trigger fetching actual event data
+      await fetchFunction(refresh: true);
+    } catch (error) {
+      debugPrint('Error fetching IDs for $collectionName: $error');
+      state = state.copyWith(error: error);
+    }
   }
 
-  Future<void> _fetchEvents({bool isRefresh = false}) async {
-    if (_companyId == null) return;
-    if (state.isLoading) return;
+  Future<void> refreshAllEvents({bool clearIds = false}) async {
+    if (clearIds) {
+      _currentEventIds = [];
+      _upcomingEventIds = [];
+      _pastEventIds = [];
+    }
+    await _refreshEventIds();
+  }
 
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> fetchCurrentEvents({bool refresh = false}) => _fetchEvents(
+        eventIds: _currentEventIds,
+        currentEvents: state.currentEvents,
+        isLoadingFlag: state.isLoadingCurrent,
+        isLoadingSetter: (value) => state = state.copyWith(isLoadingCurrent: value),
+        hasMoreSetter: (value) => state = state.copyWith(hasMoreCurrent: value),
+        onUpdateEvents: (events, canceledEvents) => state = state.copyWith(
+          currentEvents: events,
+          canceledEvents: refresh ? canceledEvents : [...state.canceledEvents, ...canceledEvents],
+        ),
+        onClearEvents: () => state = state.copyWith(currentEvents: []),
+        refresh: refresh,
+      );
 
-    if (isRefresh) {
-      _lastDocument = null;
-      state = state.copyWith(events: []);
+  Future<void> fetchUpcomingEvents({bool refresh = false}) => _fetchEvents(
+        eventIds: _upcomingEventIds,
+        currentEvents: state.upcomingEvents,
+        isLoadingFlag: state.isLoadingUpcoming,
+        isLoadingSetter: (value) => state = state.copyWith(isLoadingUpcoming: value),
+        hasMoreSetter: (value) => state = state.copyWith(hasMoreUpcoming: value),
+        onUpdateEvents: (events, canceledEvents) => state = state.copyWith(
+          upcomingEvents: events,
+          canceledEvents: refresh ? canceledEvents : [...state.canceledEvents, ...canceledEvents],
+        ),
+        onClearEvents: () => state = state.copyWith(upcomingEvents: []),
+        refresh: refresh,
+      );
+
+  Future<void> fetchPastEvents({bool refresh = false}) => _fetchEvents(
+        eventIds: _pastEventIds,
+        currentEvents: state.pastEvents,
+        isLoadingFlag: state.isLoadingPast,
+        isLoadingSetter: (value) => state = state.copyWith(isLoadingPast: value),
+        hasMoreSetter: (value) => state = state.copyWith(hasMorePast: value),
+        onUpdateEvents: (events, canceledEvents) => state = state.copyWith(
+          pastEvents: events,
+          canceledEvents: refresh ? canceledEvents : [...state.canceledEvents, ...canceledEvents],
+        ),
+        onClearEvents: () => state = state.copyWith(pastEvents: []),
+        refresh: refresh,
+      );
+
+  Future<void> _fetchEvents({
+    required List<String> eventIds,
+    required List<Event> currentEvents,
+    required bool isLoadingFlag,
+    required void Function(bool) isLoadingSetter,
+    required void Function(bool) hasMoreSetter,
+    required void Function(List<Event>, List<Event>) onUpdateEvents,
+    required void Function() onClearEvents,
+    bool refresh = false,
+  }) async {
+    if (isLoadingFlag) return;
+
+    isLoadingSetter(true);
+    state = state.copyWith(error: null);
+
+    if (refresh) {
+      onClearEvents();
+      hasMoreSetter(true);
+    }
+
+    final startIndex = refresh ? 0 : currentEvents.length;
+
+    if (startIndex >= eventIds.length) {
+      hasMoreSetter(false);
+      isLoadingSetter(false);
+      return;
+    }
+
+    final batch = eventIds.skip(startIndex).take(pageSize).toList();
+
+    if (batch.isEmpty) {
+      hasMoreSetter(false);
+      isLoadingSetter(false);
+      return;
     }
 
     try {
-      final now = DateTime.now();
-      var query = _firestore
-          .collection('events')
-          .where('companyId', isEqualTo: _companyId)
-          .orderBy('dates.start')
-          .limit(pageSize);
+      List<Event> fetchedEvents = [];
 
-      if (_lastDocument != null) {
-        query = query.startAfterDocument(_lastDocument!);
+      for (var i = 0; i < batch.length; i += 10) {
+        final subBatch = batch.skip(i).take(10).toList();
+        if (subBatch.isEmpty) continue;
+
+        final snapshot = await _firestore
+            .collection('events')
+            .where(FieldPath.documentId, whereIn: subBatch)
+            .get();
+
+        final events = snapshot.docs.map((doc) {
+          final data = Map<String, dynamic>.from(doc.data());
+          data['id'] = doc.id; // Ensure ID is mapped correctly
+          return Event.fromJson(data);
+        }).toList();
+
+        events.sort((a, b) => batch.indexOf(a.id!).compareTo(batch.indexOf(b.id!)));
+        fetchedEvents.addAll(events);
       }
 
-      final snapshot = await query.get();
+      List<Event> validEvents = [];
+      List<Event> newCanceledEvents = [];
 
-      if (snapshot.docs.isEmpty) {
-        state = state.copyWith(hasMore: false, isLoading: false);
-        return;
+      for (var event in fetchedEvents) {
+        if (event.isCanceled == true) {
+          newCanceledEvents.add(event);
+        } else {
+          validEvents.add(event);
+        }
       }
 
-      _lastDocument = snapshot.docs.last;
-
-      final fetchedEvents = snapshot.docs
-          .map((doc) {
-            final data = doc.data();
-            // Assuming Event.fromJson handles the ID if needed, 
-            // or you might need to pass doc.id depending on your model.
-            return Event.fromJson(data);
-          })
-          .toList();
-
-      // Filter events based on original business logic
-      final validEvents = fetchedEvents.where((event) {
-        if (event.isCanceled == true) return false;
-        final eventStart = event.dates.start;
-        final eventEnd = event.dates.end;
-        return eventEnd.isAfter(now) && eventStart.isBefore(now);
-      }).toList();
-
-      final updatedEvents = isRefresh
+      final updatedEvents = refresh
           ? validEvents
-          : [...state.events, ...validEvents];
+          : [...currentEvents, ...validEvents];
 
-      state = state.copyWith(
-        events: updatedEvents,
-        hasMore: snapshot.docs.length == pageSize,
-        isLoading: false,
-      );
+      onUpdateEvents(updatedEvents, newCanceledEvents);
+      hasMoreSetter(fetchedEvents.length == batch.length);
     } catch (e) {
-      debugPrint('Error fetching company events: $e');
-      state = state.copyWith(
-        error: e,
-        hasMore: false,
-        isLoading: false,
-      );
+      debugPrint('Error fetching events: $e');
+      state = state.copyWith(error: e);
+      hasMoreSetter(false);
+    } finally {
+      isLoadingSetter(false);
     }
   }
 }
 
-final companyEventsNotifier =
-    NotifierProvider<CompanyEventsNotifier, CompanyEventsState>(
-  CompanyEventsNotifier.new,
+// Provider definition using family
+final companyEventsProvider =
+    NotifierProvider.family<CompanyEventsNotifier, CompanyEventsState, String>(
+  (companyId) => CompanyEventsNotifier(companyId),
 );
