@@ -112,6 +112,14 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         times: times,
       );
       await docRef.set(event.toJson());
+
+      // Add eventId to companies/companyId/createdEvents/ collection for easy querying of a company's created events
+      await firestore
+          .collection('companies')
+          .doc(company.id)
+          .collection('createdEvents')
+          .doc(eventId)
+          .set({'eventId': eventId});
       
       state = const AsyncData(null);
 

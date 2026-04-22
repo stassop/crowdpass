@@ -252,13 +252,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     times ??= _times;
     doorTicketsAvailable ??= _doorTicketsAvailable;
 
-    setState(() {
-      _dates = dates;
-      _ticketSalesDates = ticketSalesDates;
-      _times = times;
-      _doorTicketsAvailable = doorTicketsAvailable ?? false;
-    });
-
     // Don't validate until all required event fields exist.
     if (dates == null || times == null) {
       return;
@@ -292,6 +285,11 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       }
       return;
     }
+
+    setState(() {
+      _times = times;
+      _dates = DateTimeRange(start: eventStart, end: eventEnd);
+    });
 
     if (ticketSalesDates == null) {
       return;
@@ -346,6 +344,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
     }
 
     setState(() {
+      _doorTicketsAvailable = doorTicketsAvailable ?? _doorTicketsAvailable;
       _ticketSalesDates = DateTimeRange(
         start: ticketSalesStart,
         end: ticketSalesEnd,

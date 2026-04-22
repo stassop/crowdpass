@@ -92,7 +92,7 @@ class DrawerMenu extends ConsumerWidget {
                       title: const Text('My Events'),
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/events/');
+                         Navigator.pushNamed(context, '/my_events/');
                       },
                     ),
                     ListTile(

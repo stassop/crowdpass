@@ -137,7 +137,7 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
   }
 }
 
-final companyEventsProvider =
+final companyEventsNotifier =
     NotifierProvider<CompanyEventsNotifier, CompanyEventsState>(
   CompanyEventsNotifier.new,
 );
