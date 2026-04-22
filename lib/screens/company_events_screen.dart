@@ -3,19 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/event.dart';
 
-import 'package:crowdpass/providers/auth_provider.dart';
-import 'package:crowdpass/providers/my_events_provider.dart';
+import 'package:crowdpass/providers/company_provider.dart';
+import 'package:crowdpass/providers/company_events_provider.dart';
 
 import 'package:crowdpass/widgets/refreshable_list.dart';
 
-class MyEventsScreen extends ConsumerStatefulWidget {
-  const MyEventsScreen({super.key});
+class CompanyEventsScreen extends ConsumerStatefulWidget {
+  const CompanyEventsScreen({super.key});
 
   @override
-  ConsumerState<MyEventsScreen> createState() => _MyEventsScreenState();
+  ConsumerState<CompanyEventsScreen> createState() => _CompanyEventsScreenState();
 }
 
-class _MyEventsScreenState extends ConsumerState<MyEventsScreen>
+class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
@@ -33,9 +33,10 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final authAsync = ref.watch(authProvider);
+    // IMPORTANT: We expressly pass null to companyProvider to get current user's company (or null).
+    final companyAsync = ref.watch(companyProvider(null));
 
-    return authAsync.when(
+    return companyAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, _) => Scaffold(
@@ -45,15 +46,15 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen>
         ),
         body: Center(child: Text('Error: $err')),
       ),
-      data: (user) {
-        if (user == null) {
+      data: (company) {
+        if (company == null) {
           return Scaffold(
             appBar: AppBar(
               leading: BackButton(onPressed: () => Navigator.maybePop(context)),
-              title: const Text('User Not Found'),
+              title: const Text('Company Not Found'),
             ),
             body: const Center(
-              child: Text('The specified user could not be found.'),
+              child: Text('The specified company could not be found.'),
             ),
           );
         }
@@ -75,10 +76,13 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen>
           body: TabBarView(
             controller: _tabController,
             children: [
-              _EventList(eventType: EventTypeFilter.past),
-              _EventList(eventType: EventTypeFilter.current),
-              _EventList(eventType: EventTypeFilter.upcoming),
-              _EventList(eventType: EventTypeFilter.canceled),
+              _EventList(companyId: company.id, eventType: EventTypeFilter.past),
+              _EventList(
+                  companyId: company.id, eventType: EventTypeFilter.current),
+              _EventList(
+                  companyId: company.id, eventType: EventTypeFilter.upcoming),
+              _EventList(
+                  companyId: company.id, eventType: EventTypeFilter.canceled),
             ],
           ),
         );
@@ -90,19 +94,19 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen>
 enum EventTypeFilter { past, current, upcoming, canceled }
 
 class _EventList extends ConsumerWidget {
-  // Remove companyId from here
+  final String companyId;
   final EventTypeFilter eventType;
 
   const _EventList({
-    // Remove companyId from constructor
+    required this.companyId,
     required this.eventType,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Use myEventsProvider as before, but do not pass companyId
-    final state = ref.watch(myEventsProvider);
-    final notifier = ref.read(myEventsProvider.notifier);
+    // companyEventsProvider is now a family that requires companyId
+    final state = ref.watch(companyEventsProvider(companyId));
+    final notifier = ref.read(companyEventsProvider(companyId).notifier);
 
     // Use the pre-split lists from state (no local time filtering needed)
     final List<Event> filteredEvents = switch (eventType) {
