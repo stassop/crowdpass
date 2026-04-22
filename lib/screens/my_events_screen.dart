@@ -32,8 +32,7 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    final companyId = ModalRoute.of(context)?.settings.arguments as String?;
-    final companyAsync = ref.watch(companyProvider(companyId));
+    final companyAsync = ref.watch(companyProvider(null)); // Pass null to get the current user's company
 
     return companyAsync.when(
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
