@@ -448,10 +448,10 @@ class _EventScreenState extends ConsumerState<EventScreen> {
           _isEditing = true;
         }
 
-        final isOwner = isCreating || (event.createdBy == user?.uid);
+        final isOwner = isCreating || event.createdBy == user?.uid;
         final isLoading = ref.watch(eventNotifier).isLoading;
 
-        final hasStarted = event != null &&
+        final eventStarted = event != null &&
              event.dates.start.isBefore(DateTime.now());
         final ticketSalesStarted = event != null &&
             event.ticketSalesDates != null &&
@@ -785,7 +785,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                             ),
                           ),
 
-                        if (!isCreating && !hasStarted)
+                        if (!isCreating && !eventStarted)
                           Padding(
                             padding: const EdgeInsets.only(top: 16.0),
                             child: ElevatedButton.icon(
