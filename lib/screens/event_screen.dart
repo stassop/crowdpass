@@ -384,8 +384,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
         // Determine whether we're creating a new event 
         final isCreating = _eventId == null || _eventId!.isEmpty || event == null;
-
-        // If the event is null (e.g. invalid ID), show an error message
+        
         final hasChanged = !isCreating && (
           _dates != event.dates ||
           _description != event.description ||

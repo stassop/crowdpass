@@ -150,17 +150,18 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
         final isOwner = isCreating || company.ownerId == user?.uid;
         final isLoading = ref.watch(companyNotifier).isLoading;
 
-        final hasChanged =
-            _name != company?.name ||
-            _industry != company?.industry ||
-            _address != company?.address ||
-            _phone != company?.phone ||
-            _vatNumber != company?.vatNumber ||
-            _website != company?.website ||
-            _email != company?.email ||
-            _ownerId != company?.ownerId ||
-            _iban != company?.iban ||
-            _logoURL != company?.logoURL;
+        final hasChanged = !isCreating && (
+            _name != company.name ||
+            _industry != company.industry ||
+            _address != company.address ||
+            _phone != company.phone ||
+            _vatNumber != company.vatNumber ||
+            _website != company.website ||
+            _email != company.email ||
+            _ownerId != company.ownerId ||
+            _iban != company.iban ||
+            _logoURL != company.logoURL
+        );
 
         // Auto-enable editing for new companies
         if (isCreating && !_isEditing) {
