@@ -158,7 +158,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
           );
         }
 
-        final isCreating = companyId == null || company == null;
+        final isCreating = company == null;
         final isOwner = isCreating || company.ownerId == user?.uid;
         final isLoading = ref.watch(companyNotifier).isLoading;
 
