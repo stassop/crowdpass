@@ -36,22 +36,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
   String? _vatNumber;
   String? _website;
 
-  bool _hasChanged = false;
   bool _isEditing = false;
-
-  void _updateHasChanged(Company? company) {
-    _hasChanged =
-        _name != company?.name ||
-        _industry != company?.industry ||
-        _address != company?.address ||
-        _phone != company?.phone ||
-        _vatNumber != company?.vatNumber ||
-        _website != company?.website ||
-        _email != company?.email ||
-        _ownerId != company?.ownerId ||
-        _iban != company?.iban ||
-        _logoURL != company?.logoURL;
-  }
 
   // Set fields from company
   void _resetFields(Company? company) {
@@ -67,15 +52,17 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
     _ownerId = company.ownerId;
     _iban = company.iban;
     _logoURL = company.logoURL;
-
-    _updateHasChanged(company);
   }
 
   Future<void> _createOrUpdate(String? companyId) async {
     if (!_formKey.currentState!.validate()) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(companyId == null ? 'Creating company...' : 'Updating company...')),
+      SnackBar(
+        content: Text(
+          companyId == null ? 'Creating company...' : 'Updating company...',
+        ),
+      ),
     );
 
     try {
@@ -83,7 +70,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
         await ref.read(companyNotifier.notifier).createCompany(
           address: _address!,
           email: _email!,
-          iban: _iban!,
+          iban: _iban,
           industry: _industry!,
           logoPath: _logoURL,
           name: _name!,
@@ -115,7 +102,8 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ErrorDialog.show(context, title: 'Failed to save company', message: e.toString());
+        ErrorDialog.show(context,
+            title: 'Failed to save company', message: e.toString());
       }
     } finally {
       if (mounted) {
@@ -162,6 +150,18 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
         final isOwner = isCreating || company.ownerId == user?.uid;
         final isLoading = ref.watch(companyNotifier).isLoading;
 
+        final hasChanged =
+            _name != company?.name ||
+            _industry != company?.industry ||
+            _address != company?.address ||
+            _phone != company?.phone ||
+            _vatNumber != company?.vatNumber ||
+            _website != company?.website ||
+            _email != company?.email ||
+            _ownerId != company?.ownerId ||
+            _iban != company?.iban ||
+            _logoURL != company?.logoURL;
+
         // Auto-enable editing for new companies
         if (isCreating && !_isEditing) {
           _isEditing = true;
@@ -170,9 +170,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
         return Scaffold(
           appBar: AppBar(
             title: Text(
-              isCreating
-                  ? 'Create Company'
-                  : company.name,
+              isCreating ? 'Create Company' : company.name,
             ),
             actions: [
               if (isOwner && !isCreating)
@@ -180,7 +178,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                   onPressed: isLoading
                       ? null
                       : () {
-                          if (_isEditing && _hasChanged) {
+                          if (_isEditing && hasChanged) {
                             _createOrUpdate(company.id);
                           } else {
                             setState(() => _isEditing = !_isEditing);
@@ -188,7 +186,7 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                         },
                   icon: Icon(
                     _isEditing
-                        ? (_hasChanged ? Icons.check : Icons.edit_off)
+                        ? (hasChanged ? Icons.check : Icons.edit_off)
                         : Icons.edit,
                   ),
                 ),
@@ -210,11 +208,9 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                         displayName: _name,
                         onNameChanged: (value) => setState(() {
                           _name = value;
-                          _updateHasChanged(company);
                         }),
                         onPhotoChanged: (value) => setState(() {
                           _logoURL = value;
-                          _updateHasChanged(company);
                         }),
                       ),
                     ),
@@ -233,9 +229,9 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                       ),
                       onChanged: (value) => setState(() {
                         _industry = value.firstOrNull;
-                        _updateHasChanged(company);
                       }),
-                      validator: (value) => value.isEmpty ? 'Industry required' : null,
+                      validator: (value) =>
+                          value.isEmpty ? 'Industry required' : null,
                     ),
 
                     const SizedBox(height: 16),
@@ -245,9 +241,9 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                       isEditable: _isEditing,
                       onChanged: (value) => setState(() {
                         _address = value;
-                        _updateHasChanged(company);
                       }),
-                      validator: (value) => value == null ? 'Address required' : null,
+                      validator: (value) =>
+                          value == null ? 'Address required' : null,
                     ),
 
                     const SizedBox(height: 16),
@@ -258,7 +254,6 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                       isRequired: true,
                       onChanged: (value) => setState(() {
                         _phone = value;
-                        _updateHasChanged(company);
                       }),
                     ),
 
@@ -270,7 +265,6 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                       isRequired: true,
                       onChanged: (value) => setState(() {
                         _email = value;
-                        _updateHasChanged(company);
                       }),
                     ),
 
@@ -281,7 +275,6 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                       isEditable: _isEditing,
                       onChanged: (value) => setState(() {
                         _iban = value;
-                        _updateHasChanged(company);
                       }),
                     ),
 
@@ -297,7 +290,6 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                       ),
                       onChanged: (value) => setState(() {
                         _vatNumber = value;
-                        _updateHasChanged(company);
                       }),
                       validator: (value) => (value == null || value.isEmpty)
                           ? 'VAT required'
@@ -311,7 +303,6 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                       isEditable: _isEditing,
                       onChanged: (value) => setState(() {
                         _website = value;
-                        _updateHasChanged(company);
                       }),
                     ),
 
@@ -319,9 +310,8 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 16.0),
                         child: ElevatedButton(
-                          onPressed: isLoading
-                              ? null
-                              : () => _createOrUpdate(null),
+                          onPressed:
+                              isLoading ? null : () => _createOrUpdate(null),
                           child: isLoading
                               ? const SizedBox(
                                   height: 20,
@@ -343,4 +333,3 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
     );
   }
 }
-
