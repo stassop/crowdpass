@@ -243,17 +243,22 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
   void _updateDatesAndTimes({
     DateTimeRange? dates,
+    bool? doorTicketsAvailable,
     DateTimeRange? ticketSalesDates,
     TimeRange? times,
-    bool? doorTicketsAvailable,
   }) {
     dates ??= _dates;
+    doorTicketsAvailable ??= _doorTicketsAvailable;
     ticketSalesDates ??= _ticketSalesDates;
     times ??= _times;
-    doorTicketsAvailable ??= _doorTicketsAvailable;
 
-    // Don't validate until all required event fields exist.
+    // We need a starting point to validate against, 
+    // so if both dates and times are null, just update what we can and return early.
     if (dates == null || times == null) {
+      setState(() {
+        _dates = dates;
+        _times = times;
+      });
       return;
     }
 
@@ -265,7 +270,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       times.start.minute,
     );
 
-    final eventEnd = DateTime(
+    var eventEnd = DateTime(
       dates.end.year,
       dates.end.month,
       dates.end.day,
@@ -273,14 +278,20 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       times.end.minute,
     );
 
-    // Event must end after it starts.
-    if (eventEnd.isBefore(eventStart) || eventEnd.isAtSameMomentAs(eventStart)) {
+    // If the the event continues past midnight, we need to add a day to the end time for accurate validation.
+    if (eventEnd.isBefore(eventStart)) {
+      eventEnd = eventEnd.add(const Duration(days: 1));
+    }
+
+    // Make sure event lasts at least 30 minutes
+    if (eventEnd.isBefore(eventStart) ||
+        eventEnd.isAtSameMomentAs(eventStart) ||
+        eventEnd.difference(eventStart) < const Duration(minutes: 30)) {
       if (mounted) {
         ErrorDialog.show(
           context,
           title: 'Schedule Error',
-          message: 'Event end must be after the start. '
-              'If your event continues after midnight, select a wider date range.',
+          message: 'Event must last at least 30 minutes.',
         );
       }
       return;
@@ -326,18 +337,17 @@ class _EventScreenState extends ConsumerState<EventScreen> {
       ticketSalesEnd = ticketSalesCutoff;
     }
 
-    // Validate final range
-    if (ticketSalesEnd.isBefore(ticketSalesStart) ||
-        ticketSalesEnd.isAtSameMomentAs(ticketSalesStart)) {
+    // Make sure ticket sales last at least 30 minutes if no door tickets are available
+    if (!doorTicketsAvailable && (
+        ticketSalesEnd.isBefore(ticketSalesStart) ||
+        ticketSalesEnd.isAtSameMomentAs(ticketSalesStart) ||
+        ticketSalesEnd.difference(ticketSalesStart) < const Duration(minutes: 30))) {
       if (mounted) {
         ErrorDialog.show(
           context,
           title: 'Schedule Error',
-          message:  doorTicketsAvailable
-              ? 'Ticket sales must end at least 15 minutes before the event ends, '
-                  'and sales cannot start after the event begins.'
-              : 'When door tickets are not available, ticket sales must end by the event start time, '
-                  'and sales cannot start after the event begins.',
+          message:
+              'Ticket sales must last at least 30 minutes if no door tickets are available.',
         );
       }
       return;
@@ -776,7 +786,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 16.0),
                             child: ElevatedButton.icon(
-                              icon: const Icon(Icons.save),
+                              icon: const Icon(Icons.check),
                               label: Text(isCreating ? 'Create Event' : 'Save Changes'),
                               onPressed: isLoading
                                   ? null
