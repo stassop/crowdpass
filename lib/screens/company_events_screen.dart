@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/event.dart';
-
 import 'package:crowdpass/providers/company_provider.dart';
 import 'package:crowdpass/providers/company_events_provider.dart';
-
 import 'package:crowdpass/widgets/refreshable_list.dart';
 
 class CompanyEventsScreen extends ConsumerStatefulWidget {
   const CompanyEventsScreen({super.key});
 
   @override
-  ConsumerState<CompanyEventsScreen> createState() => _CompanyEventsScreenState();
+  ConsumerState<CompanyEventsScreen> createState() =>
+      _CompanyEventsScreenState();
 }
 
 class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen>
@@ -33,7 +32,6 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen>
 
   @override
   Widget build(BuildContext context) {
-    // IMPORTANT: We expressly pass null to companyProvider to get current user's company (or null).
     final companyAsync = ref.watch(companyProvider(null));
 
     return companyAsync.when(
@@ -61,7 +59,7 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen>
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('My Events'),
+            title: const Text('My Events'),
             bottom: TabBar(
               controller: _tabController,
               isScrollable: true,
@@ -104,11 +102,9 @@ class _EventList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // companyEventsProvider is now a family that requires companyId
     final state = ref.watch(companyEventsProvider(companyId));
     final notifier = ref.read(companyEventsProvider(companyId).notifier);
 
-    // Use the pre-split lists from state (no local time filtering needed)
     final List<Event> filteredEvents = switch (eventType) {
       EventTypeFilter.past => state.pastEvents,
       EventTypeFilter.current => state.currentEvents,
@@ -116,47 +112,22 @@ class _EventList extends ConsumerWidget {
       EventTypeFilter.canceled => state.canceledEvents,
     };
 
-    // Hook up pagination/refresh to the correct "bucket"
-    final bool isLoading = switch (eventType) {
-      EventTypeFilter.past => state.isLoadingPast,
-      EventTypeFilter.current => state.isLoadingCurrent,
-      EventTypeFilter.upcoming => state.isLoadingUpcoming,
-      EventTypeFilter.canceled => false, // canceled is derived while fetching
-    };
-
-    final bool hasMore = switch (eventType) {
-      EventTypeFilter.past => state.hasMorePast,
-      EventTypeFilter.current => state.hasMoreCurrent,
-      EventTypeFilter.upcoming => state.hasMoreUpcoming,
-      EventTypeFilter.canceled => false, // no pagination for canceled bucket here
-    };
-
     Future<void> onRefresh() async {
-      // Refresh everything so all tabs stay consistent
-      await notifier.refreshAllEvents(clearIds: true);
+      await notifier.refresh();
     }
 
     Future<void> onLoadMore() async {
-      switch (eventType) {
-        case EventTypeFilter.past:
-          await notifier.fetchPastEvents();
-          break;
-        case EventTypeFilter.current:
-          await notifier.fetchCurrentEvents();
-          break;
-        case EventTypeFilter.upcoming:
-          await notifier.fetchUpcomingEvents();
-          break;
-        case EventTypeFilter.canceled:
-          // No loadMore for canceled bucket (unless you want to implement it separately)
-          break;
-      }
+      // Single pagination stream. If a page contains only upcoming events,
+      // past/current lists may not grow until more pages are loaded.
+      await notifier.loadMore();
     }
 
+    // Pagination applies to the underlying "events" list, so use the same flags for all tabs.
+    // (You can special-case canceled if you want, but this keeps behavior consistent.)
     return RefreshableList<Event>(
       items: filteredEvents,
-      hasMore: hasMore,
-      isLoading: isLoading,
+      hasMore: state.hasMore,
+      isLoading: state.isLoading,
       onRefresh: onRefresh,
       onLoadMore: onLoadMore,
       tileBuilder: (context, event, index) => ListTile(
