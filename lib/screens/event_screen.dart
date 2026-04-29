@@ -466,6 +466,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
             event.ticketSalesDates != null &&
             event.ticketSalesDates!.start.isBefore(DateTime.now());
 
+        final canEdit = isOwner && !isCreating && !eventStarted && !ticketSalesStarted;
+
         final theme = Theme.of(context);
 
         return Scaffold(
@@ -481,7 +483,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   actions: [
-                    if (isOwner && !isCreating && !ticketSalesStarted)
+                    if (canEdit)
                       IconButton(
                         onPressed: isLoading
                             ? null
