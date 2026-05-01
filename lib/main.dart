@@ -9,9 +9,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
-// Import your Riverpod providers
-import 'package:crowdpass/providers/auth_provider.dart';
-
 // Import your screens
 import 'package:crowdpass/screens/home_screen.dart';
 import 'package:crowdpass/screens/event_screen.dart';
@@ -23,8 +20,7 @@ import 'package:crowdpass/screens/terms_screen.dart';
 import 'package:crowdpass/screens/company_screen.dart';
 import 'package:crowdpass/screens/user_profile_screen.dart';
 import 'package:crowdpass/screens/my_events_screen.dart';
-import 'package:crowdpass/screens/company_events_screen.dart';
-// import 'package:crowdpass/screens/calendar_screen.dart';
+import 'package:crowdpass/screens/calendar_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,10 +78,9 @@ class App extends ConsumerWidget {
         '/user/': (context) => const UserProfileScreen(),
         '/event/': (context) => const EventScreen(),
         '/my_events/': (context) => const MyEventsScreen(),
-        '/company_events/': (context) => const CompanyEventsScreen(),
         '/terms/': (context) => TermsScreen(),
         '/privacy/': (context) => PrivacyScreen(),
-        // '/calendar/': (context) => const CalendarScreen(),
+        '/calendar/': (context) => const CalendarScreen(),
       },
     );
   }

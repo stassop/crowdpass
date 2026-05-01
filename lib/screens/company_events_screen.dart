@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crowdpass/models/event.dart';
 
 import 'package:crowdpass/providers/company_provider.dart';
-import 'package:crowdpass/providers/company_events_provider.dart';
+import 'package:crowdpass/providers/my_events_provider.dart';
 
 import 'package:crowdpass/widgets/refreshable_list.dart';
 import 'package:crowdpass/widgets/error_dialog.dart';
@@ -14,15 +14,15 @@ import 'package:crowdpass/widgets/editable_date_range_field.dart';
 
 import 'package:crowdpass/services/date_time_service.dart';
 
-class CompanyEventsScreen extends ConsumerStatefulWidget {
-  const CompanyEventsScreen({super.key});
+class MyEventsScreen extends ConsumerStatefulWidget {
+  const MyEventsScreen({super.key});
 
   @override
-  ConsumerState<CompanyEventsScreen> createState() =>
-      _CompanyEventsScreenState();
+  ConsumerState<MyEventsScreen> createState() =>
+      _MyEventsScreenState();
 }
 
-class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
+class _MyEventsScreenState extends ConsumerState<MyEventsScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _openFilterDrawer() {
