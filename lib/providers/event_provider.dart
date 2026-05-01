@@ -111,7 +111,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
             .doc(company.id)
             .collection('events')
             .doc(eventId),
-        {'eventId': eventId, 'createdAt': FieldValue.serverTimestamp()},
+        {'createdAt': FieldValue.serverTimestamp()},
       );
 
       await batch.commit();
