@@ -12,9 +12,12 @@ enum EventSortBy { latest, oldest }
 
 class CompanyEventsFilters {
   final Set<EventStatusFilter> status;
+
+  /// Selected date range to filter events by time overlap.
+  /// An event matches when: event.end >= range.start && event.start <= range.end
   final DateTimeRange? dateRange;
 
-  /// Now truly controls query sort by event start date.
+  /// Controls query sort by event start date.
   final EventSortBy sortBy;
 
   const CompanyEventsFilters({
@@ -154,15 +157,33 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
     try {
       // IMPORTANT:
       // This requires companies/{companyId}/events/{eventId} documents to have:
-      // - startAt: Timestamp (event start date)
+      // - start: Timestamp (event start date)
+      // - end: Timestamp (event end date)
       //
-      // Optionally you can also keep createdAt, endAt, etc. but startAt is what we sort on.
-      Query<Map<String, dynamic>> query = _companyEventsRefs
-          .orderBy(
-            'startAt',
-            descending: state.filters.sortBy == EventSortBy.latest,
-          )
-          .limit(pageSize);
+      // Date range filter uses OVERLAP logic:
+      // event overlaps selected range if:
+      //   event.end >= range.start && event.start <= range.end
+      //
+      // This uses 2 range filters across 2 different fields.
+      Query<Map<String, dynamic>> query = _companyEventsRefs;
+
+      final DateTimeRange? dateRange = state.filters.dateRange;
+      if (dateRange != null) {
+        final Timestamp start = Timestamp.fromDate(dateRange.start);
+        final Timestamp end = Timestamp.fromDate(dateRange.end);
+
+        query = query
+            .where('end', isGreaterThanOrEqualTo: start)
+            .where('start', isLessThanOrEqualTo: end);
+      }
+
+      // Sort by event start date.
+      query = query.orderBy(
+        'start',
+        descending: state.filters.sortBy == EventSortBy.latest,
+      );
+
+      query = query.limit(pageSize);
 
       if (startAfter != null) {
         query = query.startAfterDocument(startAfter);
@@ -177,17 +198,23 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
       }
 
       // Doc id == eventId
-      final eventIds = docs.map((d) => d.id).toList();
-      final fetched = await _fetchEventsByIdsPreserveOrder(eventIds);
+      final List<String> eventIds = docs.map((doc) => doc.id).toList();
+      final List<Event> fetchedEvents =
+          await _fetchEventsByIdsPreserveOrder(eventIds);
+
+      // Apply status filters client-side (since semantics are often derived from "now"
+      // and may not map cleanly to a single Firestore predicate).
+      final List<Event> statusFilteredEvents =
+          _applyStatusFilters(fetchedEvents, state.filters.status);
 
       final List<Event> nextEvents;
       if (replace) {
-        nextEvents = fetched;
+        nextEvents = statusFilteredEvents;
       } else {
-        final existing = state.events.map((e) => e.id).toSet();
+        final Set<String> existingIds = state.events.map((event) => event.id).toSet();
         nextEvents = <Event>[
           ...state.events,
-          ...fetched.where((e) => !existing.contains(e.id)),
+          ...statusFilteredEvents.where((event) => !existingIds.contains(event.id)),
         ];
       }
 
@@ -196,14 +223,16 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
         hasMore: docs.length == pageSize,
         lastDoc: docs.last,
       );
-    } catch (e, st) {
-      debugPrint('CompanyEventsNotifier.loadMore error: $e\n$st');
-      state = state.copyWith(error: e, hasMore: false);
+    } catch (error, stackTrace) {
+      debugPrint('CompanyEventsNotifier.loadMore error: $error\n$stackTrace');
+      state = state.copyWith(error: error, hasMore: false);
     }
   }
 
+  // ---- Filters ----
+
   void toggleStatusFilter(EventStatusFilter filter) {
-    final next = Set<EventStatusFilter>.from(state.filters.status);
+    final Set<EventStatusFilter> next = Set<EventStatusFilter>.from(state.filters.status);
     if (next.contains(filter)) {
       next.remove(filter);
     } else {
@@ -230,32 +259,80 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
     Future.microtask(refresh);
   }
 
+  List<Event> _applyStatusFilters(
+    List<Event> events,
+    Set<EventStatusFilter> statusFilters,
+  ) {
+    if (statusFilters.isEmpty) return events;
+
+    final DateTime now = DateTime.now();
+
+    bool matchesAnySelectedStatus(Event event) {
+      // If your Event model has an explicit "canceled" flag/status, plug it in here.
+      // For now we treat "canceled" as not derivable unless you add it to the model.
+      final bool isCanceled = false;
+
+      final DateTimeRange eventDates = event.dates;
+      final DateTime start = eventDates.start;
+      final DateTime end = eventDates.end;
+
+      bool matches = false;
+
+      if (statusFilters.contains(EventStatusFilter.canceled)) {
+        matches = matches || isCanceled;
+      }
+
+      if (!isCanceled) {
+        if (statusFilters.contains(EventStatusFilter.past)) {
+          matches = matches || end.isBefore(now);
+        }
+        if (statusFilters.contains(EventStatusFilter.current)) {
+          matches = matches || (start.isBefore(now) && end.isAfter(now));
+        }
+        if (statusFilters.contains(EventStatusFilter.upcoming)) {
+          matches = matches || start.isAfter(now);
+        }
+      }
+
+      return matches;
+    }
+
+    return events.where(matchesAnySelectedStatus).toList();
+  }
+
+  // ---- Fetch referenced events ----
+
   Future<List<Event>> _fetchEventsByIdsPreserveOrder(List<String> eventIds) async {
     if (eventIds.isEmpty) return const [];
 
-    final List<Event> all = [];
+    final List<Event> allEvents = [];
 
     // Firestore whereIn limit is 10.
-    for (var i = 0; i < eventIds.length; i += 10) {
-      final sub = eventIds.skip(i).take(10).toList();
-      if (sub.isEmpty) continue;
+    for (int i = 0; i < eventIds.length; i += 10) {
+      final List<String> subIds = eventIds.skip(i).take(10).toList();
+      if (subIds.isEmpty) continue;
 
-      final snap = await _events.where(FieldPath.documentId, whereIn: sub).get();
+      final snap = await _events.where(FieldPath.documentId, whereIn: subIds).get();
 
-      final events = snap.docs.map((doc) {
-        final data = Map<String, dynamic>.from(doc.data());
+      final List<Event> chunkEvents = snap.docs.map((doc) {
+        final Map<String, dynamic> data = Map<String, dynamic>.from(doc.data());
         data['id'] = doc.id;
         return Event.fromJson(data);
       }).toList();
 
       // preserve order within the sub-batch
-      events.sort((a, b) => sub.indexOf(a.id).compareTo(sub.indexOf(b.id)));
-      all.addAll(events);
+      chunkEvents.sort(
+        (Event a, Event b) => subIds.indexOf(a.id).compareTo(subIds.indexOf(b.id)),
+      );
+      allEvents.addAll(chunkEvents);
     }
 
     // preserve order across chunks
-    all.sort((a, b) => eventIds.indexOf(a.id).compareTo(eventIds.indexOf(b.id)));
-    return all;
+    allEvents.sort(
+      (Event a, Event b) =>
+          eventIds.indexOf(a.id).compareTo(eventIds.indexOf(b.id)),
+    );
+    return allEvents;
   }
 }
 

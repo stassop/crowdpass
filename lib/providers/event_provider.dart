@@ -115,8 +115,8 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
             .doc(eventId),
 
         {
-          'createdAt': FieldValue.serverTimestamp(),
-          'startAt': event.dates.start, // will store startAt as a Firestore Timestamp 
+          'start': event.dates.start,
+          'end': event.dates.end,
         },
       );
 
