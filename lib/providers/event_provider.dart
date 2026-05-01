@@ -18,10 +18,12 @@ final eventProvider = StreamProvider.family<Event?, String?>((ref, eventId) {
 
   final firestore = ref.watch(firestoreProvider);
 
-  return firestore.collection('events').doc(eventId).snapshots().map((snapshot) {
+  return firestore.collection('events').doc(eventId).snapshots().map((
+    snapshot,
+  ) {
     final data = snapshot.data();
     if (data == null || !snapshot.exists) return null;
-    
+
     data['id'] = snapshot.id;
     return Event.fromJson(data);
   });
@@ -66,7 +68,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
 
       final firestore = ref.read(firestoreProvider);
       final batch = firestore.batch();
-      
+
       String? imageURL;
       if (imagePath != null && imagePath.isNotEmpty) {
         imageURL = await ImageFileService.uploadImage(
@@ -111,11 +113,15 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
             .doc(company.id)
             .collection('events')
             .doc(eventId),
-        {'createdAt': FieldValue.serverTimestamp()},
+
+        {
+          'createdAt': FieldValue.serverTimestamp(),
+          'startAt': event.dates.start, // will store startAt as a Firestore Timestamp 
+        },
       );
 
       await batch.commit();
-      
+
       state = const AsyncData(null);
       return eventId;
     } catch (e, st) {
@@ -133,7 +139,9 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
       final user = await ref.read(authProvider.future);
       if (user == null) throw Exception('Authentication required.');
 
-      final currentEvent = await ref.read(eventProvider(updatedEvent.id).future);
+      final currentEvent = await ref.read(
+        eventProvider(updatedEvent.id).future,
+      );
       if (currentEvent == null) throw Exception('Event does not exist.');
       if (currentEvent.createdBy != user.uid) {
         throw Exception('Unauthorized update attempt.');
@@ -170,14 +178,15 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
       final user = await ref.read(authProvider.future);
       final currentEvent = await ref.read(eventProvider(eventId).future);
 
-      if (user == null || currentEvent == null) throw Exception('Data mismatch.');
+      if (user == null || currentEvent == null) {
+        throw Exception('Data mismatch.');
+      }
       if (currentEvent.createdBy != user.uid) throw Exception('Unauthorized.');
 
       final firestore = ref.read(firestoreProvider);
-      await firestore
-          .collection('events')
-          .doc(eventId)
-          .update({'isCanceled': true});
+      await firestore.collection('events').doc(eventId).update({
+        'isCanceled': true,
+      });
 
       state = const AsyncData(null);
     } catch (e, st) {
@@ -194,7 +203,8 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
       final user = await ref.read(authProvider.future);
       final currentEvent = await ref.read(eventProvider(eventId).future);
 
-      if (user == null || currentEvent == null) throw Exception('Data mismatch.');
+      if (user == null || currentEvent == null)
+        throw Exception('Data mismatch.');
       if (currentEvent.createdBy != user.uid) throw Exception('Unauthorized.');
 
       if (currentEvent.dates.start.isBefore(DateTime.now())) {
@@ -206,7 +216,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
 
       // Delete from main collection
       batch.delete(firestore.collection('events').doc(eventId));
-      
+
       // Delete reference from company subcollection
       batch.delete(
         firestore

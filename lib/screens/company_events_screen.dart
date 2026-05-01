@@ -12,6 +12,8 @@ import 'package:crowdpass/widgets/error_dialog.dart';
 // Assumes this exists in your project as requested.
 import 'package:crowdpass/widgets/editable_date_range_field.dart';
 
+import 'package:crowdpass/services/date_time_service.dart';
+
 class CompanyEventsScreen extends ConsumerStatefulWidget {
   const CompanyEventsScreen({super.key});
 
@@ -96,8 +98,6 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
 
                   const SizedBox(height: 16),
 
-                  Text('Status', style: theme.textTheme.titleMedium),
-
                   Wrap(
                     spacing: 8,
                     children: [
@@ -130,20 +130,36 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
 
                   const SizedBox(height: 16),
 
-                  Text('Date Range', style: theme.textTheme.titleMedium),
+                  DropdownMenu<EventSortBy>(
+                    label: const Text('Sort By'),
+                    leadingIcon: const Icon(Icons.sort),
+                    initialSelection: state.filters.sortBy,
+                    onSelected: (value) {
+                      if (value != null) {
+                        notifier.setSortBy(value);
+                      }
+                    },
+                    dropdownMenuEntries: const [
+                      DropdownMenuEntry(
+                        value: EventSortBy.latest,
+                        label: 'Latest',
+                      ),
+                      DropdownMenuEntry(
+                        value: EventSortBy.oldest,
+                        label: 'Oldest',
+                      ),
+                    ],
+                  ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   EditableDateRangeField(
                     isEditable: true,
                     initialValue: range,
                     onChanged: (value) => notifier.setDateRange(value),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                    ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
                   if (anyFilterSelected)
                     ElevatedButton.icon(
@@ -164,14 +180,15 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
             ),
           ),
           body: RefreshableList<Event>(
-            items: state.visibleEvents,
+            items: state.events,
             hasMore: state.hasMore,
             isLoading: state.isLoading,
             onRefresh: notifier.refresh,
             onLoadMore: notifier.loadMore,
             tileBuilder: (context, event, index) => ListTile(
               title: Text(event.title),
-              subtitle: Text('${event.dates.start} - ${event.dates.end}'),
+              subtitle: Text(event.description),
+              trailing: Text(DateTimeService.formatDateTimeRange(event.dates)),
               onTap: () =>
                   Navigator.pushNamed(context, '/event/', arguments: event.id),
             ),

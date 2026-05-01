@@ -34,6 +34,9 @@ enum EventCategory {
       orElse: () => EventCategory.other,
     );
   }
+
+  @override
+  String toString() => name;
 }
 
 enum EventType {
@@ -111,6 +114,9 @@ enum EventType {
           .where((type) => type.category == category)
           .toSet()
   };
+
+  @override
+  String toString() => name;
 }
 
 @immutable

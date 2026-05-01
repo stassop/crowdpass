@@ -535,7 +535,6 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                           initialValue: _description,
                           isEditable: _isEditing,
                           isMultiline: true,
-                          minLines: 2,
                           decoration: const InputDecoration(
                             labelText: 'Description',
                             prefixIcon: Icon(Icons.description),

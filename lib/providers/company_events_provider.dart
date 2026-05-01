@@ -8,74 +8,85 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crowdpass/models/event.dart';
 
 enum EventStatusFilter { past, current, upcoming, canceled }
+enum EventSortBy { latest, oldest }
 
 class CompanyEventsFilters {
-  /// If empty => show all statuses.
   final Set<EventStatusFilter> status;
-
-  /// Optional extra filter by event date overlap with this range.
-  /// If null => no date filtering.
   final DateTimeRange? dateRange;
+
+  /// Now truly controls query sort by event start date.
+  final EventSortBy sortBy;
 
   const CompanyEventsFilters({
     this.status = const {},
     this.dateRange,
+    this.sortBy = EventSortBy.latest,
   });
 
   CompanyEventsFilters copyWith({
     Set<EventStatusFilter>? status,
     DateTimeRange? dateRange,
+    EventSortBy? sortBy,
   }) {
     return CompanyEventsFilters(
       status: status ?? this.status,
-      dateRange: dateRange,
+      dateRange: dateRange ?? this.dateRange,
+      sortBy: sortBy ?? this.sortBy,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other is CompanyEventsFilters &&
+            setEquals(other.status, status) &&
+            other.dateRange == dateRange &&
+            other.sortBy == sortBy);
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        Object.hashAll(status.toList()..sort()),
+        dateRange,
+        sortBy,
+      );
 }
 
 class CompanyEventsState {
-  /// All fetched events (paged from membership docs).
   final List<Event> events;
-
-  /// Filtered view (apply drawer filters).
-  final List<Event> visibleEvents;
-
   final CompanyEventsFilters filters;
 
   final bool isLoading;
   final bool hasMore;
 
-  /// Pagination cursor for membership docs.
-  final DocumentSnapshot<Map<String, dynamic>>? lastMembershipDoc;
+  /// Cursor for paging company event reference docs.
+  final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
 
   final Object? error;
 
   const CompanyEventsState({
     this.events = const [],
-    this.visibleEvents = const [],
     this.filters = const CompanyEventsFilters(),
     this.isLoading = false,
     this.hasMore = true,
-    this.lastMembershipDoc,
+    this.lastDoc,
     this.error,
   });
 
   CompanyEventsState copyWith({
     List<Event>? events,
-    List<Event>? visibleEvents,
     CompanyEventsFilters? filters,
     bool? isLoading,
     bool? hasMore,
-    DocumentSnapshot<Map<String, dynamic>>? lastMembershipDoc,
+    DocumentSnapshot<Map<String, dynamic>>? lastDoc,
     Object? error,
   }) {
     return CompanyEventsState(
       events: events ?? this.events,
-      visibleEvents: visibleEvents ?? this.visibleEvents,
       filters: filters ?? this.filters,
       isLoading: isLoading ?? this.isLoading,
       hasMore: hasMore ?? this.hasMore,
-      lastMembershipDoc: lastMembershipDoc ?? this.lastMembershipDoc,
+      lastDoc: lastDoc ?? this.lastDoc,
       error: error,
     );
   }
@@ -89,10 +100,10 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
 
   static const int pageSize = 20;
 
-  CollectionReference<Map<String, dynamic>> get _membershipCollection =>
+  CollectionReference<Map<String, dynamic>> get _companyEventsRefs =>
       _firestore.collection('companies').doc(companyId).collection('events');
 
-  CollectionReference<Map<String, dynamic>> get _eventsCollection =>
+  CollectionReference<Map<String, dynamic>> get _events =>
       _firestore.collection('events');
 
   @override
@@ -101,20 +112,23 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
     return const CompanyEventsState();
   }
 
+  /// New search: clear results + reset cursor, then fetch first page.
   Future<void> refresh() async {
     if (state.isLoading) return;
 
-    // Keep filters, reset paging + data.
     state = state.copyWith(
       events: const [],
-      visibleEvents: const [],
-      isLoading: false,
+      isLoading: true,
       hasMore: true,
-      lastMembershipDoc: null,
+      lastDoc: null,
       error: null,
     );
 
-    await loadMore();
+    try {
+      await _loadMoreInternal(startAfter: null, replace: true);
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   Future<void> loadMore() async {
@@ -124,12 +138,34 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      Query<Map<String, dynamic>> query = _membershipCollection
-          .orderBy('createdAt', descending: true)
+      await _loadMoreInternal(
+        startAfter: state.lastDoc,
+        replace: false,
+      );
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> _loadMoreInternal({
+    required DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    required bool replace,
+  }) async {
+    try {
+      // IMPORTANT:
+      // This requires companies/{companyId}/events/{eventId} documents to have:
+      // - startAt: Timestamp (event start date)
+      //
+      // Optionally you can also keep createdAt, endAt, etc. but startAt is what we sort on.
+      Query<Map<String, dynamic>> query = _companyEventsRefs
+          .orderBy(
+            'startAt',
+            descending: state.filters.sortBy == EventSortBy.latest,
+          )
           .limit(pageSize);
 
-      if (state.lastMembershipDoc != null) {
-        query = query.startAfterDocument(state.lastMembershipDoc!);
+      if (startAfter != null) {
+        query = query.startAfterDocument(startAfter);
       }
 
       final snapshot = await query.get();
@@ -140,31 +176,29 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
         return;
       }
 
-      // Membership doc id == eventId
+      // Doc id == eventId
       final eventIds = docs.map((d) => d.id).toList();
-
       final fetched = await _fetchEventsByIdsPreserveOrder(eventIds);
 
-      // Merge and de-dupe by id.
-      final existing = state.events.map((e) => e.id).toSet();
-      final merged = <Event>[
-        ...state.events,
-        ...fetched.where((e) => !existing.contains(e.id)),
-      ];
+      final List<Event> nextEvents;
+      if (replace) {
+        nextEvents = fetched;
+      } else {
+        final existing = state.events.map((e) => e.id).toSet();
+        nextEvents = <Event>[
+          ...state.events,
+          ...fetched.where((e) => !existing.contains(e.id)),
+        ];
+      }
 
       state = state.copyWith(
-        events: merged,
+        events: nextEvents,
         hasMore: docs.length == pageSize,
-        lastMembershipDoc: docs.last,
+        lastDoc: docs.last,
       );
-
-      _recomputeVisible();
     } catch (e, st) {
       debugPrint('CompanyEventsNotifier.loadMore error: $e\n$st');
       state = state.copyWith(error: e, hasMore: false);
-      _recomputeVisible(); // keep UI consistent (likely shows empty)
-    } finally {
-      state = state.copyWith(isLoading: false);
     }
   }
 
@@ -175,32 +209,25 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
     } else {
       next.add(filter);
     }
-
-    state = state.copyWith(
-      filters: state.filters.copyWith(status: next),
-    );
-    _recomputeVisible();
-  }
-
-  void clearStatusFilters() {
-    state = state.copyWith(
-      filters: state.filters.copyWith(status: <EventStatusFilter>{}),
-    );
-    _recomputeVisible();
+    _setFiltersAndRestart(state.filters.copyWith(status: next));
   }
 
   void setDateRange(DateTimeRange? range) {
-    state = state.copyWith(
-      filters: state.filters.copyWith(dateRange: range),
-    );
-    _recomputeVisible();
+    _setFiltersAndRestart(state.filters.copyWith(dateRange: range));
   }
 
-  void clearDateRange() => setDateRange(null);
+  void setSortBy(EventSortBy sortBy) {
+    _setFiltersAndRestart(state.filters.copyWith(sortBy: sortBy));
+  }
 
   void clearAllFilters() {
-    state = state.copyWith(filters: const CompanyEventsFilters());
-    _recomputeVisible();
+    _setFiltersAndRestart(const CompanyEventsFilters());
+  }
+
+  void _setFiltersAndRestart(CompanyEventsFilters next) {
+    if (next == state.filters) return;
+    state = state.copyWith(filters: next);
+    Future.microtask(refresh);
   }
 
   Future<List<Event>> _fetchEventsByIdsPreserveOrder(List<String> eventIds) async {
@@ -208,13 +235,12 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
 
     final List<Event> all = [];
 
+    // Firestore whereIn limit is 10.
     for (var i = 0; i < eventIds.length; i += 10) {
       final sub = eventIds.skip(i).take(10).toList();
       if (sub.isEmpty) continue;
 
-      final snap = await _eventsCollection
-          .where(FieldPath.documentId, whereIn: sub)
-          .get();
+      final snap = await _events.where(FieldPath.documentId, whereIn: sub).get();
 
       final events = snap.docs.map((doc) {
         final data = Map<String, dynamic>.from(doc.data());
@@ -222,68 +248,14 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
         return Event.fromJson(data);
       }).toList();
 
-      // Preserve membership order within sub-batch
+      // preserve order within the sub-batch
       events.sort((a, b) => sub.indexOf(a.id).compareTo(sub.indexOf(b.id)));
       all.addAll(events);
     }
 
-    // Preserve order across chunks too
+    // preserve order across chunks
     all.sort((a, b) => eventIds.indexOf(a.id).compareTo(eventIds.indexOf(b.id)));
     return all;
-  }
-
-  void _recomputeVisible() {
-    final now = DateTime.now();
-
-    final filters = state.filters;
-    final statusFilters = filters.status;
-    final range = filters.dateRange;
-
-    bool matchesStatus(Event e) {
-      // If no status filters selected, allow all.
-      if (statusFilters.isEmpty) return true;
-
-      final start = e.dates.start;
-      final end = e.dates.end;
-
-      final isCanceled = e.isCanceled == true;
-      final isPast = !isCanceled && end.isBefore(now);
-      final isUpcoming = !isCanceled && start.isAfter(now);
-      final isCurrent = !isCanceled && !isPast && !isUpcoming;
-
-      bool ok = false;
-      if (statusFilters.contains(EventStatusFilter.canceled)) {
-        ok = ok || isCanceled;
-      }
-      if (statusFilters.contains(EventStatusFilter.past)) {
-        ok = ok || isPast;
-      }
-      if (statusFilters.contains(EventStatusFilter.current)) {
-        ok = ok || isCurrent;
-      }
-      if (statusFilters.contains(EventStatusFilter.upcoming)) {
-        ok = ok || isUpcoming;
-      }
-
-      return ok;
-    }
-
-    bool matchesRange(Event e) {
-      if (range == null) return true;
-
-      // "Overlap" logic: keep event if it intersects the selected range.
-      // event: [start, end], range: [rs, re]
-      final start = e.dates.start;
-      final end = e.dates.end;
-
-      return !end.isBefore(range.start) && !start.isAfter(range.end);
-    }
-
-    final visible = state.events
-        .where((e) => matchesStatus(e) && matchesRange(e))
-        .toList(growable: false);
-
-    state = state.copyWith(visibleEvents: visible);
   }
 }
 
