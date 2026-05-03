@@ -51,7 +51,7 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen> {
               title: const Text('Company Not Found'),
             ),
             body: const Center(
-              child: Text('The specified company could not be found.'),
+              child: Text('Event company not found.'),
             ),
           );
         }

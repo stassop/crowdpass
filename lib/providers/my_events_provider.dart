@@ -12,29 +12,28 @@ enum EventSortBy { latest, oldest }
 
 class MyEventsFilters {
   final Set<EventStatusFilter> status;
-
-  /// Selected date range to filter events by time overlap.
-  /// An event matches when: event.end >= range.start && event.start <= range.end
   final DateTimeRange? dateRange;
-
-  /// Controls query sort by event start date.
   final EventSortBy sortBy;
+  final bool isMonthly;
 
   const MyEventsFilters({
     this.status = const {},
     this.dateRange,
     this.sortBy = EventSortBy.latest,
+    this.isMonthly = false,
   });
 
   MyEventsFilters copyWith({
     Set<EventStatusFilter>? status,
     DateTimeRange? dateRange,
     EventSortBy? sortBy,
+    bool? isMonthly,
   }) {
     return MyEventsFilters(
       status: status ?? this.status,
       dateRange: dateRange ?? this.dateRange,
       sortBy: sortBy ?? this.sortBy,
+      isMonthly: isMonthly ?? this.isMonthly,
     );
   }
 
@@ -44,7 +43,8 @@ class MyEventsFilters {
         (other is MyEventsFilters &&
             setEquals(other.status, status) &&
             other.dateRange == dateRange &&
-            other.sortBy == sortBy);
+            other.sortBy == sortBy &&
+            other.isMonthly == isMonthly);
   }
 
   @override
@@ -52,19 +52,16 @@ class MyEventsFilters {
         Object.hashAll(status.toList()..sort()),
         dateRange,
         sortBy,
+        isMonthly,
       );
 }
 
 class MyEventsState {
   final List<Event> events;
   final MyEventsFilters filters;
-
   final bool isLoading;
   final bool hasMore;
-
-  /// Cursor for paging company event reference docs.
   final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
-
   final Object? error;
 
   const MyEventsState({
@@ -115,7 +112,6 @@ class MyEventsNotifier extends Notifier<MyEventsState> {
     return const MyEventsState();
   }
 
-  /// New search: clear results + reset cursor, then fetch first page.
   Future<void> refresh() async {
     if (state.isLoading) return;
 
@@ -155,19 +151,10 @@ class MyEventsNotifier extends Notifier<MyEventsState> {
     required bool replace,
   }) async {
     try {
-      // IMPORTANT:
-      // This requires companies/{companyId}/events/{eventId} documents to have:
-      // - start: Timestamp (event start date)
-      // - end: Timestamp (event end date)
-      //
-      // Date range filter uses OVERLAP logic:
-      // event overlaps selected range if:
-      //   event.end >= range.start && event.start <= range.end
-      //
-      // This uses 2 range filters across 2 different fields.
       Query<Map<String, dynamic>> query = _companyEventsRefs;
-
       final DateTimeRange? dateRange = state.filters.dateRange;
+      final bool isMonthly = state.filters.isMonthly;
+
       if (dateRange != null) {
         final Timestamp start = Timestamp.fromDate(dateRange.start);
         final Timestamp end = Timestamp.fromDate(dateRange.end);
@@ -177,16 +164,17 @@ class MyEventsNotifier extends Notifier<MyEventsState> {
             .where('start', isLessThanOrEqualTo: end);
       }
 
-      // Sort by event start date.
       query = query.orderBy(
         'start',
         descending: state.filters.sortBy == EventSortBy.latest,
       );
 
-      query = query.limit(pageSize);
-
-      if (startAfter != null) {
-        query = query.startAfterDocument(startAfter);
+      // FIX: Disable pagination logic if we are in a month/dateRange view
+      if (isMonthly || dateRange == null) {
+        query = query.limit(pageSize);
+        if (startAfter != null) {
+          query = query.startAfterDocument(startAfter);
+        }
       }
 
       final snapshot = await query.get();
@@ -197,13 +185,10 @@ class MyEventsNotifier extends Notifier<MyEventsState> {
         return;
       }
 
-      // Doc id == eventId
       final List<String> eventIds = docs.map((doc) => doc.id).toList();
       final List<Event> fetchedEvents =
           await _fetchEventsByIdsPreserveOrder(eventIds);
 
-      // Apply status filters client-side (since semantics are often derived from "now"
-      // and may not map cleanly to a single Firestore predicate).
       final List<Event> statusFilteredEvents =
           _applyStatusFilters(fetchedEvents, state.filters.status);
 
@@ -220,7 +205,8 @@ class MyEventsNotifier extends Notifier<MyEventsState> {
 
       state = state.copyWith(
         events: nextEvents,
-        hasMore: docs.length == pageSize,
+        // If range view, we have everything, so hasMore is false
+        hasMore: !isMonthly && docs.length == pageSize,
         lastDoc: docs.last,
       );
     } catch (error, stackTrace) {
@@ -228,8 +214,6 @@ class MyEventsNotifier extends Notifier<MyEventsState> {
       state = state.copyWith(error: error, hasMore: false);
     }
   }
-
-  // ---- Filters ----
 
   void toggleStatusFilter(EventStatusFilter filter) {
     final Set<EventStatusFilter> next = Set<EventStatusFilter>.from(state.filters.status);
@@ -264,20 +248,15 @@ class MyEventsNotifier extends Notifier<MyEventsState> {
     Set<EventStatusFilter> statusFilters,
   ) {
     if (statusFilters.isEmpty) return events;
-
     final DateTime now = DateTime.now();
 
     bool matchesAnySelectedStatus(Event event) {
-      // If your Event model has an explicit "canceled" flag/status, plug it in here.
-      // For now we treat "canceled" as not derivable unless you add it to the model.
-      final bool isCanceled = false;
-
+      const bool isCanceled = false;
       final DateTimeRange eventDates = event.dates;
       final DateTime start = eventDates.start;
       final DateTime end = eventDates.end;
 
       bool matches = false;
-
       if (statusFilters.contains(EventStatusFilter.canceled)) {
         matches = matches || isCanceled;
       }
@@ -293,41 +272,33 @@ class MyEventsNotifier extends Notifier<MyEventsState> {
           matches = matches || start.isAfter(now);
         }
       }
-
       return matches;
     }
 
     return events.where(matchesAnySelectedStatus).toList();
   }
 
-  // ---- Fetch referenced events ----
-
   Future<List<Event>> _fetchEventsByIdsPreserveOrder(List<String> eventIds) async {
     if (eventIds.isEmpty) return const [];
-
     final List<Event> allEvents = [];
 
-    // Firestore whereIn limit is 10.
     for (int i = 0; i < eventIds.length; i += 10) {
       final List<String> subIds = eventIds.skip(i).take(10).toList();
       if (subIds.isEmpty) continue;
 
       final snap = await _events.where(FieldPath.documentId, whereIn: subIds).get();
-
       final List<Event> chunkEvents = snap.docs.map((doc) {
         final Map<String, dynamic> data = Map<String, dynamic>.from(doc.data());
         data['id'] = doc.id;
         return Event.fromJson(data);
       }).toList();
 
-      // preserve order within the sub-batch
       chunkEvents.sort(
         (Event a, Event b) => subIds.indexOf(a.id).compareTo(subIds.indexOf(b.id)),
       );
       allEvents.addAll(chunkEvents);
     }
 
-    // preserve order across chunks
     allEvents.sort(
       (Event a, Event b) =>
           eventIds.indexOf(a.id).compareTo(eventIds.indexOf(b.id)),
