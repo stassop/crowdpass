@@ -43,8 +43,14 @@ class _CalendarState extends State<Calendar> {
   Map<DateTime, List<Event>> _getEventMap() {
     final map = <DateTime, List<Event>>{};
     for (var event in widget.events) {
-      final key = DateTime(event.dates.start.year, event.dates.start.month, event.dates.start.day);
-      map.putIfAbsent(key, () => []).add(event);
+      final start = DateTime(event.dates.start.year, event.dates.start.month, event.dates.start.day);
+      final end = DateTime(event.dates.end.year, event.dates.end.month, event.dates.end.day);
+      for (DateTime day = start;
+          !day.isAfter(end);
+          day = day.add(const Duration(days: 1))) {
+        final key = DateTime(day.year, day.month, day.day);
+        map.putIfAbsent(key, () => []).add(event);
+      }
     }
     return map;
   }
@@ -155,15 +161,19 @@ class _CalendarState extends State<Calendar> {
             );
           },
           child: Container(
+            // Margin: Shrinks the decoration away from the parent cell edges
+            margin: const EdgeInsets.all(4.0), 
             decoration: isToday 
-              ? BoxDecoration(color: theme.colorScheme.primaryContainer, shape: BoxShape.circle) 
+              ? BoxDecoration(
+                  color: theme.colorScheme.primaryContainer, 
+                  shape: BoxShape.circle,
+                ) 
               : null,
             child: Center(
               child: Badge.count(
                 count: events.length,
                 isLabelVisible: events.isNotEmpty,
                 backgroundColor: theme.colorScheme.primary,
-                offset: const Offset(12, -12),
                 child: Text(
                   '${day.day}',
                   style: theme.textTheme.bodyLarge?.copyWith(
@@ -285,7 +295,7 @@ class CalendarDay extends StatelessWidget {
 
     return Positioned(
       top: top,
-      left: leftGutterWidth + 8 + (index * (eventWidth + 2)), // 2px space between events
+      left: leftGutterWidth + index * (eventWidth + 2), // 2px space between events
       width: eventWidth,
       child: GestureDetector(
         onTap: () => onEventSelected?.call(event),
@@ -301,9 +311,8 @@ class CalendarDay extends StatelessWidget {
             children: [
               Text(
                 event.title,
-                style: theme.textTheme.labelLarge?.copyWith(
+                style: theme.textTheme.titleSmall?.copyWith(
                   color: theme.colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.bold,
                 ),
                 maxLines: null, // Title will wrap instead of getting clipped
               ),
@@ -311,7 +320,9 @@ class CalendarDay extends StatelessWidget {
                 Flexible(
                   child: Text(
                     event.description,
-                    style: theme.textTheme.bodySmall,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer.withAlpha(200),
+                    ),
                     maxLines: height > 80 ? 3 : 1,
                     overflow: TextOverflow.ellipsis,
                   ),

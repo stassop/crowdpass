@@ -91,91 +91,99 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen> {
           ),
           endDrawer: Drawer(
             child: SafeArea(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  Text('Filters', style: theme.textTheme.titleLarge),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Filters', style: theme.textTheme.titleLarge),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      FilterChip(
-                        label: const Text('Past'),
-                        selected: selected.contains(EventStatusFilter.past),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.past),
-                      ),
-                      FilterChip(
-                        label: const Text('Current'),
-                        selected: selected.contains(EventStatusFilter.current),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.current),
-                      ),
-                      FilterChip(
-                        label: const Text('Upcoming'),
-                        selected: selected.contains(EventStatusFilter.upcoming),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.upcoming),
-                      ),
-                      FilterChip(
-                        label: const Text('Canceled'),
-                        selected: selected.contains(EventStatusFilter.canceled),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.canceled),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  DropdownMenu<EventSortBy>(
-                    label: const Text('Sort By'),
-                    leadingIcon: const Icon(Icons.sort),
-                    initialSelection: state.filters.sortBy,
-                    onSelected: (value) {
-                      if (value != null) {
-                        notifier.setSortBy(value);
-                      }
-                    },
-                    dropdownMenuEntries: const [
-                      DropdownMenuEntry(
-                        value: EventSortBy.latest,
-                        label: 'Latest',
-                      ),
-                      DropdownMenuEntry(
-                        value: EventSortBy.oldest,
-                        label: 'Oldest',
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  EditableDateRangeField(
-                    isEditable: true,
-                    initialValue: range,
-                    onChanged: (value) => notifier.setDateRange(value),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  if (anyFilterSelected)
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.clear),
-                      label: const Text('Clear Filters'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.error,
-                        foregroundColor: theme.colorScheme.onError,
-                      ),
-                      onPressed: () {
-                        notifier.clearAllFilters();
-                      },
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        FilterChip(
+                          label: const Text('Past'),
+                          selected: selected.contains(EventStatusFilter.past),
+                          onSelected: (_) =>
+                              notifier.toggleStatusFilter(EventStatusFilter.past),
+                        ),
+                        FilterChip(
+                          label: const Text('Current'),
+                          selected: selected.contains(EventStatusFilter.current),
+                          onSelected: (_) =>
+                              notifier.toggleStatusFilter(EventStatusFilter.current),
+                        ),
+                        FilterChip(
+                          label: const Text('Upcoming'),
+                          selected: selected.contains(EventStatusFilter.upcoming),
+                          onSelected: (_) =>
+                              notifier.toggleStatusFilter(EventStatusFilter.upcoming),
+                        ),
+                        FilterChip(
+                          label: const Text('Canceled'),
+                          selected: selected.contains(EventStatusFilter.canceled),
+                          onSelected: (_) =>
+                              notifier.toggleStatusFilter(EventStatusFilter.canceled),
+                        ),
+                      ],
                     ),
 
-                  const SizedBox(height: 16),
-                ],
+                    const SizedBox(height: 16),
+
+                    DropdownMenu<EventSortBy>(
+                      // This makes it stretch to full width
+                      expandedInsets: EdgeInsets.zero, 
+                      label: const Text('Sort By'),
+                      leadingIcon: const Icon(Icons.sort),
+                      inputDecorationTheme: const InputDecorationTheme(
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                        constraints: BoxConstraints(maxHeight: 45),
+                        border: OutlineInputBorder(),
+                      ),
+                      initialSelection: state.filters.sortBy,
+                      onSelected: (value) {
+                        if (value != null) {
+                          notifier.setSortBy(value);
+                        }
+                      },
+                      dropdownMenuEntries: const [
+                        DropdownMenuEntry(value: EventSortBy.latest, label: 'Latest'),
+                        DropdownMenuEntry(value: EventSortBy.oldest, label: 'Oldest'),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    EditableDateRangeField(
+                      isEditable: true,
+                      initialValue: range,
+                      onChanged: (value) => notifier.setDateRange(value),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    if (anyFilterSelected)
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.clear),
+                        label: const Text('Clear Filters'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.error,
+                          foregroundColor: theme.colorScheme.onError,
+                        ),
+                        onPressed: () {
+                          notifier.clearAllFilters();
+                        },
+                      ),
+
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
           ),
