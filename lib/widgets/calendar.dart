@@ -209,17 +209,28 @@ class CalendarDay extends StatelessWidget {
         title: Text(DateFormat.yMMMMd(locale).format(date)),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: SizedBox(
-            height: 24 * hourHeight,
-            child: Stack(
-              children: [
-                _buildTimeGrid(context, theme),
-                ...sortedEvents.map((event) => _buildEventTile(context, theme, event)),
-              ],
-            ),
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Determine width per event if there are multiple events in the day
+            final availableWidth = constraints.maxWidth - leftGutterWidth - 16;
+            final eventWidth = sortedEvents.isNotEmpty
+                ? (availableWidth / sortedEvents.length) - 2
+                : availableWidth;
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: SizedBox(
+                height: 24 * hourHeight,
+                child: Stack(
+                  children: [
+                    _buildTimeGrid(context, theme),
+                    ...sortedEvents.asMap().entries.map((entry) => _buildEventTile(
+                        context, theme, entry.value, entry.key, eventWidth)),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -231,6 +242,7 @@ class CalendarDay extends StatelessWidget {
         return SizedBox(
           height: hourHeight,
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start, // <--- Add this to align line to the exact hour start
             children: [
               SizedBox(
                 width: leftGutterWidth,
@@ -239,7 +251,10 @@ class CalendarDay extends StatelessWidget {
                   child: Text(
                     TimeOfDay(hour: hour, minute: 0).format(context),
                     textAlign: TextAlign.right,
-                    style: theme.textTheme.labelMedium?.copyWith(color: theme.hintColor),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.hintColor,
+                      height: 1, // Removes built-in text leading so it sits perfectly flush with the divider
+                    ),
                   ),
                 ),
               ),
@@ -251,21 +266,27 @@ class CalendarDay extends StatelessWidget {
     );
   }
 
-  Widget _buildEventTile(BuildContext context, ThemeData theme, Event event) {
-    final start = event.dates.start;
-    final end = event.dates.end;
-    
-    final startHourDecimal = start.hour + (start.minute / 60.0);
-    final endHourDecimal = end.hour + (end.minute / 60.0);
-    
+  Widget _buildEventTile(
+      BuildContext context, ThemeData theme, Event event, int index, double eventWidth) {
+    // If the event starts before the current date, it spans from midnight
+    final isStartDay = DateUtils.isSameDay(event.dates.start, date);
+    final startHourDecimal = isStartDay
+        ? event.times.start.hour + (event.times.start.minute / 60.0)
+        : 0.0;
+
+    // If the event ends after the current date, it spans until midnight
+    final isEndDay = DateUtils.isSameDay(event.dates.end, date);
+    final endHourDecimal = isEndDay
+        ? event.times.end.hour + (event.times.end.minute / 60.0)
+        : 24.0;
+
     final top = startHourDecimal * hourHeight;
-    // Ensure a minimum height for very short events
-    final height = (endHourDecimal - startHourDecimal).clamp(0.5, 24.0) * hourHeight;
+    final height = ((endHourDecimal - startHourDecimal).clamp(0.5, 24.0)) * hourHeight;
 
     return Positioned(
       top: top,
-      left: leftGutterWidth + 8,
-      right: 16,
+      left: leftGutterWidth + 8 + (index * (eventWidth + 2)), // 2px space between events
+      width: eventWidth,
       child: GestureDetector(
         onTap: () => onEventSelected?.call(event),
         child: Container(
@@ -284,8 +305,7 @@ class CalendarDay extends StatelessWidget {
                   color: theme.colorScheme.onPrimaryContainer,
                   fontWeight: FontWeight.bold,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                maxLines: null, // Title will wrap instead of getting clipped
               ),
               if (height > 40)
                 Flexible(
