@@ -5,29 +5,31 @@ import 'package:crowdpass/models/location.dart';
 import 'package:crowdpass/widgets/debounced_search_field.dart';
 import 'package:crowdpass/widgets/error_dialog.dart';
 
-class EditableAddressField extends StatefulWidget {
-  const EditableAddressField({
+class EditableLocationField extends StatefulWidget {
+  const EditableLocationField({
     super.key,
     this.isEditable = false,
     this.isRequired = false,
-    this.location,
+    this.initialValue,
     this.onChanged,
     this.validator,
     this.onSaved,
+    this.decoration,
   });
 
   final bool isEditable;
   final bool isRequired;
-  final Location? location;
-  final Function(Location? location)? onChanged;
+  final Location? initialValue;
+  final Function(Location? initialValue)? onChanged;
   final String? Function(Location? value)? validator;
   final FormFieldSetter<Location>? onSaved;
+  final InputDecoration? decoration; // <-- Add this
 
   @override
-  State<EditableAddressField> createState() => _EditableAddressFieldState();
+  State<EditableLocationField> createState() => _EditableLocationFieldState();
 }
 
-class _EditableAddressFieldState extends State<EditableAddressField> {
+class _EditableLocationFieldState extends State<EditableLocationField> {
   Location? _selectedLocation;
   bool _isLocating = false;
   
@@ -37,18 +39,18 @@ class _EditableAddressFieldState extends State<EditableAddressField> {
   @override
   void initState() {
     super.initState();
-    _selectedLocation = widget.location;
+    _selectedLocation = widget.initialValue;
   }
 
   @override
-  void didUpdateWidget(EditableAddressField oldWidget) {
+  void didUpdateWidget(EditableLocationField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.location != oldWidget.location) {
-      _selectedLocation = widget.location;
+    if (widget.initialValue != oldWidget.initialValue) {
+      _selectedLocation = widget.initialValue;
       // This ensures the FormField internal state updates when the parent prop changes
       // We wrap it in addPostFrameCallback to prevent "setState() called during build" errors
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _fieldKey.currentState?.didChange(widget.location);
+        _fieldKey.currentState?.didChange(widget.initialValue);
       });
     }
   }
@@ -71,9 +73,9 @@ class _EditableAddressFieldState extends State<EditableAddressField> {
     setState(() => _isLocating = true);
 
     try {
-      final location = await LocationService.getCurrentLocation();
+      final initialValue = await LocationService.getCurrentLocation();
       if (mounted) {
-        _handleNewLocation(location);
+        _handleNewLocation(initialValue);
       }
     } catch (error) {
       if (mounted) {
@@ -91,10 +93,10 @@ class _EditableAddressFieldState extends State<EditableAddressField> {
     }
   }
 
-  void _handleNewLocation(Location? location) {
-    setState(() => _selectedLocation = location);
-    _fieldKey.currentState?.didChange(location);
-    widget.onChanged?.call(location);
+  void _handleNewLocation(Location? initialValue) {
+    setState(() => _selectedLocation = initialValue);
+    _fieldKey.currentState?.didChange(initialValue);
+    widget.onChanged?.call(initialValue);
   }
 
   @override
@@ -107,7 +109,7 @@ class _EditableAddressFieldState extends State<EditableAddressField> {
       onSaved: widget.onSaved,
       validator: (value) {
         if (widget.isRequired && value == null) {
-          return 'Please select a location';
+          return 'Please select a initialValue';
         }
         return widget.validator?.call(value);
       },
@@ -119,21 +121,21 @@ class _EditableAddressFieldState extends State<EditableAddressField> {
               initialValue: _selectedLocation,
               isEditable: widget.isEditable,
               hintText: 'Search for an address',
-              decoration: InputDecoration(
-                labelText: 'Address',
-                border: const OutlineInputBorder(),
-                errorText: state.errorText,
-                prefixIcon: _isLocating
-                    ? SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : IconButton(
-                        icon: Icon(Icons.my_location, color: theme.colorScheme.primary),
-                        onPressed: widget.isEditable ? _getCurrentLocation : null,
-                      ),
-              ),
+              decoration: (widget.decoration ?? const InputDecoration()).copyWith(
+                  labelText: 'Address',
+                  border: const OutlineInputBorder(),
+                  errorText: state.errorText,
+                  prefixIcon: _isLocating
+                      ? SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : IconButton(
+                          icon: Icon(Icons.my_location, color: theme.colorScheme.primary),
+                          onPressed: widget.isEditable ? _getCurrentLocation : null,
+                        ),
+                ),
               getDisplayText: (location) => location.fullName,
               tileBuilder: (context, location) {
                 return ListTile(

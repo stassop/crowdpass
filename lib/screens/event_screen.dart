@@ -12,7 +12,7 @@ import 'package:crowdpass/providers/company_provider.dart';
 
 import 'package:crowdpass/widgets/animated_reveal.dart';
 import 'package:crowdpass/widgets/animated_app_bar.dart';
-import 'package:crowdpass/widgets/editable_address_field.dart';
+import 'package:crowdpass/widgets/editable_location_field.dart';
 import 'package:crowdpass/widgets/editable_date_range_field.dart';
 import 'package:crowdpass/widgets/editable_event_type_field.dart';
 import 'package:crowdpass/widgets/editable_money_field.dart';
@@ -566,8 +566,8 @@ class _EventScreenState extends ConsumerState<EventScreen> {
 
                         const SizedBox(height: 16),
 
-                        EditableAddressField(
-                          location: _location,
+                        EditableLocationField(
+                          initialValue: _location,
                           isEditable: _isEditing,
                           isRequired: true,
                           onChanged: (value) {

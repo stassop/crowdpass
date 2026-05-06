@@ -116,7 +116,7 @@ class DrawerMenu extends ConsumerWidget {
                       title: const Text('Create Event'),
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/create_event/');
+                         Navigator.pushNamed(context, '/event/');
                       },
                     ),
                   ],

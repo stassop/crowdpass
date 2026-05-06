@@ -12,7 +12,7 @@ import 'package:crowdpass/widgets/error_dialog.dart';
 import 'package:crowdpass/widgets/user_avatar.dart';
 import 'package:crowdpass/widgets/editable_email_field.dart';
 import 'package:crowdpass/widgets/editable_iban_field.dart';
-import 'package:crowdpass/widgets/editable_address_field.dart';
+import 'package:crowdpass/widgets/editable_location_field.dart';
 import 'package:crowdpass/widgets/editable_list_field.dart';
 import 'package:crowdpass/widgets/editable_phone_field.dart';
 
@@ -237,8 +237,8 @@ class _CompanyScreenState extends ConsumerState<CompanyScreen> {
 
                     const SizedBox(height: 16),
 
-                    EditableAddressField(
-                      location: _address,
+                    EditableLocationField(
+                      initialValue: _address,
                       isEditable: _isEditing,
                       onChanged: (value) => setState(() {
                         _address = value;
