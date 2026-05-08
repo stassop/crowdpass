@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart' show Distance, LengthUnit;
+import 'package:latlong2/latlong.dart' show LengthUnit;
+
+class DistanceUnitValue {
+  final LengthUnit unit;
+  final double value;
+
+  DistanceUnitValue({required this.unit, required this.value});
+
+  @override
+  String toString() => '$value ${unit.scaleFactor}'; 
+}
 
 class DistanceSlider extends StatefulWidget {
   final double min;
   final double max;
-  final int? divisions;
   final double? initialValue;
-  final Distance? initialDistance;
-  final LengthUnit? units;
-
-  final ValueChanged<Distance>? onChanged;
+  final LengthUnit? initialUnit;
+  final int? divisions;
+  final ValueChanged<LengthUnit>? onUnitChanged;
+  final ValueChanged<double>? onValueChanged;
   final FormFieldValidator<double>? validator;
   final FormFieldSetter<double>? onSaved;
   final AutovalidateMode autovalidateMode;
 
   const DistanceSlider({
     super.key,
-    required this.min,
-    required this.max,
+    this.min = 0,
+    this.max = 100,
     this.initialValue,
-    this.initialDistance,
-    this.units,
-    this.onChanged,
+    this.initialUnit,
+    this.onUnitChanged,
+    this.onValueChanged,
     this.divisions,
     this.validator,
     this.onSaved,
@@ -34,43 +43,47 @@ class DistanceSlider extends StatefulWidget {
 
 class _DistanceSliderState extends State<DistanceSlider> {
   late double _value;
-  late LengthUnit _currentUnit;
+  late LengthUnit _unit;
+
+  final Map<LengthUnit, String> _unitLabels = const {
+    LengthUnit.Meter: 'm',
+    LengthUnit.Kilometer: 'km',
+    LengthUnit.Mile: 'mi',
+  };
 
   @override
   void initState() {
     super.initState();
-    // Priority: initialValue > initialDistance > min
-    _value = widget.initialValue ?? widget.min;
-    _currentUnit = widget.units ?? LengthUnit.Kilometer;
+    _unit = widget.initialUnit ?? LengthUnit.Kilometer;
+    _value = widget.initialValue ?? widget.max;
   }
 
-  // Calculate meters using the scale factor from the provided LengthUnit class
-  double get _meters => _currentUnit.to(LengthUnit.Meter, _value);
-
-  String _formatLabel(double value, LengthUnit unit) {
-    String suffix = 'm';
-    if (unit == LengthUnit.Kilometer) suffix = 'km';
-    if (unit == LengthUnit.Mile) suffix = 'mi';
-    return '${value.toStringAsFixed(1)} $suffix';
+  void _handleUpdate(double newValue, FormFieldState<double> state) {
+    setState(() => _value = newValue);
+    state.didChange(newValue);
   }
 
-  void _notifyChange(FormFieldState<double> state) {
-    state.didChange(_meters);
-    if (widget.onChanged != null) {
-      // Returning the calculator instance as requested
-      widget.onChanged!(widget.initialDistance ?? const Distance());
-    }
+  void _handleUnitChange(LengthUnit newUnit, FormFieldState<double> state) {
+    setState(() {
+      final convertedValue = _unit.to(newUnit, _value);
+      _value = convertedValue.clamp(widget.min, widget.max);
+      _unit = newUnit;
+    });
+    state.didChange(_value);
+    widget.onUnitChanged?.call(_unit);
   }
 
   @override
   Widget build(BuildContext context) {
+    final divisions = widget.divisions ?? 10;
     return FormField<double>(
-      initialValue: _meters,
+      initialValue: _value,
       validator: widget.validator,
       onSaved: widget.onSaved,
       autovalidateMode: widget.autovalidateMode,
       builder: (FormFieldState<double> state) {
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -78,31 +91,42 @@ class _DistanceSliderState extends State<DistanceSlider> {
                   child: Slider(
                     min: widget.min,
                     max: widget.max,
-                    divisions: widget.divisions,
-                    value: _value,
-                    label: _formatLabel(_value, _currentUnit),
-                    onChanged: (val) {
-                      setState(() => _value = val);
-                      _notifyChange(state);
+                    divisions: divisions,
+                    value: _value.clamp(widget.min, widget.max),
+                    label: '${_value.toStringAsFixed(1)} ${_unitLabels[_unit]}',
+                    onChanged: (double value) => _handleUpdate(value, state),
+                    onChangeEnd: (double value) {
+                      widget.onValueChanged?.call(value);
                     },
                   ),
                 ),
-                DropdownButton<LengthUnit>(
-                  value: _currentUnit,
-                  onChanged: (unit) {
-                    if (unit != null) {
-                      setState(() => _currentUnit = unit);
-                      _notifyChange(state);
-                    }
-                  },
-                  items: const [
-                    DropdownMenuItem(value: LengthUnit.Meter, child: Text('m')),
-                    DropdownMenuItem(value: LengthUnit.Kilometer, child: Text('km')),
-                    DropdownMenuItem(value: LengthUnit.Mile, child: Text('mi')),
-                  ],
+                MenuAnchor(
+                  builder: (context, controller, child) => TextButton(
+                    onPressed: () => controller.isOpen ? controller.close() : controller.open(),
+                    child: Text(
+                      '${_value.toStringAsFixed(1)} ${_unitLabels[_unit]}',
+                    ),
+                  ),
+                  menuChildren: _unitLabels.entries.map((entry) =>
+                    MenuItemButton(
+                      onPressed: () => _handleUnitChange(entry.key, state),
+                      child: Text(entry.value),
+                    )
+                  ).toList(),
                 ),
               ],
             ),
+            if (state.hasError)
+              Padding(
+                padding: const EdgeInsets.only(left: 12, top: 4),
+                child: Text(
+                  state.errorText ?? '',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
           ],
         );
       },

@@ -60,9 +60,9 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen> {
         final notifier = ref.read(companyEventsProvider(company.id).notifier);
 
         final selected = state.filters.status;
-        final range = state.filters.dateRange;
+        final range = state.filters.dates;
         final bool anyFilterSelected =
-            selected.isNotEmpty || state.filters.dateRange != null;
+            selected.isNotEmpty || range != null;
 
         final theme = Theme.of(context);
 
@@ -128,35 +128,10 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 16),
-
-                  DropdownMenu<EventSortBy>(
-                    label: const Text('Sort By'),
-                    leadingIcon: const Icon(Icons.sort),
-                    initialSelection: state.filters.sortBy,
-                    onSelected: (value) {
-                      if (value != null) {
-                        notifier.setSortBy(value);
-                      }
-                    },
-                    dropdownMenuEntries: const [
-                      DropdownMenuEntry(
-                        value: EventSortBy.latest,
-                        label: 'Latest',
-                      ),
-                      DropdownMenuEntry(
-                        value: EventSortBy.oldest,
-                        label: 'Oldest',
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
                   EditableDateRangeField(
                     isEditable: true,
                     initialValue: range,
-                    onChanged: (value) => notifier.setDateRange(value),
+                    onChanged: (value) => notifier.setFilters(state.filters.copyWith(dates: value)),
                   ),
 
                   const SizedBox(height: 16),
@@ -170,7 +145,7 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen> {
                         foregroundColor: theme.colorScheme.onError,
                       ),
                       onPressed: () {
-                        notifier.clearAllFilters();
+                        notifier.clearFilters();
                       },
                     ),
 

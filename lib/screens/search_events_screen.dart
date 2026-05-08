@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart' show Distance, LatLng, LengthUnit;
 
 import 'package:crowdpass/models/event.dart';
 
@@ -84,6 +83,7 @@ class _SearchEventsScreenState extends ConsumerState<SearchEventsScreen> {
 
                 EditableEventTypeField(
                   isMultiple: true,
+                  isEditable: true,
                   decoration: const InputDecoration(labelText: 'Event Type', isDense: true),
                   initialValue: searchEventsState.filters.eventType,
                   onChanged: (eventType) => searchEventsNotifier.setFilters(
@@ -94,6 +94,7 @@ class _SearchEventsScreenState extends ConsumerState<SearchEventsScreen> {
                 const SizedBox(height: 16),
 
                 EditableLocationField(
+                  isEditable: true,
                   decoration: const InputDecoration(labelText: 'Location', isDense: true),
                   initialValue: searchEventsState.filters.location,
                   onChanged: (address) => searchEventsNotifier.setFilters(
@@ -104,6 +105,7 @@ class _SearchEventsScreenState extends ConsumerState<SearchEventsScreen> {
                 const SizedBox(height: 16),
 
                 EditableDateRangeField(
+                  isEditable: true,
                   decoration: const InputDecoration(labelText: 'Date Range', isDense: true),
                   initialValue: searchEventsState.filters.dates,
                   onChanged: (dateRange) => searchEventsNotifier.setFilters(
@@ -114,15 +116,15 @@ class _SearchEventsScreenState extends ConsumerState<SearchEventsScreen> {
                 const SizedBox(height: 16),
 
                 Text('Distance', style: theme.textTheme.titleMedium),
-
-                const SizedBox(height: 8),
-
                 DistanceSlider(
                   min: 0,
                   max: 100,
-                  initialDistance: searchEventsState.filters.distance,
-                  units: LengthUnit.Kilometer,
-                  onChanged: (distance) => searchEventsNotifier.setFilters(
+                  initialValue: searchEventsState.filters.distance ?? 0,
+                  initialUnit: searchEventsState.filters.distanceUnit,
+                  onUnitChanged: (unit) => searchEventsNotifier.setFilters(
+                    searchEventsState.filters.copyWith(distanceUnit: unit),
+                  ),
+                  onValueChanged: (distance) => searchEventsNotifier.setFilters(
                     searchEventsState.filters.copyWith(distance: distance),
                   ),
                 ),
@@ -130,32 +132,30 @@ class _SearchEventsScreenState extends ConsumerState<SearchEventsScreen> {
                 const SizedBox(height: 16),
 
                 Text('Sort By', style: theme.textTheme.titleMedium),
-
-                const SizedBox(height: 8),
-
-                DropdownButton<SearchEventsSortBy>(
-                  value: searchEventsState.filters.sortBy,
-                  onChanged: (sortBy) {
-                    if (sortBy != null) {
+                SegmentedButton<SearchEventsSortBy>(
+                  segments: const [
+                    ButtonSegment(
+                      value: SearchEventsSortBy.date,
+                      label: Text('Date'),
+                    ),
+                    ButtonSegment(
+                      value: SearchEventsSortBy.price,
+                      label: Text('Price'),
+                    ),
+                    ButtonSegment(
+                      value: SearchEventsSortBy.distance,
+                      label: Text('Distance'),
+                    ),
+                  ],
+                  selected: <SearchEventsSortBy>{searchEventsState.filters.sortBy},
+                  onSelectionChanged: (Set<SearchEventsSortBy> selection) {
+                    if (selection.isNotEmpty) {
                       searchEventsNotifier.setFilters(
-                        searchEventsState.filters.copyWith(sortBy: sortBy),
+                        searchEventsState.filters.copyWith(sortBy: selection.first),
                       );
                     }
                   },
-                  items: const [
-                    DropdownMenuItem(
-                      value: SearchEventsSortBy.date,
-                      child: Text('Soonest Events'),
-                    ),
-                    DropdownMenuItem(
-                      value: SearchEventsSortBy.price,
-                      child: Text('Cheapest Events'),
-                    ),
-                    DropdownMenuItem(
-                      value: SearchEventsSortBy.distance,
-                      child: Text('Closest Events'),
-                    ),
-                  ],
+                  showSelectedIcon: false,
                 ),
 
                 const SizedBox(height: 16),

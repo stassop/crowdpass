@@ -8,31 +8,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crowdpass/models/event.dart';
 
 enum EventStatusFilter { past, current, upcoming, canceled }
-enum EventSortBy { latest, oldest }
 
 class MyEventsFilters {
   final Set<EventStatusFilter> status;
-  final DateTimeRange? dateRange;
-  final EventSortBy sortBy;
+  final DateTimeRange? dates;
   final bool isMonthly;
 
   const MyEventsFilters({
     this.status = const {},
-    this.dateRange,
-    this.sortBy = EventSortBy.latest,
+    this.dates,
     this.isMonthly = false,
   });
 
   MyEventsFilters copyWith({
     Set<EventStatusFilter>? status,
-    DateTimeRange? dateRange,
-    EventSortBy? sortBy,
+    DateTimeRange? dates,
     bool? isMonthly,
   }) {
     return MyEventsFilters(
       status: status ?? this.status,
-      dateRange: dateRange ?? this.dateRange,
-      sortBy: sortBy ?? this.sortBy,
+      dates: dates ?? this.dates,
       isMonthly: isMonthly ?? this.isMonthly,
     );
   }
@@ -42,16 +37,14 @@ class MyEventsFilters {
     return identical(this, other) ||
         (other is MyEventsFilters &&
             setEquals(other.status, status) &&
-            other.dateRange == dateRange &&
-            other.sortBy == sortBy &&
+            other.dates == dates &&
             other.isMonthly == isMonthly);
   }
 
   @override
   int get hashCode => Object.hash(
-        Object.hashAll(status.toList()..sort()),
-        dateRange,
-        sortBy,
+        Object.hashAll(status.toList()..sort((a, b) => a.index.compareTo(b.index))),
+        dates,
         isMonthly,
       );
 }
@@ -61,7 +54,7 @@ class MyEventsState {
   final MyEventsFilters filters;
   final bool isLoading;
   final bool hasMore;
-  final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
+  final DocumentSnapshot<Map<String, dynamic>>? lastDocument;
   final Object? error;
 
   const MyEventsState({
@@ -69,7 +62,7 @@ class MyEventsState {
     this.filters = const MyEventsFilters(),
     this.isLoading = false,
     this.hasMore = true,
-    this.lastDoc,
+    this.lastDocument,
     this.error,
   });
 
@@ -78,7 +71,7 @@ class MyEventsState {
     MyEventsFilters? filters,
     bool? isLoading,
     bool? hasMore,
-    DocumentSnapshot<Map<String, dynamic>>? lastDoc,
+    DocumentSnapshot<Map<String, dynamic>>? lastDocument,
     Object? error,
   }) {
     return MyEventsState(
@@ -86,7 +79,7 @@ class MyEventsState {
       filters: filters ?? this.filters,
       isLoading: isLoading ?? this.isLoading,
       hasMore: hasMore ?? this.hasMore,
-      lastDoc: lastDoc ?? this.lastDoc,
+      lastDocument: lastDocument ?? this.lastDocument,
       error: error,
     );
   }
@@ -95,16 +88,10 @@ class MyEventsState {
 class MyEventsNotifier extends Notifier<MyEventsState> {
   MyEventsNotifier(this.companyId);
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String companyId;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  static const int pageSize = 20;
-
-  CollectionReference<Map<String, dynamic>> get _companyEventsRefs =>
-      _firestore.collection('companies').doc(companyId).collection('events');
-
-  CollectionReference<Map<String, dynamic>> get _events =>
-      _firestore.collection('events');
+  static const int pageSize = 30;
 
   @override
   MyEventsState build() {
@@ -112,6 +99,25 @@ class MyEventsNotifier extends Notifier<MyEventsState> {
     return const MyEventsState();
   }
 
+  /// Sets all filters at once and triggers a refresh if they changed.
+  void setFilters(MyEventsFilters newFilters) {
+    if (state.filters == newFilters) return;
+    state = state.copyWith(filters: newFilters);
+    refresh();
+  }
+
+  /// Toggles a single status filter and refreshes.
+  void toggleStatusFilter(EventStatusFilter filter) {
+    final Set<EventStatusFilter> nextFilters = Set.from(state.filters.status);
+    if (nextFilters.contains(filter)) {
+      nextFilters.remove(filter);
+    } else {
+      nextFilters.add(filter);
+    }
+    setFilters(state.filters.copyWith(status: nextFilters));
+  }
+
+  /// Resets the list and starts fetching from the first page.
   Future<void> refresh() async {
     if (state.isLoading) return;
 
@@ -119,191 +125,144 @@ class MyEventsNotifier extends Notifier<MyEventsState> {
       events: const [],
       isLoading: true,
       hasMore: true,
-      lastDoc: null,
+      lastDocument: null,
       error: null,
     );
 
-    try {
-      await _loadMoreInternal(startAfter: null, replace: true);
-    } finally {
-      state = state.copyWith(isLoading: false);
-    }
+    await _fetchNextPage(isRefresh: true);
   }
 
+  /// Loads the next set of events for pagination.
   Future<void> loadMore() async {
-    if (state.isLoading) return;
-    if (!state.hasMore) return;
+    if (state.isLoading || !state.hasMore) return;
 
     state = state.copyWith(isLoading: true, error: null);
-
-    try {
-      await _loadMoreInternal(
-        startAfter: state.lastDoc,
-        replace: false,
-      );
-    } finally {
-      state = state.copyWith(isLoading: false);
-    }
+    await _fetchNextPage(isRefresh: false);
   }
 
-  Future<void> _loadMoreInternal({
-    required DocumentSnapshot<Map<String, dynamic>>? startAfter,
-    required bool replace,
-  }) async {
-    try {
-      Query<Map<String, dynamic>> query = _companyEventsRefs;
-      final DateTimeRange? dateRange = state.filters.dateRange;
-      final bool isMonthly = state.filters.isMonthly;
+  void clearFilters() {
+    setFilters(const MyEventsFilters());
+  }
 
-      if (dateRange != null) {
-        final Timestamp start = Timestamp.fromDate(dateRange.start);
-        final Timestamp end = Timestamp.fromDate(dateRange.end);
+  Future<void> _fetchNextPage({required bool isRefresh}) async {
+    try {
+      Query<Map<String, dynamic>> query = _firestore
+          .collection('companies')
+          .doc(companyId)
+          .collection('events');
+
+      // Setup Query constraints
+      if (state.filters.dates != null) {
+        final start = Timestamp.fromDate(state.filters.dates!.start);
+        final end = Timestamp.fromDate(state.filters.dates!.end);
 
         query = query
             .where('end', isGreaterThanOrEqualTo: start)
-            .where('start', isLessThanOrEqualTo: end);
+            .where('end', isLessThanOrEqualTo: end)
+            .orderBy('end');
+      } else {
+        query = query.orderBy(FieldPath.documentId);
       }
 
-      query = query.orderBy(
-        'start',
-        descending: state.filters.sortBy == EventSortBy.latest,
-      );
-
-      // FIX: Disable pagination logic if we are in a month/dateRange view
-      if (isMonthly || dateRange == null) {
+      // Handle Pagination logic
+      if (!state.filters.isMonthly) {
         query = query.limit(pageSize);
-        if (startAfter != null) {
-          query = query.startAfterDocument(startAfter);
+        if (state.lastDocument != null && !isRefresh) {
+          query = query.startAfterDocument(state.lastDocument!);
         }
       }
 
       final snapshot = await query.get();
-      final docs = snapshot.docs;
+      final documents = snapshot.docs;
 
-      if (docs.isEmpty) {
-        state = state.copyWith(hasMore: false);
+      if (documents.isEmpty) {
+        state = state.copyWith(isLoading: false, hasMore: false);
         return;
       }
 
-      final List<String> eventIds = docs.map((doc) => doc.id).toList();
-      final List<Event> fetchedEvents =
-          await _fetchEventsByIdsPreserveOrder(eventIds);
+      // Fetch full event data from the main collection
+      final eventIds = documents.map((doc) => doc.id).toList();
+      final fetchedEvents = await _fetchEventsByGroupedIds(eventIds);
 
-      final List<Event> statusFilteredEvents =
-          _applyStatusFilters(fetchedEvents, state.filters.status);
+      // Apply logic-based filters (Past/Current/Upcoming) on client
+      final filteredEvents = _applyStatusFilters(
+        fetchedEvents,
+        state.filters.status,
+      );
 
-      final List<Event> nextEvents;
-      if (replace) {
-        nextEvents = statusFilteredEvents;
-      } else {
-        final Set<String> existingIds = state.events.map((event) => event.id).toSet();
-        nextEvents = <Event>[
-          ...state.events,
-          ...statusFilteredEvents.where((event) => !existingIds.contains(event.id)),
-        ];
-      }
+      final nextEvents = isRefresh 
+          ? filteredEvents 
+          : [...state.events, ...filteredEvents];
 
       state = state.copyWith(
+        isLoading: false,
         events: nextEvents,
-        // If range view, we have everything, so hasMore is false
-        hasMore: !isMonthly && docs.length == pageSize,
-        lastDoc: docs.last,
+        lastDocument: documents.last,
+        hasMore: !state.filters.isMonthly && documents.length == pageSize,
       );
+
+      // If the current batch of IDs didn't yield any visible results due to filters,
+      // but there are more documents on the server, fetch the next page immediately.
+      if (filteredEvents.isEmpty && state.hasMore) {
+        await _fetchNextPage(isRefresh: false);
+      }
     } catch (error, stackTrace) {
-      debugPrint('MyEventsNotifier.loadMore error: $error\n$stackTrace');
-      state = state.copyWith(error: error, hasMore: false);
+      debugPrint('MyEventsNotifier error: $error\n$stackTrace');
+      state = state.copyWith(isLoading: false, error: error, hasMore: false);
     }
   }
 
-  void toggleStatusFilter(EventStatusFilter filter) {
-    final Set<EventStatusFilter> next = Set<EventStatusFilter>.from(state.filters.status);
-    if (next.contains(filter)) {
-      next.remove(filter);
-    } else {
-      next.add(filter);
-    }
-    _setFiltersAndRestart(state.filters.copyWith(status: next));
-  }
+  Future<List<Event>> _fetchEventsByGroupedIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
 
-  void setDateRange(DateTimeRange? range) {
-    _setFiltersAndRestart(state.filters.copyWith(dateRange: range));
-  }
+    final snapshot = await _firestore
+        .collection('events')
+        .where(FieldPath.documentId, whereIn: ids)
+        .get();
 
-  void setSortBy(EventSortBy sortBy) {
-    _setFiltersAndRestart(state.filters.copyWith(sortBy: sortBy));
-  }
+    final events = snapshot.docs.map((doc) {
+      final data = Map<String, dynamic>.from(doc.data());
+      data['id'] = doc.id;
+      return Event.fromJson(data);
+    }).toList();
 
-  void clearAllFilters() {
-    _setFiltersAndRestart(const MyEventsFilters());
-  }
-
-  void _setFiltersAndRestart(MyEventsFilters next) {
-    if (next == state.filters) return;
-    state = state.copyWith(filters: next);
-    Future.microtask(refresh);
+    // Re-sort to maintain the order established by the company-subcollection query
+    events.sort((a, b) => ids.indexOf(a.id).compareTo(ids.indexOf(b.id)));
+    return events;
   }
 
   List<Event> _applyStatusFilters(
     List<Event> events,
-    Set<EventStatusFilter> statusFilters,
+    Set<EventStatusFilter> activeFilters,
   ) {
-    if (statusFilters.isEmpty) return events;
-    final DateTime now = DateTime.now();
+    if (activeFilters.isEmpty) return events;
 
-    bool matchesAnySelectedStatus(Event event) {
-      const bool isCanceled = false;
-      final DateTimeRange eventDates = event.dates;
-      final DateTime start = eventDates.start;
-      final DateTime end = eventDates.end;
+    final now = DateTime.now();
 
-      bool matches = false;
-      if (statusFilters.contains(EventStatusFilter.canceled)) {
-        matches = matches || isCanceled;
+    return events.where((event) {
+      // Logic assumes 'isCanceled' is a property of your Event model
+      if (activeFilters.contains(EventStatusFilter.canceled) && event.isCanceled) {
+        return true;
       }
 
-      if (!isCanceled) {
-        if (statusFilters.contains(EventStatusFilter.past)) {
-          matches = matches || end.isBefore(now);
-        }
-        if (statusFilters.contains(EventStatusFilter.current)) {
-          matches = matches || (start.isBefore(now) && end.isAfter(now));
-        }
-        if (statusFilters.contains(EventStatusFilter.upcoming)) {
-          matches = matches || start.isAfter(now);
-        }
+      if (event.isCanceled) return false;
+
+      final start = event.dates.start;
+      final end = event.dates.end;
+
+      if (activeFilters.contains(EventStatusFilter.past) && end.isBefore(now)) {
+        return true;
       }
-      return matches;
-    }
+      if (activeFilters.contains(EventStatusFilter.current) && 
+          start.isBefore(now) && end.isAfter(now)) {
+        return true;
+      }
+      if (activeFilters.contains(EventStatusFilter.upcoming) && start.isAfter(now)) {
+        return true;
+      }
 
-    return events.where(matchesAnySelectedStatus).toList();
-  }
-
-  Future<List<Event>> _fetchEventsByIdsPreserveOrder(List<String> eventIds) async {
-    if (eventIds.isEmpty) return const [];
-    final List<Event> allEvents = [];
-
-    for (int i = 0; i < eventIds.length; i += 10) {
-      final List<String> subIds = eventIds.skip(i).take(10).toList();
-      if (subIds.isEmpty) continue;
-
-      final snap = await _events.where(FieldPath.documentId, whereIn: subIds).get();
-      final List<Event> chunkEvents = snap.docs.map((doc) {
-        final Map<String, dynamic> data = Map<String, dynamic>.from(doc.data());
-        data['id'] = doc.id;
-        return Event.fromJson(data);
-      }).toList();
-
-      chunkEvents.sort(
-        (Event a, Event b) => subIds.indexOf(a.id).compareTo(subIds.indexOf(b.id)),
-      );
-      allEvents.addAll(chunkEvents);
-    }
-
-    allEvents.sort(
-      (Event a, Event b) =>
-          eventIds.indexOf(a.id).compareTo(eventIds.indexOf(b.id)),
-    );
-    return allEvents;
+      return false;
+    }).toList();
   }
 }
 

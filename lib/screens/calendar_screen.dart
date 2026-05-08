@@ -71,8 +71,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             onEventSelected: (event) {
               Navigator.pushNamed(context, '/event/', arguments: event.id);
             },
-            onChanged: (DateTimeRange dateRange) {
-              notifier.setDateRange(dateRange);
+            onChanged: (value) {
+              notifier.setFilters(state.filters.copyWith(dates: value));
             },
           ),
         );

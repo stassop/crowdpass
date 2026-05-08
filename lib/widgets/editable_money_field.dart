@@ -136,8 +136,8 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
     }
   }
 
-  void _onCurrencyChanged(Currency currency) {
-    setState(() => _currency = currency);
+  void _onCurrencyChanged(Currency? currency) {
+    setState(() => _currency = currency ?? _currency);
 
     // Defer notification to avoid triggering rebuild/validation during build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -162,25 +162,30 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
 
         final currencies = snapshot.data!;
 
-        final currencyMenu = PopupMenuButton<Currency>(
-          padding: EdgeInsets.zero,
-          initialValue: _currency,
-          onSelected: _onCurrencyChanged,
-          enabled: widget.isCurrencyEditable,
-          icon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(width: 8),
-              Text(
-                _currency.symbol,
-                style: widget.textStyle ?? Theme.of(context).textTheme.bodyLarge,
+        final currencyMenu = MenuAnchor(
+          builder: (context, controller, child) {
+            return InkWell(
+              onTap: widget.isCurrencyEditable 
+                  ? () => controller.isOpen ? controller.close() : controller.open() 
+                  : null,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16.0, 0, 0, 0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min, // Takes only necessary width
+                  children: [
+                    Text(
+                      _currency.symbol,
+                      style: widget.textStyle ?? Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const Icon(Icons.arrow_drop_down, size: 20),
+                  ],
+                ),
               ),
-              const Icon(Icons.arrow_drop_down, size: 20),
-            ],
-          ),
-          itemBuilder: (context) => currencies.map((currency) {
-            return PopupMenuItem<Currency>(
-              value: currency,
+            );
+          },
+          menuChildren: currencies.map((currency) {
+            return MenuItemButton(
+              onPressed: () => _onCurrencyChanged(currency),
               child: Text('${currency.name} (${currency.symbol})'),
             );
           }).toList(),

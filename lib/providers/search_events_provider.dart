@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:latlong2/distance.dart';
+import 'package:latlong2/latlong.dart' show Distance, LatLng, LengthUnit;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -12,8 +11,8 @@ import 'package:crowdpass/models/location.dart';
 enum SearchEventsSortBy { distance, date, price }
 
 class SearchEventsFilters {
-  final Distance? distance;
-  final LatLng? center;
+  final double? distance;
+  final LengthUnit distanceUnit;
   final Location? location;
   final Set<EventType>? eventType; // Changed from EventType? to Set<EventType>?
   final DateTimeRange? dates;
@@ -23,7 +22,7 @@ class SearchEventsFilters {
 
   const SearchEventsFilters({
     this.distance,
-    this.center,
+    this.distanceUnit = LengthUnit.Kilometer,
     this.location,
     this.eventType, // Changed
     this.dates,
@@ -33,8 +32,8 @@ class SearchEventsFilters {
   });
 
   SearchEventsFilters copyWith({
-    Distance? distance,
-    LatLng? center,
+    double? distance,
+    LengthUnit? distanceUnit,
     Location? location,
     Set<EventType>? eventType, // Changed
     DateTimeRange? dates,
@@ -44,7 +43,7 @@ class SearchEventsFilters {
   }) {
     return SearchEventsFilters(
       distance: distance ?? this.distance,
-      center: center ?? this.center,
+      distanceUnit: distanceUnit ?? this.distanceUnit,
       location: location ?? this.location,
       eventType: eventType ?? this.eventType, // Changed
       dates: dates ?? this.dates,
@@ -130,13 +129,22 @@ class SearchEventsNotifier extends Notifier<SearchEventsState> {
         query = query.where('isFree', isEqualTo: filters.isFree);
       }
       if (filters.doorTicketsAvailable != null) {
-        query = query.where('doorTicketsAvailable', isEqualTo: filters.doorTicketsAvailable);
+        query = query.where(
+          'doorTicketsAvailable',
+          isEqualTo: filters.doorTicketsAvailable,
+        );
       }
       if (filters.dates != null) {
         // Overlap: event.end >= range.start && event.start <= range.end
         query = query
-          .where('dates.end', isGreaterThanOrEqualTo: filters.dates!.start.toIso8601String())
-          .where('dates.start', isLessThanOrEqualTo: filters.dates!.end.toIso8601String());
+            .where(
+              'dates.end',
+              isGreaterThanOrEqualTo: filters.dates!.start.toIso8601String(),
+            )
+            .where(
+              'dates.start',
+              isLessThanOrEqualTo: filters.dates!.end.toIso8601String(),
+            );
       }
 
       // Sorting
@@ -160,9 +168,7 @@ class SearchEventsNotifier extends Notifier<SearchEventsState> {
             query = query.startAfter([lastEvent.dates.start.toIso8601String()]);
             break;
           case SearchEventsSortBy.price:
-            query = query.startAfter([
-              lastEvent.ticketPrice?.amount ?? 0
-            ]);
+            query = query.startAfter([lastEvent.ticketPrice?.amount ?? 0]);
             break;
           case SearchEventsSortBy.distance:
             // No Firestore-side sort, so no startAfter
@@ -182,34 +188,47 @@ class SearchEventsNotifier extends Notifier<SearchEventsState> {
       }).toList();
 
       // Geo filtering (client-side, after Firestore query)
-      if (filters.distance != null && filters.center != null) {
-        final Distance distance = filters.distance!;
-        final LatLng center = filters.center!;
+      if (filters.distance != null && filters.location?.latLng != null) {
+        final distanceCalc = Distance();
+        final double maxDistanceMeters = distanceCalc.as(
+          filters.distanceUnit,
+          filters.location!.latLng,
+          filters.location!.latLng,
+        );
+        final LatLng center = filters.location!.latLng;
         fetched = fetched.where((event) {
-          final location = event.location;
-          final LatLng? eventLatLng = location.latLng;
+          final LatLng? eventLatLng = event.location.latLng;
           if (eventLatLng == null) return false;
-          return distance(center, eventLatLng) <= filters.distance!.value;
+          return Distance().as(LengthUnit.Meter, center, eventLatLng) <=
+              maxDistanceMeters;
         }).toList();
       }
 
       // Location-based filtering using isWithinDistance
       if (filters.location != null && filters.distance != null) {
-        final Distance distance = filters.distance!;
+        final distanceCalc = Distance();
+        final double maxDistanceMeters = distanceCalc.as(
+          filters.distanceUnit,
+          filters.location!.latLng,
+          filters.location!.latLng,
+        );
         final Location filterLocation = filters.location!;
         fetched = fetched.where((event) {
           // isWithinDistance expects a double for the distance in meters
-          return event.location.isWithinDistance(filterLocation, distance.value);
+          return event.location.isWithinDistance(
+            filterLocation,
+            maxDistanceMeters,
+          );
         }).toList();
       }
 
       // Client-side sort for distance if needed
       if (state.filters.sortBy == SearchEventsSortBy.distance &&
-          state.filters.center != null) {
-        final LatLng center = state.filters.center!;
+          state.filters.location?.latLng != null) {
+        final LatLng center = state.filters.location!.latLng;
         fetched.sort((a, b) {
-          final aDist = a.location.latLng?.distanceTo(center) ?? double.infinity;
-          final bDist = b.location.latLng?.distanceTo(center) ?? double.infinity;
+          final aDist = Distance().distance(a.location.latLng, center);
+          final bDist = Distance().distance(b.location.latLng, center);
           return aDist.compareTo(bDist);
         });
       }
@@ -239,5 +258,5 @@ class SearchEventsNotifier extends Notifier<SearchEventsState> {
 
 final searchEventsProvider =
     NotifierProvider<SearchEventsNotifier, SearchEventsState>(
-  SearchEventsNotifier.new,
-);
+      SearchEventsNotifier.new,
+    );
