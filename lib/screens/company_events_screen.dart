@@ -14,15 +14,15 @@ import 'package:crowdpass/widgets/editable_date_range_field.dart';
 
 import 'package:crowdpass/services/date_time_service.dart';
 
-class MyEventsScreen extends ConsumerStatefulWidget {
-  const MyEventsScreen({super.key});
+class CompanyEventsScreen extends ConsumerStatefulWidget {
+  const CompanyEventsScreen({super.key});
 
   @override
-  ConsumerState<MyEventsScreen> createState() =>
-      _MyEventsScreenState();
+  ConsumerState<CompanyEventsScreen> createState() =>
+      _CompanyEventsScreenState();
 }
 
-class _MyEventsScreenState extends ConsumerState<MyEventsScreen> {
+class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _openFilterDrawer() {
@@ -80,7 +80,7 @@ class _MyEventsScreenState extends ConsumerState<MyEventsScreen> {
         return Scaffold(
           key: _scaffoldKey,
           appBar: AppBar(
-            title: const Text('My Events'),
+            title: Text('${company.name} Events'),
             actions: [
               IconButton(
                 icon: const Icon(Icons.filter_list),

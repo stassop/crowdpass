@@ -89,10 +89,10 @@ class DrawerMenu extends ConsumerWidget {
                     ),
                     ListTile(
                       leading: const Icon(Icons.event),
-                      title: const Text('My Events'),
+                      title: const Text('Company Events'),
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/my_events/');
+                         Navigator.pushNamed(context, '/company_events/');
                       },
                     ),
                     ListTile(
