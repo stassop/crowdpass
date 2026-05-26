@@ -91,14 +91,12 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
     return const CompanyEventsState();
   }
 
-  /// Sets all filters at once and triggers a refresh if they changed.
   void setFilters(CompanyEventsFilters newFilters) {
     if (state.filters == newFilters) return;
     state = state.copyWith(filters: newFilters);
     Future.microtask(refresh);
   }
 
-  /// Toggles a single status filter and refreshes.
   void toggleStatusFilter(EventStatusFilter filter) {
     final Set<EventStatusFilter> nextFilters = Set.from(state.filters.status);
     if (nextFilters.contains(filter)) {
@@ -113,7 +111,6 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
     setFilters(const CompanyEventsFilters());
   }
 
-  /// Resets the list and starts fetching from the first page.
   Future<void> refresh() async {
     state = state.copyWith(
       events: const [],
@@ -126,7 +123,6 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
     state = state.copyWith(isLoading: false);
   }
 
-  /// Loads the next set of events for pagination.
   Future<void> loadMore() async {
     if (state.isLoading || !state.hasMore) return;
 
@@ -142,9 +138,9 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
           .where('companyId', isEqualTo: companyId);
 
       final filters = state.filters;
+      final now = DateTime.now().toIso8601String();
 
       if (filters.dates != null) {
-        // Overlap: event end >= selected start && event start <= selected end
         query = query
             .where(
               'dates.end',
@@ -156,30 +152,70 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
             );
       }
 
-      query = query.orderBy('dates.start', descending: false);
+      if (filters.status.length == 1) {
+        final status = filters.status.first;
+
+        switch (status) {
+          case EventStatusFilter.past:
+            query = query
+                .where('isCanceled', isEqualTo: false)
+                .where('dates.end', isLessThan: now)
+                .orderBy('dates.end', descending: true);
+            break;
+          case EventStatusFilter.current:
+            query = query
+                .where('isCanceled', isEqualTo: false)
+                .where('dates.start', isLessThanOrEqualTo: now)
+                .where('dates.end', isGreaterThanOrEqualTo: now)
+                .orderBy('dates.start', descending: false);
+            break;
+          case EventStatusFilter.upcoming:
+            query = query
+                .where('isCanceled', isEqualTo: false)
+                .where('dates.start', isGreaterThan: now)
+                .orderBy('dates.start', descending: false);
+            break;
+          case EventStatusFilter.canceled:
+            query = query
+                .where('isCanceled', isEqualTo: true)
+                .orderBy('dates.start', descending: false);
+            break;
+        }
+      } else {
+        query = query.orderBy('dates.start', descending: false);
+      }
 
       if (!replace && state.events.isNotEmpty) {
         final lastEvent = state.events.last;
-        query = query.startAfter([lastEvent.dates.start.toIso8601String()]);
+
+        if (filters.status.length == 1) {
+          final status = filters.status.first;
+
+          switch (status) {
+            case EventStatusFilter.past:
+              query = query.startAfter([lastEvent.dates.end.toIso8601String()]);
+              break;
+            case EventStatusFilter.current:
+            case EventStatusFilter.upcoming:
+            case EventStatusFilter.canceled:
+              query = query.startAfter([lastEvent.dates.start.toIso8601String()]);
+              break;
+          }
+        } else {
+          query = query.startAfter([lastEvent.dates.start.toIso8601String()]);
+        }
       }
 
-      if (!replace) {
-        query = query.limit(pageSize);
-      }
+      query = query.limit(pageSize);
 
       final snapshot = await query.get();
       final docs = snapshot.docs;
 
-      var fetchedEvents = docs.map((doc) {
+      final fetchedEvents = docs.map((doc) {
         final data = Map<String, dynamic>.from(doc.data());
         data['id'] = doc.id;
         return Event.fromJson(data);
       }).toList();
-
-      fetchedEvents = _applyStatusFilters(
-        fetchedEvents,
-        filters.status,
-      );
 
       final nextEvents = replace
           ? fetchedEvents
@@ -189,53 +225,10 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
         events: nextEvents,
         hasMore: docs.length == pageSize,
       );
-
-      // If status filters removed everything from this page, keep paging until
-      // we either find visible events or exhaust the result set.
-      if (fetchedEvents.isEmpty && docs.length == pageSize) {
-        await _loadMoreInternal(replace: false);
-      }
     } catch (error, stackTrace) {
       debugPrint('CompanyEventsNotifier error: $error\n$stackTrace');
       state = state.copyWith(error: error, hasMore: false);
     }
-  }
-
-  List<Event> _applyStatusFilters(
-    List<Event> events,
-    Set<EventStatusFilter> activeFilters,
-  ) {
-    if (activeFilters.isEmpty) return events;
-
-    final now = DateTime.now();
-
-    return events.where((event) {
-      if (activeFilters.contains(EventStatusFilter.canceled) &&
-          event.isCanceled) {
-        return true;
-      }
-
-      if (event.isCanceled) return false;
-
-      final start = event.dates.start;
-      final end = event.dates.end;
-
-      if (activeFilters.contains(EventStatusFilter.past) &&
-          end.isBefore(now)) {
-        return true;
-      }
-      if (activeFilters.contains(EventStatusFilter.current) &&
-          start.isBefore(now) &&
-          end.isAfter(now)) {
-        return true;
-      }
-      if (activeFilters.contains(EventStatusFilter.upcoming) &&
-          start.isAfter(now)) {
-        return true;
-      }
-
-      return false;
-    }).toList();
   }
 }
 

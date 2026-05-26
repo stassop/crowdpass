@@ -238,3 +238,4 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
 final eventNotifier = AsyncNotifierProvider<EventAsyncNotifier, void>(() {
   return EventAsyncNotifier();
 });
+ 
