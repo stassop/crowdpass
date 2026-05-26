@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crowdpass/models/event.dart';
 
 import 'package:crowdpass/providers/company_provider.dart';
-import 'package:crowdpass/providers/my_events_provider.dart';
+import 'package:crowdpass/providers/calendar_provider.dart';
 
 import 'package:crowdpass/widgets/error_dialog.dart';
 import 'package:crowdpass/widgets/calendar.dart';
@@ -47,8 +47,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           );
         }
 
-        final state = ref.watch(companyEventsProvider(company.id));
-        final notifier = ref.read(companyEventsProvider(company.id).notifier);
+        final state = ref.watch(calendarProvider(company.id));
+        final notifier = ref.read(calendarProvider(company.id).notifier);
 
         // Show error dialog if error exists
         if (state.error != null) {
