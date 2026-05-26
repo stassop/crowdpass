@@ -34,7 +34,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
-  /// Creates an event and links it to the company atomically.
+  /// Creates an event.
   Future<String?> createEvent({
     required DateTimeRange dates,
     required String description,
@@ -59,7 +59,6 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
   }) async {
     state = const AsyncLoading();
     try {
-      // Resolve futures to ensure data is present before proceeding
       final user = await ref.read(authProvider.future);
       final company = await ref.read(companyProvider(null).future);
 
@@ -67,7 +66,6 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
       if (company == null) throw Exception('Company profile required.');
 
       final firestore = ref.read(firestoreProvider);
-      final batch = firestore.batch();
 
       String? imageURL;
       if (imagePath != null && imagePath.isNotEmpty) {
@@ -105,22 +103,7 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         times: times,
       );
 
-      // Atomic write: Event entry + Company reference
-      batch.set(docRef, event.toJson());
-      batch.set(
-        firestore
-            .collection('companies')
-            .doc(company.id)
-            .collection('events')
-            .doc(eventId),
-
-        {
-          'start': event.dates.start,
-          'end': event.dates.end,
-        },
-      );
-
-      await batch.commit();
+      await docRef.set(event.toJson());
 
       state = const AsyncData(null);
       return eventId;
@@ -203,8 +186,9 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
       final user = await ref.read(authProvider.future);
       final currentEvent = await ref.read(eventProvider(eventId).future);
 
-      if (user == null || currentEvent == null)
+      if (user == null || currentEvent == null) {
         throw Exception('Data mismatch.');
+      }
       if (currentEvent.createdBy != user.uid) throw Exception('Unauthorized.');
 
       if (currentEvent.dates.start.isBefore(DateTime.now())) {
@@ -212,21 +196,8 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
       }
 
       final firestore = ref.read(firestoreProvider);
-      final batch = firestore.batch();
+      await firestore.collection('events').doc(eventId).delete();
 
-      // Delete from main collection
-      batch.delete(firestore.collection('events').doc(eventId));
-
-      // Delete reference from company subcollection
-      batch.delete(
-        firestore
-            .collection('companies')
-            .doc(currentEvent.companyId)
-            .collection('events')
-            .doc(eventId),
-      );
-
-      await batch.commit();
       state = const AsyncData(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -238,4 +209,3 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
 final eventNotifier = AsyncNotifierProvider<EventAsyncNotifier, void>(() {
   return EventAsyncNotifier();
 });
- 
