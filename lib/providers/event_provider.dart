@@ -103,7 +103,21 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         times: times,
       );
 
-      await docRef.set(event.toJson());
+      final ownerCollection = EventRole.owner.collectionName;
+
+      final batch = firestore.batch();
+      batch.set(docRef, event.toJson());
+      batch.set(
+        docRef.collection(ownerCollection).doc(user.uid),
+        {
+          'userId': user.uid,
+          'eventId': eventId,
+          'role': EventRole.owner.name,
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+      );
+
+      await batch.commit();
 
       state = const AsyncData(null);
       return eventId;
