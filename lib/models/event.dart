@@ -119,6 +119,26 @@ enum EventType {
   String toString() => name;
 }
 
+enum EventRole {
+  owner(collectionName: 'owners', label: 'Owner'),
+  admin(collectionName: 'admins', label: 'Admin'),
+  staff(collectionName: 'staff', label: 'Staff'), // 'Staff' is typically its own plural
+  guest(collectionName: 'guests', label: 'Guest'),
+  security(collectionName: 'security', label: 'Security'), // Usually singular/uncountable
+  vendor(collectionName: 'vendors', label: 'Vendor'),
+  volunteer(collectionName: 'volunteers', label: 'Volunteer');
+
+  // Fields must be final in an enhanced enum
+  final String collectionName;
+  final String label;
+
+  // Constant constructor
+  const EventRole({
+    required this.collectionName,
+    required this.label,
+  });
+}
+
 @immutable
 class Event implements Comparable<Event> {
   final String companyId;

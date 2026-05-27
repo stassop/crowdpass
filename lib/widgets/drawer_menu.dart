@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/providers/auth_provider.dart';
+import 'package:crowdpass/providers/company_provider.dart';
+
 import 'package:crowdpass/widgets/user_avatar.dart';
 
 import 'package:crowdpass/services/developer_service.dart';
@@ -14,6 +16,7 @@ class DrawerMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch the authProvider to get the current user.
     final user = ref.watch(authProvider).value;
+    final company = ref.watch(companyProvider(null)).value;
     
     return Drawer(
       child: SafeArea(
@@ -80,24 +83,8 @@ class DrawerMenu extends ConsumerWidget {
                       },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.business),
-                      title: const Text('My Company'),
-                      onTap: () {
-                         Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/company/');
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.event),
-                      title: const Text('Company Events'),
-                      onTap: () {
-                         Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/company_events/');
-                      },
-                    ),
-                    ListTile(
                       leading: const Icon(Icons.calendar_month),
-                      title: const Text('Calendar'),
+                      title: const Text('My Calendar'),
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
                          Navigator.pushNamed(context, '/calendar/');
@@ -109,6 +96,24 @@ class DrawerMenu extends ConsumerWidget {
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
                          Navigator.pushNamed(context, '/search_events/');
+                      },
+                    ),
+                  ],
+                  if (company != null) ...[
+                    ListTile(
+                      leading: const Icon(Icons.business),
+                      title: const Text('My Company'),
+                      onTap: () {
+                         Navigator.pop(context); // Close the drawer first
+                         Navigator.pushNamed(context, '/company/');
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.event),
+                      title: const Text('My Company Events'),
+                      onTap: () {
+                         Navigator.pop(context); // Close the drawer first
+                         Navigator.pushNamed(context, '/company_events/');
                       },
                     ),
                     ListTile(

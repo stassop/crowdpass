@@ -1,13 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum EventRole {
-  admins,
-  staff,
-  security,
-  vendors,
-  volunteers,
-}
+import 'package:crowdpass/providers/auth_provider.dart';
+
+import 'package:crowdpass/models/event.dart' show EventRole;
 
 class EventRolesState {
   final Map<EventRole, List<String>> roles;
