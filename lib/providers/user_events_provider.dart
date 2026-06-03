@@ -5,24 +5,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/event.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
+import 'package:crowdpass/providers/firestore_provider.dart';
 
-/// Filters for user events
+/// Filters for user events (supports date range and single role filtering)
 class UserEventsFilters {
   final DateTimeRange? dates;
-  final Set<EventRole> roles; // Empty set means all roles
+  final EventRole? role; // Single role filter, null means all roles
 
   const UserEventsFilters({
     this.dates,
-    this.roles = const {},
+    this.role,
   });
 
   UserEventsFilters copyWith({
     DateTimeRange? dates,
-    Set<EventRole>? roles,
+    EventRole? role,
   }) {
     return UserEventsFilters(
       dates: dates ?? this.dates,
-      roles: roles ?? this.roles,
+      role: role ?? this.role,
     );
   }
 
@@ -31,23 +32,20 @@ class UserEventsFilters {
     return identical(this, other) ||
         (other is UserEventsFilters &&
             other.dates == dates &&
-            setEquals(other.roles, roles));
+            other.role == role);
   }
 
   @override
-  int get hashCode => Object.hash(
-    dates,
-    Object.hashAll(roles.toList()..sort((a, b) => a.index.compareTo(b.index))),
-  );
+  int get hashCode => Object.hash(dates, role);
 }
 
-/// State for user events
+/// State for user events with pagination and error handling
 class UserEventsState {
   final List<Event> events;
-  final Map<String, EventRole> eventToRole;
+  final Map<String, EventRole> eventToRole; // Map eventId → user's role in that event
   final UserEventsFilters filters;
   final bool isLoading;
-  final bool hasMore;
+  final bool hasMore; // Indicates if more events can be loaded
   final Object? error;
 
   const UserEventsState({
@@ -78,7 +76,7 @@ class UserEventsState {
   }
 }
 
-/// Notifier for managing user's events
+/// Notifier for managing user's events (where they have any role: owner, admin, staff, guest, etc.)
 class UserEventsNotifier extends Notifier<UserEventsState> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -86,44 +84,37 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
 
   @override
   UserEventsState build() {
+    // Auto-load events on initialization with default date range (now + 1 month)
     Future.microtask(() {
       final now = DateTime.now();
       final oneMonthLater = now.add(const Duration(days: 30));
       final defaultRange = DateTimeRange(start: now, end: oneMonthLater);
-      setFilters(UserEventsFilters(
-        dates: defaultRange,
-        roles: Set.from(EventRole.values),
-      ));
+      setFilters(UserEventsFilters(dates: defaultRange));
     });
     return const UserEventsState();
   }
 
+  /// Update filters and refresh events
   void setFilters(UserEventsFilters newFilters) {
     if (state.filters == newFilters) return;
     state = state.copyWith(filters: newFilters);
     Future.microtask(refresh);
   }
 
-  void toggleRoleFilter(EventRole role) {
-    final Set<EventRole> nextRoles = Set.from(state.filters.roles);
-    if (nextRoles.contains(role)) {
-      nextRoles.remove(role);
-    } else {
-      nextRoles.add(role);
-    }
-    setFilters(state.filters.copyWith(roles: nextRoles));
+  /// Set role filter (null to clear)
+  void setRoleFilter(EventRole? role) {
+    setFilters(state.filters.copyWith(role: role));
   }
 
+  /// Clear all filters and refresh
   void clearFilters() {
     final now = DateTime.now();
     final oneMonthLater = now.add(const Duration(days: 30));
     final defaultRange = DateTimeRange(start: now, end: oneMonthLater);
-    setFilters(UserEventsFilters(
-      dates: defaultRange,
-      roles: Set.from(EventRole.values),
-    ));
+    setFilters(UserEventsFilters(dates: defaultRange));
   }
 
+  /// Refresh: Clear all events and reload from the beginning
   Future<void> refresh() async {
     state = state.copyWith(
       events: const [],
@@ -132,19 +123,24 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
       hasMore: true,
       error: null,
     );
+
     await _loadMoreInternal(replace: true);
     state = state.copyWith(isLoading: false);
   }
 
+  /// Load more: Append next page of events (pagination)
   Future<void> loadMore() async {
     if (state.isLoading || !state.hasMore) return;
+
     state = state.copyWith(isLoading: true, error: null);
     await _loadMoreInternal(replace: false);
     state = state.copyWith(isLoading: false);
   }
 
+  /// Internal method: Handles pagination logic (replace=true for refresh, false for loadMore)
   Future<void> _loadMoreInternal({required bool replace}) async {
     try {
+      // Step 1: Get current authenticated user
       final user = await ref.read(authProvider.future);
       if (user == null) {
         state = state.copyWith(
@@ -156,147 +152,156 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
         return;
       }
 
+      // Step 2: Build base query for events
       final filters = state.filters;
+      Query<Map<String, dynamic>> query = _firestore.collection('events');
 
-      // Step 1: Get all event IDs and roles for this user
-      final userEventRoles = await _getUserEventRoles(user.uid);
-      
-      debugPrint('Found ${userEventRoles.length} events for user ${user.uid}');
-      debugPrint('Event roles: $userEventRoles');
-      
-      if (userEventRoles.isEmpty) {
-        state = state.copyWith(
-          events: const [],
-          eventToRole: const {},
-          hasMore: false,
-        );
-        return;
-      }
-
-      final eventIds = userEventRoles.keys.toList();
-
-      // Step 2: Fetch ALL event documents in chunks
-      final allEvents = <Event>[];
-      
-      for (int i = 0; i < eventIds.length; i += 10) {
-        final end = (i + 10 < eventIds.length) ? i + 10 : eventIds.length;
-        final chunk = eventIds.sublist(i, end);
-        
-        debugPrint('Fetching chunk: $chunk');
-        
-        final snapshot = await _firestore
-            .collection('events')
-            .where(FieldPath.documentId, whereIn: chunk)
-            .get();
-
-        debugPrint('Got ${snapshot.docs.length} documents');
-
-        for (final doc in snapshot.docs) {
-          try {
-            final data = Map<String, dynamic>.from(doc.data());
-            data['id'] = doc.id;
-            allEvents.add(Event.fromJson(data));
-          } catch (e) {
-            debugPrint('Error parsing event ${doc.id}: $e');
-          }
+      // If role is filtered, query the specific role subcollection
+      if (filters.role != null) {
+        query = _firestore
+            .collectionGroup(filters.role!.collectionName)
+            .where('userId', isEqualTo: user.uid);
+      } else {
+        // Query all events where user has any role
+        // We'll need to fetch from all role subcollections and deduplicate
+        final allEventIds = await _getUserEventIds(user.uid);
+        if (allEventIds.isEmpty) {
+          state = state.copyWith(
+            events: const [],
+            eventToRole: const {},
+            hasMore: false,
+          );
+          return;
         }
-      }
-
-      debugPrint('Total events fetched: ${allEvents.length}');
-
-      if (allEvents.isEmpty) {
+        
+        // For "all roles" case, we need to fetch the role mapping and then query events
+        final userEventRoles = await _getUserEventRoles(user.uid);
+        query = _firestore
+            .collection('events')
+            .where(FieldPath.documentId, whereIn: allEventIds.toList());
+        
+        // Store roles for later use
         state = state.copyWith(
-          events: const [],
-          eventToRole: const {},
-          hasMore: false,
+          eventToRole: userEventRoles,
         );
-        return;
       }
 
-      // Step 3: Filter by date range in-memory
-      List<Event> filteredEvents = allEvents;
+      // Apply date range filter if specified
       if (filters.dates != null) {
-        debugPrint('Filtering by dates: ${filters.dates!.start} to ${filters.dates!.end}');
-        filteredEvents = allEvents
-            .where((event) {
-              debugPrint('Event ${event.id} dates: ${event.dates.start} to ${event.dates.end}');
-              return event.dates.end.isAfter(filters.dates!.start) &&
-                  event.dates.start.isBefore(filters.dates!.end);
-            })
-            .toList();
-        debugPrint('After date filter: ${filteredEvents.length} events');
+        query = query
+            .where(
+              'dates.end',
+              isGreaterThanOrEqualTo: filters.dates!.start.toIso8601String(),
+            )
+            .where(
+              'dates.start',
+              isLessThanOrEqualTo: filters.dates!.end.toIso8601String(),
+            );
       }
 
-      // Step 4: Filter by roles in-memory
-      if (filters.roles.isNotEmpty && filters.roles.length < EventRole.values.length) {
-        debugPrint('Filtering by roles: ${filters.roles}');
-        filteredEvents = filteredEvents
-            .where((event) {
-              final eventRole = userEventRoles[event.id];
-              debugPrint('Event ${event.id} has role $eventRole, selected roles: ${filters.roles}');
-              return filters.roles.contains(eventRole);
-            })
-            .toList();
-        debugPrint('After role filter: ${filteredEvents.length} events');
-      }
+      // Sort by start date
+      query = query.orderBy('dates.start', descending: false);
 
-      // Step 5: Sort by date
-      filteredEvents.sort((a, b) => a.dates.start.compareTo(b.dates.start));
-
-      // Step 6: Apply pagination
-      List<Event> paginatedEvents = filteredEvents;
+      // Apply pagination cursor
       if (!replace && state.events.isNotEmpty) {
         final lastEvent = state.events.last;
-        paginatedEvents = filteredEvents
-            .where((e) => e.dates.start.isAfter(lastEvent.dates.start))
-            .take(pageSize)
-            .toList();
-      } else {
-        paginatedEvents = filteredEvents.take(pageSize).toList();
+        query = query.startAfter([lastEvent.dates.start.toIso8601String()]);
       }
 
+      // Limit to page size
+      query = query.limit(pageSize);
+
+      final snapshot = await query.get();
+      final docs = snapshot.docs;
+
+      final fetchedEvents = docs.map((doc) {
+        final data = Map<String, dynamic>.from(doc.data());
+        data['id'] = doc.id;
+        return Event.fromJson(data);
+      }).toList();
+
+      // Get roles if not already fetched
+      Map<String, EventRole> eventRoles = state.eventToRole;
+      if (filters.role == null && state.eventToRole.isEmpty) {
+        eventRoles = await _getUserEventRoles(user.uid);
+      } else if (filters.role != null) {
+        // For single role case, all events have the same role
+        eventRoles = {
+          for (final event in fetchedEvents)
+            event.id: filters.role!
+        };
+      }
+
+      // Update state
       final nextEvents = replace
-          ? paginatedEvents
-          : [...state.events, ...paginatedEvents];
+          ? fetchedEvents
+          : [...state.events, ...fetchedEvents];
 
-      final nextRoles = <String, EventRole>{};
-      for (final event in nextEvents) {
-        final role = userEventRoles[event.id];
-        if (role != null) {
-          nextRoles[event.id] = role;
-        }
-      }
+      final nextRoles = replace
+          ? eventRoles
+          : {...state.eventToRole, ...eventRoles};
 
       state = state.copyWith(
         events: nextEvents,
         eventToRole: nextRoles,
-        hasMore: paginatedEvents.length == pageSize,
+        hasMore: docs.length == pageSize,
       );
     } catch (error, stackTrace) {
-      debugPrint('UserEventsNotifier error: $error');
-      debugPrintStack(stackTrace: stackTrace);
+      debugPrint('UserEventsNotifier error: $error\n$stackTrace');
       state = state.copyWith(error: error, hasMore: false);
     }
   }
 
-  Future<Map<String, EventRole>> _getUserEventRoles(String userId) async {
-    final eventRoles = <String, EventRole>{};
+  /// Fetch all event IDs where user has any role
+  Future<Set<String>> _getUserEventIds(String userId) async {
+    final eventIds = <String>{};
 
     for (final role in EventRole.values) {
-      debugPrint('Querying ${role.collectionName} for userId $userId');
-      
       final snapshot = await _firestore
           .collectionGroup(role.collectionName)
           .where('userId', isEqualTo: userId)
           .get();
 
-      debugPrint('Found ${snapshot.docs.length} documents');
+      for (final doc in snapshot.docs) {
+        final eventRef = doc.reference.parent.parent;
+        if (eventRef != null) {
+          eventIds.add(eventRef.id);
+        }
+      }
+    }
+
+    return eventIds;
+  }
+
+  /// Fetch all event IDs mapped to their roles for the user
+  /// Returns: Map<eventId, EventRole>
+  ///
+  /// How it works:
+  /// 1. Iterate through all EventRole values (owner, admin, staff, guest, etc.)
+  /// 2. Use collectionGroup() to query all subcollections named by role (e.g., "owners", "admins")
+  ///    across ALL events simultaneously
+  /// 3. Filter documents to only those matching the current userId
+  /// 4. Navigate up: doc.reference.parent.parent gives the event document reference
+  /// 5. Extract event IDs and map to their corresponding role
+  ///
+  /// Expected Firestore structure:
+  /// events/{eventId}/owners/{docId} → { userId: "user123" }
+  /// events/{eventId}/admins/{docId} → { userId: "user123" }
+  /// events/{eventId}/guests/{docId} → { userId: "user123" }
+  /// etc.
+  Future<Map<String, EventRole>> _getUserEventRoles(String userId) async {
+    final eventRoles = <String, EventRole>{};
+
+    for (final role in EventRole.values) {
+      final snapshot = await _firestore
+          .collectionGroup(role.collectionName)
+          .where('userId', isEqualTo: userId)
+          .get();
 
       for (final doc in snapshot.docs) {
         final eventRef = doc.reference.parent.parent;
         if (eventRef != null) {
           eventRoles[eventRef.id] = role;
-          debugPrint('Added event ${eventRef.id} with role $role');
         }
       }
     }
@@ -305,6 +310,7 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
   }
 }
 
+/// Provider for user events notifier
 final userEventsProvider =
     NotifierProvider<UserEventsNotifier, UserEventsState>(
   UserEventsNotifier.new,
