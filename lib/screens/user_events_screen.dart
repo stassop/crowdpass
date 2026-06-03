@@ -2,27 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/event.dart';
-
-import 'package:crowdpass/providers/company_provider.dart';
-import 'package:crowdpass/providers/company_events_provider.dart';
-
+import 'package:crowdpass/providers/auth_provider.dart';
+import 'package:crowdpass/providers/user_events_provider.dart';
 import 'package:crowdpass/widgets/refreshable_list.dart';
 import 'package:crowdpass/widgets/error_dialog.dart';
-
-// Assumes this exists in your project as requested.
 import 'package:crowdpass/widgets/editable_date_range_field.dart';
-
 import 'package:crowdpass/services/date_time_service.dart';
 
-class CompanyEventsScreen extends ConsumerStatefulWidget {
-  const CompanyEventsScreen({super.key});
+class UserEventsScreen extends ConsumerStatefulWidget {
+  const UserEventsScreen({super.key});
 
   @override
-  ConsumerState<CompanyEventsScreen> createState() =>
-      _CompanyEventsScreenState();
+  ConsumerState<UserEventsScreen> createState() => _UserEventsScreenState();
 }
 
-class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
+class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _openFilterDrawer() {
@@ -31,9 +25,9 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final companyAsync = ref.watch(companyProvider(null));
+    final userAsync = ref.watch(authProvider);
 
-    return companyAsync.when(
+    return userAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(
@@ -43,26 +37,24 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
         ),
         body: Center(child: Text('Error: $e')),
       ),
-      data: (company) {
-        if (company == null) {
+      data: (user) {
+        if (user == null) {
           return Scaffold(
             appBar: AppBar(
               leading: BackButton(onPressed: () => Navigator.maybePop(context)),
-              title: const Text('Company Not Found'),
+              title: const Text('User Not Found'),
             ),
             body: const Center(
-              child: Text('The specified company could not be found.'),
+              child: Text('No user is currently logged in.'),
             ),
           );
         }
 
-        final state = ref.watch(companyEventsProvider(company.id));
-        final notifier = ref.read(companyEventsProvider(company.id).notifier);
+        final state = ref.watch(userEventsProvider);
+        final notifier = ref.read(userEventsProvider.notifier);
 
-        final selected = state.filters.status;
         final range = state.filters.dates;
-        final bool anyFilterSelected =
-            selected.isNotEmpty || range != null;
+        final bool anyFilterSelected = range != null;
 
         final theme = Theme.of(context);
 
@@ -71,7 +63,7 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             ErrorDialog.show(
               context,
-              title: 'Error loading filters',
+              title: 'Error loading events',
               message: state.error.toString(),
             );
           });
@@ -80,7 +72,7 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
         return Scaffold(
           key: _scaffoldKey,
           appBar: AppBar(
-            title: Text('${company.name} Events'),
+            title: const Text('My Events'),
             actions: [
               IconButton(
                 icon: const Icon(Icons.filter_list),
@@ -101,37 +93,25 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
                   Wrap(
                     spacing: 8,
                     children: [
-                      FilterChip(
-                        label: const Text('Past'),
-                        selected: selected.contains(EventStatusFilter.past),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.past),
-                      ),
-                      FilterChip(
-                        label: const Text('Current'),
-                        selected: selected.contains(EventStatusFilter.current),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.current),
-                      ),
-                      FilterChip(
-                        label: const Text('Upcoming'),
-                        selected: selected.contains(EventStatusFilter.upcoming),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.upcoming),
-                      ),
-                      FilterChip(
-                        label: const Text('Canceled'),
-                        selected: selected.contains(EventStatusFilter.canceled),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.canceled),
-                      ),
+                      for (final role in EventRole.values)
+                        FilterChip(
+                          label: Text(role.label),
+                          selected: state.eventToRole.containsValue(role),
+                          onSelected: (_) {
+                            // Note: Role-based filtering could be added here if needed
+                            // Currently just showing which roles user has
+                          },
+                        ),
                     ],
                   ),
+
+                  const SizedBox(height: 16),
 
                   EditableDateRangeField(
                     isEditable: true,
                     initialValue: range,
-                    onChanged: (value) => notifier.setFilters(state.filters.copyWith(dates: value)),
+                    onChanged: (value) =>
+                        notifier.setFilters(state.filters.copyWith(dates: value)),
                   ),
 
                   const SizedBox(height: 16),
@@ -160,13 +140,22 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
             isLoading: state.isLoading,
             onRefresh: notifier.refresh,
             onLoadMore: notifier.loadMore,
-            tileBuilder: (context, event, index) => ListTile(
-              title: Text(event.title),
-              subtitle: Text(event.description),
-              trailing: Text(DateTimeService.formatDateTimeRange(event.dates)),
-              onTap: () =>
-                  Navigator.pushNamed(context, '/event/', arguments: event.id),
-            ),
+            tileBuilder: (context, event, index) {
+              final userRole = state.eventToRole[event.id];
+
+              return ListTile(
+                title: Text(event.title),
+                subtitle: Text(event.description),
+                trailing: userRole != null
+                    ? Chip(
+                        label: Text(userRole.label),
+                        visualDensity: VisualDensity.compact,
+                      )
+                    : null,
+                onTap: () =>
+                    Navigator.pushNamed(context, '/event/', arguments: event.id),
+              );
+            },
           ),
         );
       },

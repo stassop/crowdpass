@@ -20,7 +20,7 @@ import 'package:crowdpass/screens/terms_screen.dart';
 import 'package:crowdpass/screens/company_screen.dart';
 import 'package:crowdpass/screens/user_profile_screen.dart';
 import 'package:crowdpass/screens/company_events_screen.dart';
-import 'package:crowdpass/screens/calendar_screen.dart';
+import 'package:crowdpass/screens/user_events_screen.dart';
 import 'package:crowdpass/screens/search_events_screen.dart';
 
 void main() async {
@@ -79,10 +79,10 @@ class App extends ConsumerWidget {
         '/user/': (context) => const UserProfileScreen(),
         '/event/': (context) => const EventScreen(),
         '/company_events/': (context) => const CompanyEventsScreen(),
+        '/user_events/': (context) => const UserEventsScreen(),
         '/search_events/': (context) => const SearchEventsScreen(),
         '/terms/': (context) => TermsScreen(),
         '/privacy/': (context) => PrivacyScreen(),
-        '/calendar/': (context) => const CalendarScreen(),
       },
     );
   }

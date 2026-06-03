@@ -84,10 +84,10 @@ class DrawerMenu extends ConsumerWidget {
                     ),
                     ListTile(
                       leading: const Icon(Icons.calendar_month),
-                      title: const Text('My Calendar'),
+                      title: const Text('My Events'),
                       onTap: () {
                          Navigator.pop(context); // Close the drawer first
-                         Navigator.pushNamed(context, '/calendar/');
+                         Navigator.pushNamed(context, '/user_events/');
                       },
                     ),
                     ListTile(
