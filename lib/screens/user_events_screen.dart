@@ -53,8 +53,10 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
         final state = ref.watch(userEventsProvider);
         final notifier = ref.read(userEventsProvider.notifier);
 
+        final selectedRoles = state.filters.roles;
         final range = state.filters.dates;
-        final bool anyFilterSelected = range != null;
+        final bool anyFilterSelected =
+            selectedRoles.isNotEmpty || range != null;
 
         final theme = Theme.of(context);
 
@@ -96,11 +98,8 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
                       for (final role in EventRole.values)
                         FilterChip(
                           label: Text(role.label),
-                          selected: state.eventToRole.containsValue(role),
-                          onSelected: (_) {
-                            // Note: Role-based filtering could be added here if needed
-                            // Currently just showing which roles user has
-                          },
+                          selected: selectedRoles.contains(role),
+                          onSelected: (_) => notifier.toggleRoleFilter(role),
                         ),
                     ],
                   ),
