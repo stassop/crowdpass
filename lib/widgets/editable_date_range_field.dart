@@ -14,10 +14,9 @@ class EditableDateRangeField extends StatefulWidget {
     this.title,
     this.validator,
     this.decoration,
-    DateTime? firstDate,
-    DateTime? lastDate,
-  })  : firstDate = firstDate ?? DateTime.now(),
-        lastDate = lastDate ?? DateTime.now().add(const Duration(days: 365));
+    this.firstDate,
+    this.lastDate,
+  });
 
   final DateTimeRange? initialValue;
   final bool isEditable;
@@ -27,8 +26,8 @@ class EditableDateRangeField extends StatefulWidget {
   final TextStyle? textStyle;
   final String? Function(DateTimeRange?)? validator;
   final Function(DateTimeRange)? onChanged;
-  final DateTime firstDate;
-  final DateTime lastDate;
+  final DateTime? firstDate;
+  final DateTime? lastDate;
 
   @override
   State<EditableDateRangeField> createState() => _DateRangeFieldState();
@@ -80,8 +79,8 @@ class _DateRangeFieldState extends State<EditableDateRangeField> {
       context: context,
       initialDateRange: _dateRange,
       initialEntryMode: DatePickerEntryMode.calendar,
-      firstDate: widget.firstDate,
-      lastDate: widget.lastDate,
+      firstDate: widget.firstDate ?? DateTime.now(),
+      lastDate: widget.lastDate ?? DateTime.now().add(const Duration(days: 365 * 5)),
       helpText: widget.title,
       builder: (BuildContext context, Widget? child) {
         final animation = CurvedAnimation(

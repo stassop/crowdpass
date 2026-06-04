@@ -44,7 +44,7 @@ class UserEventsState {
   final List<Event> events;
   final Map<String, EventRole> eventToRole; // Map eventId → user's role in that event
   final UserEventsFilters filters;
-  final DateTime? earliestEventDate; // Start date of earliest event user participated in
+  final DateTime? earliestEventDate; // Earliest event user ever participated in (across all time)
   final bool isLoading;
   final bool hasMore; // Indicates if more events can be loaded
   final Object? error;
@@ -188,7 +188,13 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
       // Step 3: Get role mapping for all user's events (only once)
       final userEventRoles = await _getUserEventRoles(user.uid);
 
-      // Step 4: Fetch events, filtered by date range
+      // Step 4: Compute earliest event date on first load (only once, without filtering)
+      DateTime? earliest = state.earliestEventDate;
+      if (replace && earliest == null) {
+        earliest = await _getEarliestEventDate(userEventIds);
+      }
+
+      // Step 5: Fetch events, filtered by date range
       final filters = state.filters;
       Query<Map<String, dynamic>> query = _firestore
           .collection('events')
@@ -222,7 +228,7 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
       final snapshot = await query.get();
       final docs = snapshot.docs;
 
-      // Step 5: Parse events and filter by selected roles
+      // Step 6: Parse events and filter by selected roles
       final filteredEvents = <Event>[];
       final filteredEventRoles = <String, EventRole>{};
 
@@ -243,17 +249,6 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
             filteredEventRoles[event.id] = userRole;
           }
         }
-      }
-
-      // Step 6: Compute earliest event date (only on first load)
-      DateTime? earliest = state.earliestEventDate;
-      if (replace && filteredEvents.isNotEmpty) {
-        earliest = filteredEvents.fold<DateTime>(
-          filteredEvents.first.dates.start,
-          (prev, event) => event.dates.start.isBefore(prev)
-              ? event.dates.start
-              : prev,
-        );
       }
 
       // Step 7: Update state
@@ -332,6 +327,32 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
     }
 
     return eventRoles;
+  }
+
+  /// Fetch the earliest event date the user has ever participated in
+  /// This queries ALL user events without date filtering
+  Future<DateTime?> _getEarliestEventDate(Set<String> userEventIds) async {
+    if (userEventIds.isEmpty) return null;
+
+    try {
+      final snapshot = await _firestore
+          .collection('events')
+          .where(FieldPath.documentId, whereIn: userEventIds.toList())
+          .orderBy('dates.start', descending: false)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+
+      final data = snapshot.docs.first.data();
+      final startDateStr = data['dates']['start'] as String?;
+      if (startDateStr == null) return null;
+
+      return DateTime.tryParse(startDateStr);
+    } catch (error, stackTrace) {
+      debugPrint('Error fetching earliest event date: $error\n$stackTrace');
+      return null;
+    }
   }
 }
 

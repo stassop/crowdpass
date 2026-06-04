@@ -110,7 +110,7 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
                   EditableDateRangeField(
                     isEditable: true,
                     initialValue: dates,
-                    firstDate: earliestEventDate ?? DateTime.now(),
+                    firstDate: earliestEventDate,
                     onChanged: (value) =>
                         notifier.setFilters(state.filters.copyWith(dates: value)),
                   ),
