@@ -53,10 +53,11 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
         final state = ref.watch(userEventsProvider);
         final notifier = ref.read(userEventsProvider.notifier);
 
+        final earliestEventDate = state.earliestEventDate;
         final selectedRoles = state.filters.roles;
-        final range = state.filters.dates;
+        final dates = state.filters.dates;
         final bool anyFilterSelected =
-            selectedRoles.isNotEmpty || range != null;
+            selectedRoles.isNotEmpty || dates != null;
 
         final theme = Theme.of(context);
 
@@ -108,7 +109,8 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
 
                   EditableDateRangeField(
                     isEditable: true,
-                    initialValue: range,
+                    initialValue: dates,
+                    firstDate: earliestEventDate ?? DateTime.now(),
                     onChanged: (value) =>
                         notifier.setFilters(state.filters.copyWith(dates: value)),
                   ),
