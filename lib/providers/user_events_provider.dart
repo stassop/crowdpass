@@ -161,7 +161,6 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
   /// Internal method: Handles pagination logic (replace=true for refresh, false for loadMore)
   Future<void> _loadMoreInternal({required bool replace}) async {
     try {
-      // Step 1: Get current authenticated user
       final user = await ref.read(authProvider.future);
       if (user == null) {
         state = state.copyWith(
@@ -173,7 +172,6 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
         return;
       }
 
-      // Step 2: Get all event IDs where user has any role
       final userEventIds = await _getUserEventIds(user.uid);
       if (userEventIds.isEmpty) {
         state = state.copyWith(
@@ -185,16 +183,17 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
         return;
       }
 
-      // Step 3: Get role mapping for all user's events (only once)
-      final userEventRoles = await _getUserEventRoles(user.uid);
-
-      // Step 4: Compute earliest event date on first load (only once, without filtering)
+      // Compute earliest date immediately on first load, before event fetching
       DateTime? earliest = state.earliestEventDate;
       if (replace && earliest == null) {
         earliest = await _getEarliestEventDate(userEventIds);
+        state = state.copyWith(earliestEventDate: earliest); // Update state immediately
       }
 
-      // Step 5: Fetch events, filtered by date range
+      // Fetch user's roles for all their events in a single batch
+      final userEventRoles = await _getUserEventRoles(user.uid);
+
+      // Fetch events, filtered by date range
       final filters = state.filters;
       Query<Map<String, dynamic>> query = _firestore
           .collection('events')
@@ -228,7 +227,7 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
       final snapshot = await query.get();
       final docs = snapshot.docs;
 
-      // Step 6: Parse events and filter by selected roles
+      // Parse events and filter by selected roles
       final filteredEvents = <Event>[];
       final filteredEventRoles = <String, EventRole>{};
 
@@ -252,18 +251,17 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
       }
 
       // Step 7: Update state
-      final nextEvents = replace
+      final newEvents = replace
           ? filteredEvents
           : [...state.events, ...filteredEvents];
 
-      final nextRoles = replace
+      final newRoles = replace
           ? filteredEventRoles
           : {...state.eventToRole, ...filteredEventRoles};
 
       state = state.copyWith(
-        events: nextEvents,
-        eventToRole: nextRoles,
-        earliestEventDate: earliest,
+        events: newEvents,
+        eventToRole: newRoles,
         hasMore: docs.length == pageSize,
       );
     } catch (error, stackTrace) {
