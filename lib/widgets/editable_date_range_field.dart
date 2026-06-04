@@ -133,10 +133,16 @@ class _DateRangeFieldState extends State<EditableDateRangeField> {
 
     if (oldWidget.initialValue != widget.initialValue) {
       _dateRange = widget.initialValue;
-
-      // didUpdateWidget is called during rebuild; treat as "defer if building"
-      // to avoid Form markNeedsBuild assertions.
       _syncController(deferIfBuilding: true);
+    }
+    
+    // Also rebuild if firstDate or lastDate changes (e.g., when earliestEventDate updates)
+    if (oldWidget.firstDate != widget.firstDate || 
+        oldWidget.lastDate != widget.lastDate) {
+      // Trigger a rebuild so the date picker uses the new constraints
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
