@@ -4,10 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crowdpass/models/event.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/user_events_provider.dart';
-import 'package:crowdpass/widgets/refreshable_list.dart';
+import 'package:crowdpass/widgets/refreshable_event_list.dart';
 import 'package:crowdpass/widgets/error_dialog.dart';
 import 'package:crowdpass/widgets/editable_date_range_field.dart';
-import 'package:crowdpass/services/date_time_service.dart';
 
 class UserEventsScreen extends ConsumerStatefulWidget {
   const UserEventsScreen({super.key});
@@ -135,23 +134,20 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
               ),
             ),
           ),
-          body: RefreshableList<Event>(
-            items: state.events,
+          body: RefreshableEventList(
+            events: state.events,
             hasMore: state.hasMore,
             isLoading: state.isLoading,
             onRefresh: notifier.refresh,
             onLoadMore: notifier.loadMore,
-            tileBuilder: (context, event, index) {
+            itemBuilder: (context, event, index) {
               final userRole = state.eventToRole[event.id];
 
               return ListTile(
                 title: Text(event.title),
                 subtitle: Text(event.description),
                 trailing: userRole != null
-                    ? Chip(
-                        label: Text(userRole.label),
-                        visualDensity: VisualDensity.compact,
-                      )
+                    ? Text(userRole.label)
                     : null,
                 onTap: () =>
                     Navigator.pushNamed(context, '/event/', arguments: event.id),

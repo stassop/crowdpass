@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/event.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
-import 'package:crowdpass/providers/firestore_provider.dart';
 
 /// Filters for user events (supports date range and multiple role filtering)
 class UserEventsFilters {
@@ -84,7 +83,7 @@ class UserEventsState {
 class UserEventsNotifier extends Notifier<UserEventsState> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  static const int pageSize = 30;
+  static const int pageSize = 10;
 
   @override
   UserEventsState build() {
@@ -172,13 +171,19 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
         return;
       }
 
-      final userEventIds = await _getUserEventIds(user.uid);
+      // Fetch user's roles for all their events in a single batch
+      final userEventRoles = await _getUserEventRoles(user.uid);
+
+      // Get user event IDs for quick lookup
+      final userEventIds = userEventRoles.keys.toList();
+
+      // We can't have an empty userEventIds list for Firestore queries, so handle that case
       if (userEventIds.isEmpty) {
         state = state.copyWith(
           events: const [],
           eventToRole: const {},
           hasMore: false,
-          earliestEventDate: null,
+          error: null,
         );
         return;
       }
@@ -190,29 +195,26 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
         state = state.copyWith(earliestEventDate: earliest); // Update state immediately
       }
 
-      // Fetch user's roles for all their events in a single batch
-      final userEventRoles = await _getUserEventRoles(user.uid);
+      final filters = state.filters;
 
       // Fetch events, filtered by date range
-      final filters = state.filters;
       Query<Map<String, dynamic>> query = _firestore
           .collection('events')
-          .where(FieldPath.documentId, whereIn: userEventIds.toList());
+          .where('id', whereIn: userEventIds); // <-- Changed from FieldPath.documentId
 
-      // Apply date range filter if specified
+      // This inequality filter is now completely legal
       if (filters.dates != null) {
-        query = query
-            .where(
-              'dates.end',
-              isGreaterThanOrEqualTo: filters.dates!.start.toIso8601String(),
-            )
-            .where(
-              'dates.start',
-              isLessThanOrEqualTo: filters.dates!.end.toIso8601String(),
-            );
+        query = query.where(
+          'dates.start',
+          isGreaterThanOrEqualTo: filters.dates!.start.toIso8601String(),
+        );
+        query = query.where(
+          'dates.start',
+          isLessThanOrEqualTo: filters.dates!.end.toIso8601String(),
+        );
       }
 
-      // Sort by start date
+      // This sort is now completely legal
       query = query.orderBy('dates.start', descending: false);
 
       // Apply pagination cursor
@@ -270,27 +272,6 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
     }
   }
 
-  /// Fetch all event IDs where user has any role
-  Future<Set<String>> _getUserEventIds(String userId) async {
-    final eventIds = <String>{};
-
-    for (final role in EventRole.values) {
-      final snapshot = await _firestore
-          .collectionGroup(role.collectionName)
-          .where('userId', isEqualTo: userId)
-          .get();
-
-      for (final doc in snapshot.docs) {
-        final eventRef = doc.reference.parent.parent;
-        if (eventRef != null) {
-          eventIds.add(eventRef.id);
-        }
-      }
-    }
-
-    return eventIds;
-  }
-
   /// Fetch all event IDs mapped to their roles for the user
   /// Returns: Map<eventId, EventRole>
   ///
@@ -329,13 +310,11 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
 
   /// Fetch the earliest event date the user has ever participated in
   /// This queries ALL user events without date filtering
-  Future<DateTime?> _getEarliestEventDate(Set<String> userEventIds) async {
-    if (userEventIds.isEmpty) return null;
-
+  Future<DateTime?> _getEarliestEventDate(List<String> userEventIds) async {
     try {
       final snapshot = await _firestore
           .collection('events')
-          .where(FieldPath.documentId, whereIn: userEventIds.toList())
+          .where(FieldPath.documentId, whereIn: userEventIds)
           .orderBy('dates.start', descending: false)
           .limit(1)
           .get();
