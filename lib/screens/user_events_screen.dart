@@ -118,14 +118,10 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
 
                   if (anyFilterSelected)
                     ElevatedButton.icon(
-                      icon: const Icon(Icons.clear),
-                      label: const Text('Clear Filters'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.error,
-                        foregroundColor: theme.colorScheme.onError,
-                      ),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Reset Filters'),
                       onPressed: () {
-                        notifier.clearFilters();
+                        notifier.resetFilters();
                       },
                     ),
 

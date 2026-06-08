@@ -44,6 +44,7 @@ class UserEventsState {
   final Map<String, EventRole> eventToRole; // Map eventId → user's role in that event
   final UserEventsFilters filters;
   final DateTime? earliestEventDate; // Earliest event user ever participated in (across all time)
+  final DateTime? latestEventDate; // Latest event user ever participated in (across all time)
   final bool isLoading;
   final bool hasMore; // Indicates if more events can be loaded
   final Object? error;
@@ -53,6 +54,7 @@ class UserEventsState {
     this.eventToRole = const {},
     this.filters = const UserEventsFilters(),
     this.earliestEventDate,
+    this.latestEventDate,
     this.isLoading = false,
     this.hasMore = true,
     this.error,
@@ -63,6 +65,7 @@ class UserEventsState {
     Map<String, EventRole>? eventToRole,
     UserEventsFilters? filters,
     DateTime? earliestEventDate,
+    DateTime? latestEventDate,
     bool? isLoading,
     bool? hasMore,
     Object? error,
@@ -72,6 +75,7 @@ class UserEventsState {
       eventToRole: eventToRole ?? this.eventToRole,
       filters: filters ?? this.filters,
       earliestEventDate: earliestEventDate ?? this.earliestEventDate,
+      latestEventDate: latestEventDate ?? this.latestEventDate,
       isLoading: isLoading ?? this.isLoading,
       hasMore: hasMore ?? this.hasMore,
       error: error,
@@ -123,10 +127,12 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
   }
 
   /// Clear all filters and refresh with defaults
-  void clearFilters() {
-    final now = DateTime.now();
-    final oneMonthLater = now.add(const Duration(days: 30));
-    final defaultRange = DateTimeRange(start: now, end: oneMonthLater);
+  void resetFilters() {
+    final latest = state.latestEventDate;
+    // Start with the latest event date minus 1 month as the default end of the date range filter
+    final defaultEnd = latest ?? DateTime.now();
+    final defaultStart = defaultEnd.subtract(const Duration(days: 30));
+    final defaultRange = DateTimeRange(start: defaultStart, end: defaultEnd);
     final defaultFilters = UserEventsFilters(
       dates: defaultRange,
       roles: EventRole.values.toSet(),
@@ -190,9 +196,15 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
 
       // Compute earliest date immediately on first load, before event fetching
       DateTime? earliest = state.earliestEventDate;
+      DateTime? latest = state.latestEventDate;
       if (replace && earliest == null) {
         earliest = await _getEarliestEventDate(userEventIds);
-        state = state.copyWith(earliestEventDate: earliest); // Update state immediately
+        latest = await _getLatestEventDate(userEventIds);
+        state = state.copyWith(
+          earliestEventDate: earliest,
+          latestEventDate: latest,
+        ); // Update state immediately
+        resetFilters();
       }
 
       final filters = state.filters;
@@ -328,6 +340,28 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
       return DateTime.tryParse(startDateStr);
     } catch (error, stackTrace) {
       debugPrint('Error fetching earliest event date: $error\n$stackTrace');
+      return null;
+    }
+  }
+
+  /// Fetch the latest event date the user has ever participated in
+  /// This queries ALL user events without date filtering
+  Future<DateTime?> _getLatestEventDate(List<String> userEventIds) async {
+    try {
+      final snapshot = await _firestore          
+          .collection('events')
+          .where(FieldPath.documentId, whereIn: userEventIds)
+          .orderBy('dates.start', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+      final data = snapshot.docs.first.data();
+      final startDateStr = data['dates']['start'] as String?;
+      if (startDateStr == null) return null;
+      return DateTime.tryParse(startDateStr);
+    } catch (error, stackTrace) {
+      debugPrint('Error fetching latest event date: $error\n$stackTrace');
       return null;
     }
   }
