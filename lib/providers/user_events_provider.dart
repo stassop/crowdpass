@@ -197,7 +197,8 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
       // Compute earliest date immediately on first load, before event fetching
       DateTime? earliest = state.earliestEventDate;
       DateTime? latest = state.latestEventDate;
-      if (replace && earliest == null) {
+
+      if (replace) {
         earliest = await _getEarliestEventDate(userEventIds);
         latest = await _getLatestEventDate(userEventIds);
         state = state.copyWith(

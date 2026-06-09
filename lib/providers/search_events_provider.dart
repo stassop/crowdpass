@@ -251,7 +251,7 @@ class SearchEventsNotifier extends Notifier<SearchEventsState> {
     Future.microtask(refresh);
   }
 
-  void clearFilters() {
+  void resetFilters() {
     setFilters(const SearchEventsFilters());
   }
 }

@@ -161,19 +161,15 @@ class _SearchEventsScreenState extends ConsumerState<SearchEventsScreen> {
                 const SizedBox(height: 16),
 
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.clear),
-                  label: const Text('Clear Filters'),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Reset Filters'),
                   onPressed: searchEventsState.isLoading
                       ? null
                       : () {
-                          // The clearFilters() method in the notifier already triggers a fetch.
-                          searchEventsNotifier.clearFilters();
+                          // The resetFilters() method in the notifier already triggers a fetch.
+                          searchEventsNotifier.resetFilters();
                           Navigator.of(context).maybePop();
                         },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.error,
-                    foregroundColor: theme.colorScheme.onError,
-                  ),
                 ),
               ],
             ),

@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:crowdpass/models/event.dart';
-
 import 'package:crowdpass/providers/company_provider.dart';
 import 'package:crowdpass/providers/company_events_provider.dart';
-
-import 'package:crowdpass/widgets/refreshable_list.dart';
+import 'package:crowdpass/widgets/refreshable_event_list.dart';
 import 'package:crowdpass/widgets/error_dialog.dart';
-
-// Assumes this exists in your project as requested.
 import 'package:crowdpass/widgets/editable_date_range_field.dart';
-
-import 'package:crowdpass/services/date_time_service.dart';
 
 class CompanyEventsScreen extends ConsumerStatefulWidget {
   const CompanyEventsScreen({super.key});
@@ -59,19 +52,17 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
         final state = ref.watch(companyEventsProvider(company.id));
         final notifier = ref.read(companyEventsProvider(company.id).notifier);
 
-        final selected = state.filters.status;
-        final range = state.filters.dates;
-        final bool anyFilterSelected =
-            selected.isNotEmpty || range != null;
+        final earliestEventDate = state.earliestEventDate;
+        final dates = state.filters.dates;
+        final bool anyFilterSelected = dates != null;
 
         final theme = Theme.of(context);
 
-        // Show error dialog if error exists
         if (state.error != null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             ErrorDialog.show(
               context,
-              title: 'Error loading filters',
+              title: 'Error loading events',
               message: state.error.toString(),
             );
           });
@@ -98,54 +89,22 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
 
                   const SizedBox(height: 16),
 
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      FilterChip(
-                        label: const Text('Past'),
-                        selected: selected.contains(EventStatusFilter.past),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.past),
-                      ),
-                      FilterChip(
-                        label: const Text('Current'),
-                        selected: selected.contains(EventStatusFilter.current),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.current),
-                      ),
-                      FilterChip(
-                        label: const Text('Upcoming'),
-                        selected: selected.contains(EventStatusFilter.upcoming),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.upcoming),
-                      ),
-                      FilterChip(
-                        label: const Text('Canceled'),
-                        selected: selected.contains(EventStatusFilter.canceled),
-                        onSelected: (_) =>
-                            notifier.toggleStatusFilter(EventStatusFilter.canceled),
-                      ),
-                    ],
-                  ),
-
                   EditableDateRangeField(
                     isEditable: true,
-                    initialValue: range,
-                    onChanged: (value) => notifier.setFilters(state.filters.copyWith(dates: value)),
+                    initialValue: dates,
+                    firstDate: earliestEventDate,
+                    onChanged: (value) =>
+                        notifier.setFilters(state.filters.copyWith(dates: value)),
                   ),
 
                   const SizedBox(height: 16),
 
                   if (anyFilterSelected)
                     ElevatedButton.icon(
-                      icon: const Icon(Icons.clear),
-                      label: const Text('Clear Filters'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.error,
-                        foregroundColor: theme.colorScheme.onError,
-                      ),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Reset Filters'),
                       onPressed: () {
-                        notifier.clearFilters();
+                        notifier.resetFilters();
                       },
                     ),
 
@@ -154,19 +113,20 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
               ),
             ),
           ),
-          body: RefreshableList<Event>(
-            items: state.events,
+          body: RefreshableEventList(
+            events: state.events,
             hasMore: state.hasMore,
             isLoading: state.isLoading,
             onRefresh: notifier.refresh,
             onLoadMore: notifier.loadMore,
-            tileBuilder: (context, event, index) => ListTile(
-              title: Text(event.title),
-              subtitle: Text(event.description),
-              trailing: Text(DateTimeService.formatDateTimeRange(event.dates)),
-              onTap: () =>
-                  Navigator.pushNamed(context, '/event/', arguments: event.id),
-            ),
+            itemBuilder: (context, event, index) {
+              return ListTile(
+                title: Text(event.title),
+                subtitle: Text(event.description),
+                onTap: () =>
+                    Navigator.pushNamed(context, '/event/', arguments: event.id),
+              );
+            },
           ),
         );
       },
