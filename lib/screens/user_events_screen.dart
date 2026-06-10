@@ -18,6 +18,27 @@ class UserEventsScreen extends ConsumerStatefulWidget {
 class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      ref.read(userEventsProvider.notifier).refresh();
+    });
+
+    ref.listenManual<UserEventsState>(userEventsProvider, (previous, next) {
+      if (!mounted) return;
+
+      if (next.error != null && previous?.error != next.error) {
+        ErrorDialog.show(
+          context,
+          title: 'Error loading events',
+          message: next.error.toString(),
+        );
+      }
+    });
+  }
+
   void _openFilterDrawer() {
     _scaffoldKey.currentState?.openEndDrawer();
   }
@@ -60,17 +81,6 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
 
         final theme = Theme.of(context);
 
-        // Show error dialog if error exists
-        if (state.error != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ErrorDialog.show(
-              context,
-              title: 'Error loading events',
-              message: state.error.toString(),
-            );
-          });
-        }
-
         return Scaffold(
           key: _scaffoldKey,
           appBar: AppBar(
@@ -89,9 +99,7 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   Text('Filters', style: theme.textTheme.titleLarge),
-
                   const SizedBox(height: 16),
-
                   Wrap(
                     spacing: 8,
                     children: [
@@ -103,28 +111,24 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
                         ),
                     ],
                   ),
-
                   const SizedBox(height: 16),
-
                   EditableDateRangeField(
                     isEditable: true,
                     initialValue: dates,
                     firstDate: earliestEventDate,
-                    onChanged: (value) =>
-                        notifier.setFilters(state.filters.copyWith(dates: value)),
+                    onChanged: (value) {
+                      notifier.setFilters(
+                        state.filters.copyWith(dates: value),
+                      );
+                    },
                   ),
-
                   const SizedBox(height: 16),
-
                   if (anyFilterSelected)
                     ElevatedButton.icon(
                       icon: const Icon(Icons.refresh),
                       label: const Text('Reset Filters'),
-                      onPressed: () {
-                        notifier.resetFilters();
-                      },
+                      onPressed: notifier.resetFilters,
                     ),
-
                   const SizedBox(height: 16),
                 ],
               ),
@@ -142,9 +146,7 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
               return ListTile(
                 title: Text(event.title),
                 subtitle: Text(event.description),
-                trailing: userRole != null
-                    ? Text(userRole.label)
-                    : null,
+                trailing: userRole != null ? Text(userRole.label) : null,
                 onTap: () =>
                     Navigator.pushNamed(context, '/event/', arguments: event.id),
               );
