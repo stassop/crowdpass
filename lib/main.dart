@@ -22,6 +22,7 @@ import 'package:crowdpass/screens/user_profile_screen.dart';
 import 'package:crowdpass/screens/company_events_screen.dart';
 import 'package:crowdpass/screens/user_events_screen.dart';
 import 'package:crowdpass/screens/search_events_screen.dart';
+import 'package:crowdpass/screens/event_roles_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +79,7 @@ class App extends ConsumerWidget {
         '/company/': (context) => const CompanyScreen(),
         '/user/': (context) => const UserProfileScreen(),
         '/event/': (context) => const EventScreen(),
+        '/event_roles/': (context) => const EventRolesScreen(),
         '/company_events/': (context) => const CompanyEventsScreen(),
         '/user_events/': (context) => const UserEventsScreen(),
         '/search_events/': (context) => const SearchEventsScreen(),
