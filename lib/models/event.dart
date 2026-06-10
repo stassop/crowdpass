@@ -120,22 +120,24 @@ enum EventType {
 }
 
 enum EventRole {
-  owner(collectionName: 'owners', label: 'Owner'),
-  admin(collectionName: 'admins', label: 'Admin'),
-  staff(collectionName: 'staff', label: 'Staff'), // 'Staff' is typically its own plural
-  guest(collectionName: 'guests', label: 'Guest'),
-  security(collectionName: 'security', label: 'Security'), // Usually singular/uncountable
-  vendor(collectionName: 'vendors', label: 'Vendor'),
-  volunteer(collectionName: 'volunteers', label: 'Volunteer');
+  owner(label: 'Owner', collectionName: 'owners', collectionLabel: 'Owners'),
+  admin(label: 'Admin', collectionName: 'admins', collectionLabel: 'Admins'),
+  staff(label: 'Staff', collectionName: 'staff', collectionLabel: 'Staff'), // 'Staff' is typically its own plural
+  guest(label: 'Guest', collectionName: 'guests', collectionLabel: 'Guests'),
+  security(label: 'Security', collectionName: 'security', collectionLabel: 'Security'), // Usually singular/uncountable
+  vendor(label: 'Vendor', collectionName: 'vendors', collectionLabel: 'Vendors'),
+  volunteer(label: 'Volunteer', collectionName: 'volunteers', collectionLabel: 'Volunteers');
 
   // Fields must be final in an enhanced enum
-  final String collectionName;
   final String label;
+  final String collectionName;
+  final String collectionLabel;
 
   // Constant constructor
   const EventRole({
-    required this.collectionName,
     required this.label,
+    required this.collectionName,
+    required this.collectionLabel,
   });
 }
 
