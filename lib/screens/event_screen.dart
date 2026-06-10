@@ -460,13 +460,15 @@ class _EventScreenState extends ConsumerState<EventScreen> {
         final isOwner = isCreating || event.createdBy == user?.uid;
         final isLoading = ref.watch(eventNotifier).isLoading;
 
-        final eventStarted = event != null &&
+        final hasStarted = event != null &&
              event.dates.start.isBefore(DateTime.now());
+        final hasEnded = event != null &&
+            event.dates.end.isBefore(DateTime.now());
         final ticketSalesStarted = event != null &&
             event.ticketSalesDates != null &&
             event.ticketSalesDates!.start.isBefore(DateTime.now());
 
-        final canEdit = isOwner && !isCreating && !eventStarted && !ticketSalesStarted;
+        final canEdit = isOwner && !hasStarted && !hasEnded && !ticketSalesStarted;
 
         final theme = Theme.of(context);
 
@@ -479,11 +481,12 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                   imageUrl: _imageURL,
                   title: _title,
                   hintText: 'Event Title',
+                  isEditable: _isEditing,
                   leading: BackButton(
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   actions: [
-                    if (canEdit)
+                    if (canEdit && !isCreating)
                       IconButton(
                         onPressed: isLoading
                             ? null
@@ -795,7 +798,7 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                             ),
                           ),
 
-                        if (!isCreating && !eventStarted)
+                        if (!isCreating && !hasStarted)
                           Padding(
                             padding: const EdgeInsets.only(top: 16.0),
                             child: ElevatedButton.icon(
@@ -808,6 +811,20 @@ class _EventScreenState extends ConsumerState<EventScreen> {
                               onPressed: isLoading
                                   ? null
                                   : () => _cancelEvent(),
+                            ),
+                          ),
+                        if (isOwner)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.people),
+                              label: const Text('Manage Roles'),
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(
+                                  '/event_roles/',
+                                  arguments: _eventId,
+                                );
+                              },
                             ),
                           ),
                       ],
