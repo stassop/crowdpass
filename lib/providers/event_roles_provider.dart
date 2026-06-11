@@ -285,6 +285,16 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     try {
       await _assertOwner();
 
+      final event = state.event;
+      if (event == null) {
+        throw Exception('Event not found.');
+      }
+
+      // Prevent changing the event owner's role
+      if (userId == event.createdBy) {
+        throw Exception('Cannot change role of event owner.');
+      }
+
       final eventRef = _firestore.collection('events').doc(eventId);
       final batch = _firestore.batch();
 
@@ -321,6 +331,16 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
   }) async {
     try {
       await _assertOwner();
+
+      final event = state.event;
+      if (event == null) {
+        throw Exception('Event not found.');
+      }
+
+      // Prevent removing the event owner from their role
+      if (userId == event.createdBy) {
+        throw Exception('Cannot remove event owner from role.');
+      }
 
       final snapshot = await _firestore
           .collection('events')

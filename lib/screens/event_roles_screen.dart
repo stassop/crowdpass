@@ -114,6 +114,7 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
                         userId: userId,
                         role: role,
                       ),
+                      ownerId: state.event!.createdBy,
                     ),
                 ],
               )
@@ -145,6 +146,7 @@ class _RoleTab extends StatelessWidget {
     required this.onRefresh,
     required this.onLoadMore,
     required this.onRemoveUser,
+    required this.ownerId,
   });
 
   final EventRole role;
@@ -154,6 +156,7 @@ class _RoleTab extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final Future<void> Function() onLoadMore;
   final Future<void> Function(String userId) onRemoveUser;
+  final String ownerId;
 
   @override
   Widget build(BuildContext context) {
@@ -169,39 +172,10 @@ class _RoleTab extends StatelessWidget {
           child: Text('No users found for the ${role.label.toLowerCase()} role.'),
         ),
       ),
-      tileBuilder: (context, user, index) => Dismissible(
-        key: ValueKey('${role.name}-${user.uid}'),
-        direction: DismissDirection.endToStart,
-        confirmDismiss: (_) => showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Remove User Role'),
-            content: Text(
-              'Remove ${user.displayName} from the ${role.label} role?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.red,
-                ),
-                child: const Text('Remove'),
-              ),
-            ],
-          ),
-        ),
-        onDismissed: (_) => onRemoveUser(user.uid),
-        background: Container(
-          color: Colors.red,
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: const Icon(Icons.delete, color: Colors.white),
-        ),
-        child: ListTile(
+      tileBuilder: (context, user, index) {
+        final isOwnerUser = user.uid == ownerId;
+
+        final tile = ListTile(
           leading: CircleAvatar(
             foregroundImage: user.photoURL != null && user.photoURL!.isNotEmpty
                 ? NetworkImage(user.photoURL!)
@@ -216,8 +190,47 @@ class _RoleTab extends StatelessWidget {
             '/user/',
             arguments: user.uid,
           ),
-        ),
-      ),
+        );
+
+        if (isOwnerUser) {
+          return tile;
+        }
+
+        return Dismissible(
+          key: ValueKey('${role.name}-${user.uid}'),
+          direction: DismissDirection.endToStart,
+          confirmDismiss: (_) => showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Remove User Role'),
+              content: Text(
+                'Remove ${user.displayName} from the ${role.label} role?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                  ),
+                  child: const Text('Remove'),
+                ),
+              ],
+            ),
+          ),
+          onDismissed: (_) => onRemoveUser(user.uid),
+          background: Container(
+            color: Colors.red,
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: const Icon(Icons.delete, color: Colors.white),
+          ),
+          child: tile,
+        );
+      },
     );
   }
 }
