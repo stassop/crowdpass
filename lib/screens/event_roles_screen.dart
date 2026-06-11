@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/event.dart';
 import 'package:crowdpass/models/user_profile.dart';
+
 import 'package:crowdpass/providers/event_roles_provider.dart';
+
 import 'package:crowdpass/widgets/error_dialog.dart';
 import 'package:crowdpass/widgets/refreshable_list.dart';
+import 'package:crowdpass/widgets/animated_dialog.dart';
 
 class EventRolesScreen extends ConsumerStatefulWidget {
   const EventRolesScreen({super.key});
@@ -30,6 +33,64 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
   void dispose() {
     _tabController?.dispose();
     super.dispose();
+  }
+
+  void _showRoleDialog(user) async {
+    final state = ref.read(eventRolesProvider(_eventId!));
+    final notifier = ref.read(eventRolesProvider(_eventId!).notifier);
+    final isOwner = state.isOwner;
+    final role = state.currentUserRole;
+    
+    await AnimatedDialog.show(
+      context: context,
+      content: StatefulBuilder(
+        builder: (context, setState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 36,
+                foregroundImage: user.photoURL != null && user.photoURL!.isNotEmpty
+                    ? NetworkImage(user.photoURL!)
+                    : null,
+                child: user.photoURL == null || user.photoURL!.isEmpty
+                    ? const Icon(Icons.person, size: 36)
+                    : null,
+              ),
+              const SizedBox(height: 12),
+              Text(user.displayName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 16),
+              DropdownButton<EventRole>(
+                value: role,
+                items: [
+                  for (final r in EventRole.values)
+                    DropdownMenuItem(
+                      value: r,
+                      child: Text(r.label),
+                    ),
+                ],
+                onChanged: isOwner
+                    ? null
+                    : (newRole) async {
+                        if (newRole == null || newRole == role) return;
+                        // show a small loading state
+                        setState(() => role = newRole);
+                        await notifier.addUserToRole(userId: user.uid, role: newRole);
+                        if (Navigator.canPop(context)) Navigator.of(context).pop();
+                      },
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () {
+                  if (Navigator.canPop(context)) Navigator.of(context).pop();
+                },
+                child: const Text('Close'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -115,6 +176,7 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
                         role: role,
                       ),
                       ownerId: state.event!.createdBy,
+                      onUserTap: (user) => _showRoleDialog(user),
                     ),
                 ],
               )
@@ -147,6 +209,7 @@ class _RoleTab extends StatelessWidget {
     required this.onLoadMore,
     required this.onRemoveUser,
     required this.ownerId,
+    required this.onUserTap,
   });
 
   final EventRole role;
@@ -157,6 +220,7 @@ class _RoleTab extends StatelessWidget {
   final Future<void> Function() onLoadMore;
   final Future<void> Function(String userId) onRemoveUser;
   final String ownerId;
+  final void Function(UserProfile user) onUserTap;
 
   @override
   Widget build(BuildContext context) {
@@ -185,11 +249,7 @@ class _RoleTab extends StatelessWidget {
                 : null,
           ),
           title: Text(user.displayName),
-          onTap: () => Navigator.pushNamed(
-            context,
-            '/user/',
-            arguments: user.uid,
-          ),
+          onTap: () => onUserTap(user),
         );
 
         if (isOwnerUser) {
