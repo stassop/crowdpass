@@ -9,6 +9,7 @@ import 'package:crowdpass/providers/event_roles_provider.dart';
 import 'package:crowdpass/widgets/error_dialog.dart';
 import 'package:crowdpass/widgets/refreshable_list.dart';
 import 'package:crowdpass/widgets/animated_dialog.dart';
+import 'package:crowdpass/widgets/user_avatar.dart';
 
 class EventRolesScreen extends ConsumerStatefulWidget {
   const EventRolesScreen({super.key});
@@ -35,12 +36,12 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
     super.dispose();
   }
 
-  void _showRoleDialog(user) async {
+  void _showRoleDialog(UserProfile user) async {
     final state = ref.read(eventRolesProvider(_eventId!));
     final notifier = ref.read(eventRolesProvider(_eventId!).notifier);
     final isOwner = state.isOwner;
-    final role = state.currentUserRole;
-    
+    EventRole selectedRole = state.roleForUser(user.uid) ?? EventRole.values.first;
+
     await AnimatedDialog.show(
       context: context,
       content: StatefulBuilder(
@@ -48,35 +49,29 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircleAvatar(
-                radius: 36,
-                foregroundImage: user.photoURL != null && user.photoURL!.isNotEmpty
-                    ? NetworkImage(user.photoURL!)
-                    : null,
-                child: user.photoURL == null || user.photoURL!.isEmpty
-                    ? const Icon(Icons.person, size: 36)
-                    : null,
+              UserAvatar.large(
+                photoURL: user.photoURL,
+                displayName: user.displayName,
               ),
-              const SizedBox(height: 12),
-              Text(user.displayName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 16),
               DropdownButton<EventRole>(
-                value: role,
+                value: selectedRole,
                 items: [
-                  for (final r in EventRole.values)
+                  for (final role in EventRole.values)
                     DropdownMenuItem(
-                      value: r,
-                      child: Text(r.label),
+                      value: role,
+                      child: Text(role.label),
                     ),
                 ],
-                onChanged: isOwner
+                onChanged: !isOwner
                     ? null
                     : (newRole) async {
-                        if (newRole == null || newRole == role) return;
-                        // show a small loading state
-                        setState(() => role = newRole);
+                        if (newRole == null || newRole == selectedRole) return;
+                        setState(() => selectedRole = newRole);
                         await notifier.addUserToRole(userId: user.uid, role: newRole);
-                        if (Navigator.canPop(context)) Navigator.of(context).pop();
+                        if (context.mounted && Navigator.canPop(context)) {
+                          Navigator.of(context).pop();
+                        }
                       },
               ),
               const SizedBox(height: 12),
