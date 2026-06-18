@@ -61,7 +61,7 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
               // - Owners role can't be changed or removed
               // - Admins can add or change other roles, including their own
               // - Non-admins can't edit roles
-              final canEdit = // selectedRole != EventRole.owner &&
+              final canEdit = selectedRole != EventRole.owner &&
                   (selectedRole == EventRole.admin || currentUser?.uid != user.uid);
 
               return Column(
