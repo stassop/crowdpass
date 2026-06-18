@@ -7,8 +7,8 @@ class AnimatedDialog {
     bool barrierDismissible = true,
     Widget? title,
     List<Widget>? actions,
-    EdgeInsets contentPadding = const EdgeInsets.fromLTRB(16, 8, 16, 8),
-    EdgeInsets titlePadding = const EdgeInsets.fromLTRB(16, 24, 16, 8),
+    EdgeInsets contentPadding = const EdgeInsets.all(16),
+    EdgeInsets titlePadding = const EdgeInsets.all(16),
   }) {
     return showGeneralDialog<T>(
       context: context,
@@ -36,7 +36,7 @@ class AnimatedDialog {
               title: title,
               titlePadding: titlePadding,
               contentPadding: contentPadding,
-              insetPadding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+              insetPadding: EdgeInsets.all(16),
               children: [
                 content,
                 if (actions != null)

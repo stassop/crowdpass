@@ -7,22 +7,54 @@ import 'package:crowdpass/models/user_profile.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/firestore_provider.dart';
 
+final eventRolesProvider =
+    NotifierProvider.family<EventRolesNotifier, EventRolesState, String>(
+  (eventId) => EventRolesNotifier(eventId),
+);
+
+final userRoleProvider =
+    StreamProvider.family<EventRole?, ({String eventId, String? userId})>(
+  (ref, params) async* {
+    final firestore = ref.read(firestoreProvider);
+    final resolvedUserId =
+        params.userId ?? (await ref.read(authProvider.future))?.uid;
+
+    if (resolvedUserId == null || resolvedUserId.isEmpty) {
+      yield null;
+      return;
+    }
+
+    for (final role in EventRole.values) {
+      final snapshot = await firestore
+          .collection('events')
+          .doc(params.eventId)
+          .collection(role.collectionName)
+          .where('userId', isEqualTo: resolvedUserId)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        yield role;
+        return;
+      }
+    }
+
+    yield null;
+  },
+);
+
 class EventRolesState {
   final Event? event;
-  final EventRole? currentUserRole;
   final Map<EventRole, List<UserProfile>> usersByRole;
   final Map<EventRole, bool> isLoadingByRole;
   final Map<EventRole, bool> hasMoreByRole;
-  final bool isOwner;
   final Object? error;
 
   const EventRolesState({
     this.event,
-    this.currentUserRole,
     this.usersByRole = const {},
     this.isLoadingByRole = const {},
     this.hasMoreByRole = const {},
-    this.isOwner = false,
     this.error,
   });
 
@@ -34,20 +66,16 @@ class EventRolesState {
 
   EventRolesState copyWith({
     Event? event,
-    EventRole? currentUserRole,
     Map<EventRole, List<UserProfile>>? usersByRole,
     Map<EventRole, bool>? isLoadingByRole,
     Map<EventRole, bool>? hasMoreByRole,
-    bool? isOwner,
     Object? error,
   }) {
     return EventRolesState(
       event: event ?? this.event,
-      currentUserRole: currentUserRole ?? this.currentUserRole,
       usersByRole: usersByRole ?? this.usersByRole,
       isLoadingByRole: isLoadingByRole ?? this.isLoadingByRole,
       hasMoreByRole: hasMoreByRole ?? this.hasMoreByRole,
-      isOwner: isOwner ?? this.isOwner,
       error: error,
     );
   }
@@ -108,7 +136,6 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
       if (!eventDoc.exists || eventDoc.data() == null) {
         state = state.copyWith(
           event: null,
-          currentUserRole: null,
           isLoadingByRole: {
             for (final role in EventRole.values) role: false,
           },
@@ -125,16 +152,10 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
       final event = Event.fromJson(eventData);
 
       final isOwner = event.createdBy == user.uid;
-      final currentUserRole = await _getUserRoleForEvent(
-        eventId: event.id,
-        userId: user.uid,
-      );
 
       if (!isOwner) {
         state = state.copyWith(
           event: event,
-          currentUserRole: currentUserRole,
-          isOwner: false,
           isLoadingByRole: {
             for (final role in EventRole.values) role: false,
           },
@@ -148,8 +169,6 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
 
       state = state.copyWith(
         event: event,
-        currentUserRole: currentUserRole,
-        isOwner: true,
         error: null,
       );
 
@@ -207,7 +226,9 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
       }
 
       fetchedUsers.sort(
-        (a, b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+        (firstUser, secondUser) => firstUser.displayName
+            .toLowerCase()
+            .compareTo(secondUser.displayName.toLowerCase()),
       );
 
       final existingUsers = replace ? <UserProfile>[] : state.usersForRole(role);
@@ -244,25 +265,6 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     }
   }
 
-  Future<EventRole?> _getUserRoleForEvent({
-    required String eventId,
-    required String userId,
-  }) async {
-    for (final role in EventRole.values) {
-      final snapshot = await _firestore
-          .collection('events')
-          .doc(eventId)
-          .collection(role.collectionName)
-          .where('userId', isEqualTo: userId)
-          .limit(1)
-          .get();
-
-      if (snapshot.docs.isNotEmpty) return role;
-    }
-
-    return null;
-  }
-
   Future<UserProfile?> _getUserProfile(String userId) async {
     try {
       final snapshot = await _firestore.collection('users').doc(userId).get();
@@ -290,7 +292,6 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
         throw Exception('Event not found.');
       }
 
-      // Prevent changing the event owner's role
       if (userId == event.createdBy) {
         throw Exception('Cannot change role of event owner.');
       }
@@ -318,7 +319,10 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
       });
 
       await batch.commit();
-      await loadMore(role, replace: true);
+
+      await Future.wait([
+        for (final existingRole in EventRole.values) loadMore(existingRole, replace: true),
+      ]);
     } catch (error, stackTrace) {
       debugPrint('addUserToRole error: $error\n$stackTrace');
       state = state.copyWith(error: error);
@@ -337,7 +341,6 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
         throw Exception('Event not found.');
       }
 
-      // Prevent removing the event owner from their role
       if (userId == event.createdBy) {
         throw Exception('Cannot remove event owner from role.');
       }
@@ -356,7 +359,9 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
       state = state.copyWith(
         usersByRole: {
           ...state.usersByRole,
-          role: state.usersForRole(role).where((user) => user.uid != userId).toList(),
+          role: state.usersForRole(role)
+              .where((user) => user.uid != userId)
+              .toList(),
         },
         error: null,
       );
@@ -386,8 +391,3 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     }
   }
 }
-
-final eventRolesProvider =
-    NotifierProvider.family<EventRolesNotifier, EventRolesState, String>(
-  (eventId) => EventRolesNotifier(eventId),
-);

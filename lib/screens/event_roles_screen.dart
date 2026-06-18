@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/models/event.dart';
 import 'package:crowdpass/models/user_profile.dart';
 
+import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/event_roles_provider.dart';
 
 import 'package:crowdpass/widgets/error_dialog.dart';
@@ -37,51 +39,70 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
   }
 
   void _showRoleDialog(UserProfile user) async {
-    final state = ref.read(eventRolesProvider(_eventId!));
-    final notifier = ref.read(eventRolesProvider(_eventId!).notifier);
-    final isOwner = state.isOwner;
-    EventRole selectedRole = state.roleForUser(user.uid) ?? EventRole.values.first;
-
     await AnimatedDialog.show(
       context: context,
-      content: StatefulBuilder(
-        builder: (context, setState) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              UserAvatar.large(
-                photoURL: user.photoURL,
-                displayName: user.displayName,
-              ),
-              const SizedBox(height: 16),
-              DropdownButton<EventRole>(
-                value: selectedRole,
-                items: [
-                  for (final role in EventRole.values)
-                    DropdownMenuItem(
-                      value: role,
-                      child: Text(role.label),
-                    ),
+      content: Consumer(
+        builder: (context, ref, child) {
+          final notifier = ref.read(eventRolesProvider(_eventId!).notifier);
+          final userRoleAsync = ref.watch(
+            userRoleProvider((eventId: _eventId!, userId: user.uid)),
+          );
+
+          return userRoleAsync.when(
+            loading: () => const Center(
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, stackTrace) => Center(
+              child: Text('Error loading user role: $error'),
+            ),
+            data: (selectedRole) {
+              final currentUser = ref.watch(authProvider).value;
+              // Rules for editing roles:
+              // - Owners role can't be changed or removed
+              // - Admins can add or change other roles, including their own
+              // - Non-admins can't edit roles
+              final canEdit = // selectedRole != EventRole.owner &&
+                  (selectedRole == EventRole.admin || currentUser?.uid != user.uid);
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  UserAvatar.medium(
+                    displayName: user.displayName, 
+                    photoURL: user.photoURL,
+                    onTap: () => Navigator.of(context).pushNamed('/user/', arguments: user.uid)
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButton<EventRole>(
+                    value: selectedRole,
+                    items: [
+                      for (final role in EventRole.values)
+                        DropdownMenuItem(
+                          value: role,
+                          child: Text(role.label),
+                        ),
+                    ],
+                    onChanged: canEdit
+                        ? (newRole) async {
+                            if (newRole == null || newRole == selectedRole) return;
+                            await notifier.addUserToRole(userId: user.uid, role: newRole);
+                            if (context.mounted && Navigator.canPop(context)) {
+                              Navigator.of(context).pop();
+                            }
+                          }
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      if (Navigator.canPop(context)) Navigator.of(context).pop();
+                    },
+                    child: const Text('Close'),
+                  ),
                 ],
-                onChanged: !isOwner
-                    ? null
-                    : (newRole) async {
-                        if (newRole == null || newRole == selectedRole) return;
-                        setState(() => selectedRole = newRole);
-                        await notifier.addUserToRole(userId: user.uid, role: newRole);
-                        if (context.mounted && Navigator.canPop(context)) {
-                          Navigator.of(context).pop();
-                        }
-                      },
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () {
-                  if (Navigator.canPop(context)) Navigator.of(context).pop();
-                },
-                child: const Text('Close'),
-              ),
-            ],
+              );
+            },
           );
         },
       ),
@@ -102,6 +123,14 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
 
     final state = ref.watch(eventRolesProvider(_eventId!));
     final notifier = ref.read(eventRolesProvider(_eventId!).notifier);
+    final hasRole = ref
+        .watch(
+          userRoleProvider((
+            eventId: _eventId!,
+            userId: ref.watch(authProvider).value?.uid,
+          )),
+        )
+        .maybeWhen(data: (role) => role != null, orElse: () => false);
 
     if (state.error != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -111,6 +140,18 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
           message: state.error.toString(),
         );
       });
+    }
+
+    if (!hasRole) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: BackButton(onPressed: () => Navigator.maybePop(context)),
+          title: const Text('Event Roles'),
+        ),
+        body: const Center(
+          child: Text('You do not have permission to view this event\'s roles.'),
+        ),
+      );
     }
 
     final isInitialLoading =
@@ -143,52 +184,34 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
       child: Scaffold(
         appBar: AppBar(
           title: Text('${state.event!.title} Roles'),
-          bottom: state.isOwner
-              ? TabBar(
-                  controller: _tabController,
-                  isScrollable: true,
-                  tabs: [
-                    for (final role in EventRole.values)
-                      Tab(text: role.collectionLabel),
-                  ],
-                )
-              : null,
+          bottom: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabs: [
+              for (final role in EventRole.values)
+                Tab(text: role.collectionLabel),
+            ],
+          )
         ),
-        body: state.isOwner
-            ? TabBarView(
-                controller: _tabController,
-                children: [
-                  for (final role in EventRole.values)
-                    _RoleTab(
-                      role: role,
-                      users: state.usersForRole(role),
-                      isLoading: state.isLoadingRole(role),
-                      hasMore: state.hasMoreForRole(role),
-                      onRefresh: () => notifier.loadMore(role, replace: true),
-                      onLoadMore: () => notifier.loadMore(role),
-                      onRemoveUser: (userId) => notifier.removeUserFromRole(
-                        userId: userId,
-                        role: role,
-                      ),
-                      ownerId: state.event!.createdBy,
-                      onUserTap: (user) => _showRoleDialog(user),
-                    ),
-                ],
-              )
-            : RefreshIndicator(
-                onRefresh: notifier.refresh,
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: const [
-                    SizedBox(height: 24),
-                    Center(
-                      child: Text(
-                        'Only the event owner can manage event roles.',
-                      ),
-                    ),
-                  ],
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            for (final role in EventRole.values)
+              _RoleTab(
+                role: role,
+                users: state.usersForRole(role),
+                isLoading: state.isLoadingRole(role),
+                hasMore: state.hasMoreForRole(role),
+                onRefresh: () => notifier.loadMore(role, replace: true),
+                onLoadMore: () => notifier.loadMore(role),
+                onRemoveUser: (userId) => notifier.removeUserFromRole(
+                  userId: userId,
+                  role: role,
                 ),
+                onUserTap: (user) => _showRoleDialog(user),
               ),
+          ],
+        ),
       ),
     );
   }
@@ -203,7 +226,6 @@ class _RoleTab extends StatelessWidget {
     required this.onRefresh,
     required this.onLoadMore,
     required this.onRemoveUser,
-    required this.ownerId,
     required this.onUserTap,
   });
 
@@ -214,7 +236,6 @@ class _RoleTab extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final Future<void> Function() onLoadMore;
   final Future<void> Function(String userId) onRemoveUser;
-  final String ownerId;
   final void Function(UserProfile user) onUserTap;
 
   @override
@@ -232,8 +253,6 @@ class _RoleTab extends StatelessWidget {
         ),
       ),
       tileBuilder: (context, user, index) {
-        final isOwnerUser = user.uid == ownerId;
-
         final tile = ListTile(
           leading: CircleAvatar(
             foregroundImage: user.photoURL != null && user.photoURL!.isNotEmpty
@@ -247,7 +266,8 @@ class _RoleTab extends StatelessWidget {
           onTap: () => onUserTap(user),
         );
 
-        if (isOwnerUser) {
+        // Owner can't be removed from their role
+        if (role == EventRole.owner) {
           return tile;
         }
 

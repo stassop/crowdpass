@@ -19,7 +19,6 @@ class UserAvatar extends StatefulWidget {
   final Function(String)? onPhotoChanged;
   final String? photoURL;
   final UserAvatarSize size;
-  final String? userId;
   final FormFieldValidator<String>? validator;
 
   const UserAvatar({
@@ -32,7 +31,6 @@ class UserAvatar extends StatefulWidget {
     this.onTap,
     this.photoURL,
     required this.size,
-    this.userId,
     this.validator,
   });
 
@@ -45,7 +43,6 @@ class UserAvatar extends StatefulWidget {
     this.onPhotoChanged,
     this.onTap,
     this.photoURL,
-    this.userId,
     this.validator,
   }) : size = UserAvatarSize.small;
 
@@ -58,7 +55,6 @@ class UserAvatar extends StatefulWidget {
     this.onPhotoChanged,
     this.onTap,
     this.photoURL,
-    this.userId,
     this.validator,
   }) : size = UserAvatarSize.medium;
 
@@ -71,7 +67,6 @@ class UserAvatar extends StatefulWidget {
     this.onPhotoChanged,
     this.onTap,
     this.photoURL,
-    this.userId,
     this.validator,
   }) : size = UserAvatarSize.large;
 
