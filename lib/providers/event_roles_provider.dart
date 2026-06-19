@@ -7,11 +7,6 @@ import 'package:crowdpass/models/user_profile.dart';
 import 'package:crowdpass/providers/auth_provider.dart';
 import 'package:crowdpass/providers/firestore_provider.dart';
 
-final eventRolesProvider =
-    NotifierProvider.family<EventRolesNotifier, EventRolesState, String>(
-  (eventId) => EventRolesNotifier(eventId),
-);
-
 final userRoleProvider =
     StreamProvider.family<EventRole?, ({String eventId, String? userId})>(
   (ref, params) async* {
@@ -391,3 +386,8 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     }
   }
 }
+
+final eventRolesProvider =
+    NotifierProvider.family<EventRolesNotifier, EventRolesState, String>(
+  (eventId) => EventRolesNotifier(eventId),
+);
