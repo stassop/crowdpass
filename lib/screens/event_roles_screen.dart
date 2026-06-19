@@ -39,11 +39,10 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
   }
 
   void _showRoleDialog(UserProfile user) async {
-    await AnimatedDialog.show(
+    final selectedRole = await AnimatedDialog.show<EventRole?>(
       context: context,
       content: Consumer(
         builder: (context, ref, child) {
-          final notifier = ref.read(eventRolesProvider(_eventId!).notifier);
           final userRoleAsync = ref.watch(
             userRoleProvider((eventId: _eventId!, userId: user.uid)),
           );
@@ -55,58 +54,88 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
             error: (error, stackTrace) => Center(
               child: Text('Error loading user role: $error'),
             ),
-            data: (selectedRole) {
-              final currentUser = ref.watch(authProvider).value;
-              // Rules for editing roles:
-              // - Owners role can't be changed or removed
-              // - Admins can add or change other roles, including their own
-              // - Non-admins can't edit roles
-              final canEdit = selectedRole != EventRole.owner &&
-                  (selectedRole == EventRole.admin || currentUser?.uid != user.uid);
+            data: (userRole) {
+              // Currently authenticated user's role for this event
+              final currentUserRole = ref.watch(
+                userRoleProvider((
+                  eventId: _eventId!,
+                  userId: ref.watch(authProvider).value?.uid,
+                )),
+              ).maybeWhen(data: (role) => role, orElse: () => null);
+              // We can't change the owner
+              final canEdit = userRole != EventRole.owner || currentUserRole == EventRole.admin;
+              // We use a local variable to track the pending role selection within the dialog,
+              // since we don't want to update the provider until the user confirms their selection.
+              EventRole? pendingRole = userRole;
 
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  UserAvatar.medium(
-                    displayName: user.displayName, 
-                    photoURL: user.photoURL,
-                    onTap: () => Navigator.of(context).pushNamed('/user/', arguments: user.uid)
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButton<EventRole>(
-                    value: selectedRole,
-                    items: [
-                      for (final role in EventRole.values)
-                        DropdownMenuItem(
-                          value: role,
-                          child: Text(role.label),
-                        ),
+              return StatefulBuilder(
+                builder: (context, setState) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      UserAvatar.medium(
+                        displayName: user.displayName,
+                        photoURL: user.photoURL,
+                        onTap: () => Navigator.of(
+                          context,
+                        ).pushNamed('/user/', arguments: user.uid),
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownMenu<EventRole>(
+                        initialSelection: userRole,
+                        enabled: canEdit,
+                        onSelected: (newRole) {
+                          if (newRole == null) return;
+                          setState(() {
+                            pendingRole = newRole;
+                          });
+                        },
+                        dropdownMenuEntries: [
+                          for (final role in EventRole.values)
+                            DropdownMenuEntry<EventRole>(
+                              value: role,
+                              label: role.label,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Cancel'),
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton(
+                            onPressed: canEdit
+                                ? () => Navigator.of(context).pop(pendingRole)
+                                : null,
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
                     ],
-                    onChanged: canEdit
-                        ? (newRole) async {
-                            if (newRole == null || newRole == selectedRole) return;
-                            await notifier.addUserToRole(userId: user.uid, role: newRole);
-                            if (context.mounted && Navigator.canPop(context)) {
-                              Navigator.of(context).pop();
-                            }
-                          }
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () {
-                      if (Navigator.canPop(context)) Navigator.of(context).pop();
-                    },
-                    child: const Text('Close'),
-                  ),
-                ],
+                  );
+                },
               );
             },
           );
         },
       ),
     );
+
+    if (!mounted || selectedRole == null) return;
+
+    final notifier = ref.read(eventRolesProvider(_eventId!).notifier);
+    final currentRole = await ref.read(
+      userRoleProvider((eventId: _eventId!, userId: user.uid)).future,
+    );
+
+    if (selectedRole != currentRole) {
+      await notifier.addUserToRole(userId: user.uid, role: selectedRole);
+    }
   }
 
   @override
@@ -271,6 +300,8 @@ class _RoleTab extends StatelessWidget {
           return tile;
         }
 
+        final dismissibleColor = Theme.of(context).colorScheme.onError;
+
         return Dismissible(
           key: ValueKey('${role.name}-${user.uid}'),
           direction: DismissDirection.endToStart,
@@ -289,7 +320,7 @@ class _RoleTab extends StatelessWidget {
                 TextButton(
                   onPressed: () => Navigator.pop(context, true),
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.red,
+                    foregroundColor: dismissibleColor,
                   ),
                   child: const Text('Remove'),
                 ),
@@ -298,7 +329,7 @@ class _RoleTab extends StatelessWidget {
           ),
           onDismissed: (_) => onRemoveUser(user.uid),
           background: Container(
-            color: Colors.red,
+            color: dismissibleColor,
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: const Icon(Icons.delete, color: Colors.white),
