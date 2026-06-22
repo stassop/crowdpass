@@ -29,13 +29,40 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _eventId ??= ModalRoute.of(context)?.settings.arguments as String?;
-    _tabController ??= TabController(length: EventRole.values.length, vsync: this);
+    _tabController ??= TabController(length: EventRole.values.length, vsync: this)
+      ..addListener(_handleTabChanged);
+
+    if (_eventId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final role = EventRole.values[_tabController!.index];
+        final state = ref.read(eventRolesProvider(_eventId!));
+        if (state.usersForRole(role).isEmpty && !state.isLoadingRole(role)) {
+          ref.read(eventRolesProvider(_eventId!).notifier).refresh();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _tabController?.removeListener(_handleTabChanged);
     _tabController?.dispose();
     super.dispose();
+  }
+
+  void _handleTabChanged() {
+    final controller = _tabController;
+    final eventId = _eventId;
+    if (controller == null || eventId == null || controller.indexIsChanging) {
+      return;
+    }
+
+    final role = EventRole.values[controller.index];
+    final state = ref.read(eventRolesProvider(eventId));
+
+    if (state.usersForRole(role).isEmpty && !state.isLoadingRole(role)) {
+      ref.read(eventRolesProvider(eventId).notifier).loadMore(role, replace: true);
+    }
   }
 
   void _showRoleDialog(UserProfile user) async {
@@ -49,7 +76,7 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
 
           return userRoleAsync.when(
             loading: () => const Center(
-              child: Center(child: CircularProgressIndicator()),
+              child: CircularProgressIndicator(),
             ),
             error: (error, stackTrace) => Center(
               child: Text('Error loading user role: $error'),
@@ -208,39 +235,36 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
       );
     }
 
-    return DefaultTabController(
-      length: EventRole.values.length,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('${state.event!.title} Roles'),
-          bottom: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabs: [
-              for (final role in EventRole.values)
-                Tab(text: role.collectionLabel),
-            ],
-          )
-        ),
-        body: TabBarView(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('${state.event!.title} Roles'),
+        bottom: TabBar(
           controller: _tabController,
-          children: [
+          isScrollable: true,
+          tabs: [
             for (final role in EventRole.values)
-              _RoleTab(
-                role: role,
-                users: state.usersForRole(role),
-                isLoading: state.isLoadingRole(role),
-                hasMore: state.hasMoreForRole(role),
-                onRefresh: () => notifier.loadMore(role, replace: true),
-                onLoadMore: () => notifier.loadMore(role),
-                onRemoveUser: (userId) => notifier.removeUserFromRole(
-                  userId: userId,
-                  role: role,
-                ),
-                onUserTap: (user) => _showRoleDialog(user),
-              ),
+              Tab(text: role.collectionLabel),
           ],
         ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          for (final role in EventRole.values)
+            _RoleTab(
+              role: role,
+              users: state.usersForRole(role),
+              isLoading: state.isLoadingRole(role),
+              hasMore: state.hasMoreForRole(role),
+              onRefresh: () => notifier.loadMore(role, replace: true),
+              onLoadMore: () => notifier.loadMore(role),
+              onRemoveUser: (userId) => notifier.removeUserFromRole(
+                userId: userId,
+                role: role,
+              ),
+              onUserTap: (user) => _showRoleDialog(user),
+            ),
+        ],
       ),
     );
   }
