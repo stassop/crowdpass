@@ -11,35 +11,36 @@ import 'package:crowdpass/providers/firestore_provider.dart';
 import 'package:crowdpass/providers/user_profile_provider.dart';
 
 final userRoleProvider =
-    StreamProvider.family<EventRole?, ({String eventId, String? userId})>(
-  (ref, params) async* {
-    final firestore = ref.read(firestoreProvider);
-    final resolvedUserId =
-        params.userId ?? (await ref.read(authProvider.future))?.uid;
+    FutureProvider.family<EventRole?, ({String eventId, String? userId})>((
+      ref,
+      params,
+    ) async {
+      final firestore = ref.read(firestoreProvider);
 
-    if (resolvedUserId == null || resolvedUserId.isEmpty) {
-      yield null;
-      return;
-    }
+      // Fallback to checking synchronous state value instead of awaiting a stream future
+      final currentUid = ref.read(authProvider).value?.uid;
+      final resolvedUserId = params.userId ?? currentUid;
 
-    for (final role in EventRole.values) {
-      final snapshot = await firestore
-          .collection('events')
-          .doc(params.eventId)
-          .collection(role.collectionName)
-          .where('userId', isEqualTo: resolvedUserId)
-          .limit(1)
-          .get();
-
-      if (snapshot.docs.isNotEmpty) {
-        yield role;
-        return;
+      if (resolvedUserId == null || resolvedUserId.isEmpty) {
+        return null;
       }
-    }
 
-    yield null;
-  },
-);
+      for (final role in EventRole.values) {
+        final snapshot = await firestore
+            .collection('events')
+            .doc(params.eventId)
+            .collection(role.collectionName)
+            .where('userId', isEqualTo: resolvedUserId)
+            .limit(1)
+            .get();
+
+        if (snapshot.docs.isNotEmpty) {
+          return role;
+        }
+      }
+
+      return null;
+    });
 
 class EventRolesState {
   final Event? event;
@@ -56,7 +57,8 @@ class EventRolesState {
     this.error,
   });
 
-  List<UserProfile> usersForRole(EventRole role) => usersByRole[role] ?? const [];
+  List<UserProfile> usersForRole(EventRole role) =>
+      usersByRole[role] ?? const [];
 
   bool isLoadingRole(EventRole role) => isLoadingByRole[role] ?? false;
 
@@ -98,37 +100,25 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     state = EventRolesState(
       event: state.event,
       usersByRole: {},
-      isLoadingByRole: {
-        for (final role in EventRole.values) role: false,
-      },
-      hasMoreByRole: {
-        for (final role in EventRole.values) role: true,
-      },
+      isLoadingByRole: {for (final role in EventRole.values) role: false},
+      hasMoreByRole: {for (final role in EventRole.values) role: true},
       error: null,
     );
 
     try {
+      // Fetch the event info safely
       final event = await ref.read(eventProvider(eventId).future);
       if (event == null) {
         state = state.copyWith(event: null, error: 'Event not found');
         return;
       }
 
-      final userRole =  await ref.read(userRoleProvider((eventId: eventId, userId: null)).future);
-      if (userRole == null) {
-        state = state.copyWith(
-          event: event,
-          error: 'You do not have permission to view event roles',
-        );
-        return;
+      state = state.copyWith(event: event, clearError: true);
+
+      // Pre-load data for all roles to prevent blank screens when tabs slide over
+      for (final role in EventRole.values) {
+        await loadMore(role, replace: true);
       }
-
-      state = state.copyWith(
-        event: event,
-        clearError: true,
-      );
-
-      await loadMore(userRole, replace: true);
     } catch (error, stackTrace) {
       debugPrint('EventRolesNotifier refresh error: $error\n$stackTrace');
       state = state.copyWith(error: error);
@@ -136,7 +126,8 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
   }
 
   Future<void> loadMore(EventRole role, {bool replace = false}) async {
-    if (!replace && (state.isLoadingRole(role) || !state.hasMoreForRole(role))) {
+    if (!replace &&
+        (state.isLoadingRole(role) || !state.hasMoreForRole(role))) {
       return;
     }
 
@@ -146,18 +137,9 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     );
 
     try {
-      final event = state.event;
-      if (event == null) {
-        state = state.copyWith(
-          isLoadingByRole: {...state.isLoadingByRole, role: false},
-          hasMoreByRole: {...state.hasMoreByRole, role: false},
-        );
-        return;
-      }
-
       final snapshot = await _firestore
           .collection('events')
-          .doc(event.id)
+          .doc(eventId)
           .collection(role.collectionName)
           .get();
 
@@ -176,30 +158,9 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
         }
       }
 
-      final existingUsers = replace ? <UserProfile>[] : state.usersForRole(role);
-      final startIndex = replace ? 0 : existingUsers.length;
-
-      if (startIndex >= fetchedUsers.length) {
-        state = state.copyWith(
-          usersByRole: {...state.usersByRole, role: existingUsers},
-          hasMoreByRole: {...state.hasMoreByRole, role: false},
-          isLoadingByRole: {...state.isLoadingByRole, role: false},
-        );
-        return;
-      }
-
-      final endIndex = (startIndex + pageSize).clamp(0, fetchedUsers.length);
-      final pageUsers = fetchedUsers.sublist(startIndex, endIndex);
-
       state = state.copyWith(
-        usersByRole: {
-          ...state.usersByRole,
-          role: [...existingUsers, ...pageUsers],
-        },
-        hasMoreByRole: {
-          ...state.hasMoreByRole,
-          role: endIndex < fetchedUsers.length,
-        },
+        usersByRole: {...state.usersByRole, role: fetchedUsers},
+        hasMoreByRole: {...state.hasMoreByRole, role: false},
         isLoadingByRole: {...state.isLoadingByRole, role: false},
         error: null,
       );
@@ -218,20 +179,18 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     required EventRole role,
   }) async {
     try {
-      final event = state.event;
-      if (event == null) {
-        throw Exception('Event not found.');
-      }
+      final currentUserRole = await ref.read(
+        userRoleProvider((eventId: eventId, userId: null)).future,
+      );
 
-      final currentUserRole =
-          await ref.read(userRoleProvider((eventId: eventId, userId: null)).future);
-
-      if (currentUserRole != EventRole.owner && currentUserRole != EventRole.admin) {
+      if (currentUserRole != EventRole.owner &&
+          currentUserRole != EventRole.admin) {
         throw Exception('You do not have permission to manage roles.');
       }
 
-      final userRole =
-          await ref.read(userRoleProvider((eventId: eventId, userId: userId)).future);
+      final userRole = await ref.read(
+        userRoleProvider((eventId: eventId, userId: userId)).future,
+      );
 
       if (userRole == EventRole.owner) {
         throw Exception('Cannot change event owner.');
@@ -269,20 +228,18 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     required EventRole role,
   }) async {
     try {
-      final event = state.event;
-      if (event == null) {
-        throw Exception('Event not found.');
-      }
+      final currentUserRole = await ref.read(
+        userRoleProvider((eventId: eventId, userId: null)).future,
+      );
 
-      final currentUserRole =
-          await ref.read(userRoleProvider((eventId: eventId, userId: null)).future);
-
-      if (currentUserRole != EventRole.owner && currentUserRole != EventRole.admin) {
+      if (currentUserRole != EventRole.owner &&
+          currentUserRole != EventRole.admin) {
         throw Exception('You do not have permission to manage roles.');
       }
 
-      final userRole =
-          await ref.read(userRoleProvider((eventId: eventId, userId: userId)).future);
+      final userRole = await ref.read(
+        userRoleProvider((eventId: eventId, userId: userId)).future,
+      );
 
       if (userRole == EventRole.owner) {
         throw Exception('Cannot change event owner.');
@@ -299,7 +256,8 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
         await doc.reference.delete();
       }
 
-      final updatedUsers = state.usersForRole(role)
+      final updatedUsers = state
+          .usersForRole(role)
           .where((user) => user.uid != userId)
           .toList();
 
@@ -316,5 +274,5 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
 
 final eventRolesProvider =
     NotifierProvider.family<EventRolesNotifier, EventRolesState, String>(
-  (eventId) => EventRolesNotifier(eventId),
-);
+      (eventId) => EventRolesNotifier(eventId),
+    );

@@ -24,14 +24,12 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
     with SingleTickerProviderStateMixin {
   String? _eventId;
   TabController? _tabController;
-  int _lastTabIndex = 0;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _eventId ??= ModalRoute.of(context)?.settings.arguments as String?;
-    _tabController ??= TabController(length: EventRole.values.length, vsync: this)
-      ..addListener(_handleTabChanged);
+    _tabController ??= TabController(length: EventRole.values.length, vsync: this);
 
     if (_eventId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -43,28 +41,8 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
 
   @override
   void dispose() {
-    _tabController?.removeListener(_handleTabChanged);
     _tabController?.dispose();
     super.dispose();
-  }
-
-  void _handleTabChanged() {
-    final controller = _tabController;
-    final eventId = _eventId;
-    if (controller == null || eventId == null || controller.indexIsChanging) {
-      return;
-    }
-
-    final currentIndex = controller.index;
-    if (currentIndex == _lastTabIndex) return;
-    _lastTabIndex = currentIndex;
-
-    final role = EventRole.values[currentIndex];
-    final state = ref.read(eventRolesProvider(eventId));
-
-    if (state.usersForRole(role).isEmpty && !state.isLoadingRole(role)) {
-      ref.read(eventRolesProvider(eventId).notifier).loadMore(role, replace: true);
-    }
   }
 
   void _showRoleDialog(UserProfile user) async {
@@ -178,7 +156,6 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
     }
 
     final state = ref.watch(eventRolesProvider(_eventId!));
-    final notifier = ref.read(eventRolesProvider(_eventId!).notifier);
     final hasRole = ref
         .watch(
           userRoleProvider((
@@ -210,19 +187,6 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
       );
     }
 
-    // final isInitialLoading =
-    //     state.event == null && EventRole.values.any(state.isLoadingRole);
-
-    // if (isInitialLoading) {
-    //   return Scaffold(
-    //     appBar: AppBar(
-    //       leading: BackButton(onPressed: () => Navigator.maybePop(context)),
-    //       title: const Text('Event Roles'),
-    //     ),
-    //     body: const Center(child: CircularProgressIndicator()),
-    //   );
-    // }
-
     if (state.event == null) {
       return Scaffold(
         appBar: AppBar(
@@ -252,16 +216,8 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
         children: [
           for (final role in EventRole.values)
             _RoleTab(
+              eventId: _eventId!,
               role: role,
-              users: state.usersForRole(role),
-              isLoading: state.isLoadingRole(role),
-              hasMore: state.hasMoreForRole(role),
-              onRefresh: () => notifier.loadMore(role, replace: true),
-              onLoadMore: () => notifier.loadMore(role),
-              onDismissed: (userId) => notifier.removeUserFromRole(
-                userId: userId,
-                role: role,
-              ),
               onUserTap: (user) => _showRoleDialog(user),
             ),
         ],
@@ -270,39 +226,53 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
   }
 }
 
-class _RoleTab extends StatelessWidget {
+class _RoleTab extends ConsumerStatefulWidget {
   const _RoleTab({
+    required this.eventId,
     required this.role,
-    required this.users,
-    required this.isLoading,
-    required this.hasMore,
-    required this.onRefresh,
-    required this.onLoadMore,
-    required this.onDismissed,
     required this.onUserTap,
   });
 
+  final String eventId;
   final EventRole role;
-  final List<UserProfile> users;
-  final bool isLoading;
-  final bool hasMore;
-  final Future<void> Function() onRefresh;
-  final Future<void> Function() onLoadMore;
-  final Future<void> Function(String userId) onDismissed;
   final void Function(UserProfile user) onUserTap;
 
   @override
+  ConsumerState<_RoleTab> createState() => _RoleTabState();
+}
+
+class _RoleTabState extends ConsumerState<_RoleTab> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final state = ref.read(eventRolesProvider(widget.eventId));
+      if (state.usersForRole(widget.role).isEmpty && !state.isLoadingRole(widget.role)) {
+        ref.read(eventRolesProvider(widget.eventId).notifier).loadMore(widget.role, replace: true);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = ref.watch(eventRolesProvider(widget.eventId));
+    final notifier = ref.read(eventRolesProvider(widget.eventId).notifier);
+
+    final users = state.usersForRole(widget.role);
+    final isLoading = state.isLoadingRole(widget.role);
+    final hasMore = state.hasMoreForRole(widget.role);
+
     return RefreshableList<UserProfile>(
       items: users,
       hasMore: hasMore,
       isLoading: isLoading,
-      onRefresh: onRefresh,
-      onLoadMore: onLoadMore,
+      onRefresh: () => notifier.loadMore(widget.role, replace: true),
+      onLoadMore: () => notifier.loadMore(widget.role),
       emptyListWidget: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text('No users found for the ${role.label.toLowerCase()} role.'),
+          child: Text('No users found for the ${widget.role.label.toLowerCase()} role.'),
         ),
       ),
       tileBuilder: (context, user, index) {
@@ -316,24 +286,24 @@ class _RoleTab extends StatelessWidget {
                 : null,
           ),
           title: Text(user.displayName),
-          onTap: () => onUserTap(user),
+          onTap: () => widget.onUserTap(user),
         );
 
-        if (role == EventRole.owner) {
+        if (widget.role == EventRole.owner) {
           return tile;
         }
 
         final dismissibleColor = Theme.of(context).colorScheme.onError;
 
         return Dismissible(
-          key: ValueKey('${role.name}-${user.uid}'),
+          key: ValueKey('${widget.role.name}-${user.uid}'),
           direction: DismissDirection.endToStart,
           confirmDismiss: (_) => showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Remove User Role'),
               content: Text(
-                'Remove ${user.displayName} from the ${role.label} role?',
+                'Remove ${user.displayName} from the ${widget.role.label} role?',
               ),
               actions: [
                 TextButton(
@@ -350,7 +320,10 @@ class _RoleTab extends StatelessWidget {
               ],
             ),
           ),
-          onDismissed: (_) => onDismissed(user.uid),
+          onDismissed: (_) => notifier.removeUserFromRole(
+            userId: user.uid,
+            role: widget.role,
+          ),
           background: Container(
             color: dismissibleColor,
             alignment: Alignment.centerRight,
