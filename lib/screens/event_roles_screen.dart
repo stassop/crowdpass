@@ -29,20 +29,40 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _eventId ??= ModalRoute.of(context)?.settings.arguments as String?;
-    _tabController ??= TabController(length: EventRole.values.length, vsync: this);
+    _tabController ??= TabController(length: EventRole.values.length, vsync: this)
+      ..addListener(_handleTabChanged);
 
     if (_eventId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _eventId == null) return;
-        ref.read(eventRolesProvider(_eventId!).notifier).refresh();
+        final role = EventRole.values[_tabController!.index];
+        final state = ref.read(eventRolesProvider(_eventId!));
+        if (state.usersForRole(role).isEmpty && !state.isLoadingRole(role)) {
+          ref.read(eventRolesProvider(_eventId!).notifier).refresh();
+        }
       });
     }
   }
 
   @override
   void dispose() {
+    _tabController?.removeListener(_handleTabChanged);
     _tabController?.dispose();
     super.dispose();
+  }
+
+  void _handleTabChanged() {
+    final controller = _tabController;
+    final eventId = _eventId;
+    if (controller == null || eventId == null || controller.indexIsChanging) {
+      return;
+    }
+
+    final role = EventRole.values[controller.index];
+    final state = ref.read(eventRolesProvider(eventId));
+
+    if (state.usersForRole(role).isEmpty && !state.isLoadingRole(role)) {
+      ref.read(eventRolesProvider(eventId).notifier).loadMore(role, replace: true);
+    }
   }
 
   void _showRoleDialog(UserProfile user) async {
@@ -62,15 +82,17 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
               child: Text('Error loading user role: $error'),
             ),
             data: (userRole) {
+              // Currently authenticated user's role for this event
               final currentUserRole = ref.watch(
                 userRoleProvider((
                   eventId: _eventId!,
                   userId: ref.watch(authProvider).value?.uid,
                 )),
               ).maybeWhen(data: (role) => role, orElse: () => null);
-
-              final canEdit =
-                  userRole != EventRole.owner || currentUserRole == EventRole.admin;
+              // We can't change the owner
+              final canEdit = userRole != EventRole.owner || currentUserRole == EventRole.admin;
+              // We use a local variable to track the pending role selection within the dialog,
+              // since we don't want to update the provider until the user confirms their selection.
               EventRole? pendingRole = userRole;
 
               return StatefulBuilder(
@@ -156,6 +178,7 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
     }
 
     final state = ref.watch(eventRolesProvider(_eventId!));
+    final notifier = ref.read(eventRolesProvider(_eventId!).notifier);
     final hasRole = ref
         .watch(
           userRoleProvider((
@@ -184,6 +207,19 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
         body: const Center(
           child: Text('You do not have permission to view this event\'s roles.'),
         ),
+      );
+    }
+
+    final isInitialLoading =
+        state.event == null && EventRole.values.any(state.isLoadingRole);
+
+    if (isInitialLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: BackButton(onPressed: () => Navigator.maybePop(context)),
+          title: const Text('Event Roles'),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -216,8 +252,16 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
         children: [
           for (final role in EventRole.values)
             _RoleTab(
-              eventId: _eventId!,
               role: role,
+              users: state.usersForRole(role),
+              isLoading: state.isLoadingRole(role),
+              hasMore: state.hasMoreForRole(role),
+              onRefresh: () => notifier.loadMore(role, replace: true),
+              onLoadMore: () => notifier.loadMore(role),
+              onRemoveUser: (userId) => notifier.removeUserFromRole(
+                userId: userId,
+                role: role,
+              ),
               onUserTap: (user) => _showRoleDialog(user),
             ),
         ],
@@ -226,53 +270,39 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
   }
 }
 
-class _RoleTab extends ConsumerStatefulWidget {
+class _RoleTab extends StatelessWidget {
   const _RoleTab({
-    required this.eventId,
     required this.role,
+    required this.users,
+    required this.isLoading,
+    required this.hasMore,
+    required this.onRefresh,
+    required this.onLoadMore,
+    required this.onRemoveUser,
     required this.onUserTap,
   });
 
-  final String eventId;
   final EventRole role;
+  final List<UserProfile> users;
+  final bool isLoading;
+  final bool hasMore;
+  final Future<void> Function() onRefresh;
+  final Future<void> Function() onLoadMore;
+  final Future<void> Function(String userId) onRemoveUser;
   final void Function(UserProfile user) onUserTap;
 
   @override
-  ConsumerState<_RoleTab> createState() => _RoleTabState();
-}
-
-class _RoleTabState extends ConsumerState<_RoleTab> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final state = ref.read(eventRolesProvider(widget.eventId));
-      if (state.usersForRole(widget.role).isEmpty && !state.isLoadingRole(widget.role)) {
-        ref.read(eventRolesProvider(widget.eventId).notifier).loadMore(widget.role, replace: true);
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final state = ref.watch(eventRolesProvider(widget.eventId));
-    final notifier = ref.read(eventRolesProvider(widget.eventId).notifier);
-
-    final users = state.usersForRole(widget.role);
-    final isLoading = state.isLoadingRole(widget.role);
-    final hasMore = state.hasMoreForRole(widget.role);
-
     return RefreshableList<UserProfile>(
       items: users,
       hasMore: hasMore,
       isLoading: isLoading,
-      onRefresh: () => notifier.loadMore(widget.role, replace: true),
-      onLoadMore: () => notifier.loadMore(widget.role),
+      onRefresh: onRefresh,
+      onLoadMore: onLoadMore,
       emptyListWidget: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text('No users found for the ${widget.role.label.toLowerCase()} role.'),
+          child: Text('No users found for the ${role.label.toLowerCase()} role.'),
         ),
       ),
       tileBuilder: (context, user, index) {
@@ -286,24 +316,25 @@ class _RoleTabState extends ConsumerState<_RoleTab> {
                 : null,
           ),
           title: Text(user.displayName),
-          onTap: () => widget.onUserTap(user),
+          onTap: () => onUserTap(user),
         );
 
-        if (widget.role == EventRole.owner) {
+        // Owner can't be removed from their role
+        if (role == EventRole.owner) {
           return tile;
         }
 
         final dismissibleColor = Theme.of(context).colorScheme.onError;
 
         return Dismissible(
-          key: ValueKey('${widget.role.name}-${user.uid}'),
+          key: ValueKey('${role.name}-${user.uid}'),
           direction: DismissDirection.endToStart,
           confirmDismiss: (_) => showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Remove User Role'),
               content: Text(
-                'Remove ${user.displayName} from the ${widget.role.label} role?',
+                'Remove ${user.displayName} from the ${role.label} role?',
               ),
               actions: [
                 TextButton(
@@ -320,10 +351,7 @@ class _RoleTabState extends ConsumerState<_RoleTab> {
               ],
             ),
           ),
-          onDismissed: (_) => notifier.removeUserFromRole(
-            userId: user.uid,
-            role: widget.role,
-          ),
+          onDismissed: (_) => onRemoveUser(user.uid),
           background: Container(
             color: dismissibleColor,
             alignment: Alignment.centerRight,
