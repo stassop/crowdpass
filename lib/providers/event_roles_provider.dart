@@ -108,21 +108,14 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     );
 
     try {
-      final user = await ref.read(authProvider.future);
-      if (user == null) {
-        state = state.copyWith(error: 'User not authenticated');
-        return;
-      }
-
       final event = await ref.read(eventProvider(eventId).future);
       if (event == null) {
         state = state.copyWith(event: null, error: 'Event not found');
         return;
       }
 
-      final currentUserRole =
-          await ref.read(userRoleProvider((eventId: eventId, userId: user.uid)).future);
-      if (currentUserRole == null) {
+      final userRole =  await ref.read(userRoleProvider((eventId: eventId, userId: null)).future);
+      if (userRole == null) {
         state = state.copyWith(
           event: event,
           error: 'You do not have permission to view event roles',
@@ -130,7 +123,12 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
         return;
       }
 
-      state = state.copyWith(event: event, clearError: true);
+      state = state.copyWith(
+        event: event,
+        clearError: true,
+      );
+
+      await loadMore(userRole, replace: true);
     } catch (error, stackTrace) {
       debugPrint('EventRolesNotifier refresh error: $error\n$stackTrace');
       state = state.copyWith(error: error);
@@ -232,10 +230,10 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
         throw Exception('You do not have permission to manage roles.');
       }
 
-      final existingRole =
+      final userRole =
           await ref.read(userRoleProvider((eventId: eventId, userId: userId)).future);
 
-      if (existingRole == EventRole.owner) {
+      if (userRole == EventRole.owner) {
         throw Exception('Cannot change event owner.');
       }
 
@@ -255,9 +253,7 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
 
       batch.set(eventRef.collection(role.collectionName).doc(userId), {
         'userId': userId,
-        'eventId': eventId,
         'role': role.name,
-        'createdAt': FieldValue.serverTimestamp(),
       });
 
       await batch.commit();
@@ -285,10 +281,10 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
         throw Exception('You do not have permission to manage roles.');
       }
 
-      final existingRole =
+      final userRole =
           await ref.read(userRoleProvider((eventId: eventId, userId: userId)).future);
 
-      if (existingRole == EventRole.owner) {
+      if (userRole == EventRole.owner) {
         throw Exception('Cannot change event owner.');
       }
 

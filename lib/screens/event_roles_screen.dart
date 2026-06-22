@@ -24,6 +24,7 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
     with SingleTickerProviderStateMixin {
   String? _eventId;
   TabController? _tabController;
+  int _lastTabIndex = 0;
 
   @override
   void didChangeDependencies() {
@@ -34,11 +35,8 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
 
     if (_eventId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final role = EventRole.values[_tabController!.index];
-        final state = ref.read(eventRolesProvider(_eventId!));
-        if (state.usersForRole(role).isEmpty && !state.isLoadingRole(role)) {
-          ref.read(eventRolesProvider(_eventId!).notifier).refresh();
-        }
+        if (!mounted || _eventId == null) return;
+        ref.read(eventRolesProvider(_eventId!).notifier).refresh();
       });
     }
   }
@@ -57,7 +55,11 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
       return;
     }
 
-    final role = EventRole.values[controller.index];
+    final currentIndex = controller.index;
+    if (currentIndex == _lastTabIndex) return;
+    _lastTabIndex = currentIndex;
+
+    final role = EventRole.values[currentIndex];
     final state = ref.read(eventRolesProvider(eventId));
 
     if (state.usersForRole(role).isEmpty && !state.isLoadingRole(role)) {
@@ -82,17 +84,15 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
               child: Text('Error loading user role: $error'),
             ),
             data: (userRole) {
-              // Currently authenticated user's role for this event
               final currentUserRole = ref.watch(
                 userRoleProvider((
                   eventId: _eventId!,
                   userId: ref.watch(authProvider).value?.uid,
                 )),
               ).maybeWhen(data: (role) => role, orElse: () => null);
-              // We can't change the owner
-              final canEdit = userRole != EventRole.owner || currentUserRole == EventRole.admin;
-              // We use a local variable to track the pending role selection within the dialog,
-              // since we don't want to update the provider until the user confirms their selection.
+
+              final canEdit =
+                  userRole != EventRole.owner || currentUserRole == EventRole.admin;
               EventRole? pendingRole = userRole;
 
               return StatefulBuilder(
@@ -210,18 +210,18 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
       );
     }
 
-    final isInitialLoading =
-        state.event == null && EventRole.values.any(state.isLoadingRole);
+    // final isInitialLoading =
+    //     state.event == null && EventRole.values.any(state.isLoadingRole);
 
-    if (isInitialLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: BackButton(onPressed: () => Navigator.maybePop(context)),
-          title: const Text('Event Roles'),
-        ),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
+    // if (isInitialLoading) {
+    //   return Scaffold(
+    //     appBar: AppBar(
+    //       leading: BackButton(onPressed: () => Navigator.maybePop(context)),
+    //       title: const Text('Event Roles'),
+    //     ),
+    //     body: const Center(child: CircularProgressIndicator()),
+    //   );
+    // }
 
     if (state.event == null) {
       return Scaffold(
@@ -258,7 +258,7 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
               hasMore: state.hasMoreForRole(role),
               onRefresh: () => notifier.loadMore(role, replace: true),
               onLoadMore: () => notifier.loadMore(role),
-              onRemoveUser: (userId) => notifier.removeUserFromRole(
+              onDismissed: (userId) => notifier.removeUserFromRole(
                 userId: userId,
                 role: role,
               ),
@@ -278,7 +278,7 @@ class _RoleTab extends StatelessWidget {
     required this.hasMore,
     required this.onRefresh,
     required this.onLoadMore,
-    required this.onRemoveUser,
+    required this.onDismissed,
     required this.onUserTap,
   });
 
@@ -288,7 +288,7 @@ class _RoleTab extends StatelessWidget {
   final bool hasMore;
   final Future<void> Function() onRefresh;
   final Future<void> Function() onLoadMore;
-  final Future<void> Function(String userId) onRemoveUser;
+  final Future<void> Function(String userId) onDismissed;
   final void Function(UserProfile user) onUserTap;
 
   @override
@@ -319,7 +319,6 @@ class _RoleTab extends StatelessWidget {
           onTap: () => onUserTap(user),
         );
 
-        // Owner can't be removed from their role
         if (role == EventRole.owner) {
           return tile;
         }
@@ -351,7 +350,7 @@ class _RoleTab extends StatelessWidget {
               ],
             ),
           ),
-          onDismissed: (_) => onRemoveUser(user.uid),
+          onDismissed: (_) => onDismissed(user.uid),
           background: Container(
             color: dismissibleColor,
             alignment: Alignment.centerRight,
