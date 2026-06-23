@@ -86,7 +86,7 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
               final currentUserRole = ref.watch(
                 userRoleProvider((
                   eventId: _eventId!,
-                  userId: ref.watch(authProvider).value?.uid,
+                  userId: ref.read(authProvider).value?.uid ?? '',
                 )),
               ).maybeWhen(data: (role) => role, orElse: () => null);
               // We can't change the owner
@@ -183,7 +183,7 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
         .watch(
           userRoleProvider((
             eventId: _eventId!,
-            userId: ref.watch(authProvider).value?.uid,
+            userId: ref.watch(authProvider).value?.uid ?? '',
           )),
         )
         .maybeWhen(data: (role) => role != null, orElse: () => false);

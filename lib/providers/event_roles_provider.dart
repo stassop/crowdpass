@@ -11,13 +11,10 @@ import 'package:crowdpass/providers/user_profile_provider.dart';
 import 'package:crowdpass/providers/firestore_provider.dart';
 
 final userRoleProvider =
-    StreamProvider.family<EventRole?, ({String eventId, String? userId})>(
+    StreamProvider.family<EventRole?, ({String eventId, String userId})>(
   (ref, params) async* {
     final firestore = ref.read(firestoreProvider);
-    final resolvedUserId =
-        params.userId ?? (await ref.read(authProvider.future))?.uid;
-
-    if (resolvedUserId == null || resolvedUserId.isEmpty) {
+    if (params.userId.isEmpty) {
       yield null;
       return;
     }
@@ -27,7 +24,7 @@ final userRoleProvider =
           .collection('events')
           .doc(params.eventId)
           .collection(role.collectionName)
-          .where('userId', isEqualTo: resolvedUserId)
+          .where('userId', isEqualTo: params.userId)
           .limit(1)
           .get();
 
@@ -146,9 +143,10 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
         return;
       }
       
-      final isOwner = event.createdBy == user.uid;
-
-      if (!isOwner) {
+      final userRole = await ref.read(
+        userRoleProvider((eventId: eventId, userId: user.uid)).future,
+      );
+      if (userRole == null) {
         state = state.copyWith(
           event: event,
           isLoadingByRole: {
@@ -157,7 +155,7 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
           hasMoreByRole: {
             for (final role in EventRole.values) role: false,
           },
-          error: null,
+          error: 'User does not have a role in this event',
         );
         return;
       }
@@ -297,7 +295,10 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
       }
 
       final currentUserRole = await ref.read(
-        userRoleProvider((eventId: eventId, userId: null)).future, // Current authenticated user's role
+        userRoleProvider((
+          eventId: eventId,
+          userId: ref.read(authProvider).value?.uid ?? '',
+        )).future, // Current authenticated user's role
       );
 
       if (currentUserRole != EventRole.owner && currentUserRole != EventRole.admin) {
@@ -357,7 +358,10 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
       }
 
       final currentUserRole = await ref.read(
-        userRoleProvider((eventId: eventId, userId: null)).future, // Current authenticated user's role
+        userRoleProvider((
+          eventId: eventId,
+          userId: ref.read(authProvider).value?.uid ?? '',
+        )).future, // Current authenticated user's role
       );
 
       if (currentUserRole != EventRole.owner && currentUserRole != EventRole.admin) {
