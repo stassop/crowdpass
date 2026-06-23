@@ -103,17 +103,13 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
         times: times,
       );
 
-      final ownerCollection = EventRole.owner.collectionName;
-
       final batch = firestore.batch();
       batch.set(docRef, event.toJson());
       batch.set(
-        docRef.collection(ownerCollection).doc(user.uid),
+        docRef.collection(EventRole.owner.collectionName).doc(user.uid),
         {
           'userId': user.uid,
-          'eventId': eventId,
           'role': EventRole.owner.name,
-          'createdAt': FieldValue.serverTimestamp(),
         },
       );
 
@@ -136,19 +132,17 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
       final user = await ref.read(authProvider.future);
       if (user == null) throw Exception('Authentication required.');
 
-      final currentEvent = await ref.read(
-        eventProvider(updatedEvent.id).future,
-      );
-      if (currentEvent == null) throw Exception('Event does not exist.');
-      if (currentEvent.createdBy != user.uid) {
+      final event = await ref.read(eventProvider(updatedEvent.id).future);
+      if (event == null) throw Exception('Event does not exist.');
+      if (event.createdBy != user.uid) {
         throw Exception('Unauthorized update attempt.');
       }
 
-      String? imageURL = currentEvent.imageURL;
+      String? imageURL = event.imageURL;
       if (imagePath != null && imagePath.isNotEmpty) {
         imageURL = await ImageFileService.uploadImage(
           imagePath,
-          'events/${currentEvent.companyId}/images',
+          'events/${event.companyId}/images',
         );
       }
 
@@ -173,12 +167,12 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     try {
       final user = await ref.read(authProvider.future);
-      final currentEvent = await ref.read(eventProvider(eventId).future);
+      final event = await ref.read(eventProvider(eventId).future);
 
-      if (user == null || currentEvent == null) {
+      if (user == null || event == null) {
         throw Exception('Data mismatch.');
       }
-      if (currentEvent.createdBy != user.uid) throw Exception('Unauthorized.');
+      if (event.createdBy != user.uid) throw Exception('Unauthorized.');
 
       final firestore = ref.read(firestoreProvider);
       await firestore.collection('events').doc(eventId).update({
@@ -198,14 +192,14 @@ class EventAsyncNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     try {
       final user = await ref.read(authProvider.future);
-      final currentEvent = await ref.read(eventProvider(eventId).future);
+      final event = await ref.read(eventProvider(eventId).future);
 
-      if (user == null || currentEvent == null) {
+      if (user == null || event == null) {
         throw Exception('Data mismatch.');
       }
-      if (currentEvent.createdBy != user.uid) throw Exception('Unauthorized.');
+      if (event.createdBy != user.uid) throw Exception('Unauthorized.');
 
-      if (currentEvent.dates.start.isBefore(DateTime.now())) {
+      if (event.dates.start.isBefore(DateTime.now())) {
         throw Exception('Cannot delete events that have already started.');
       }
 

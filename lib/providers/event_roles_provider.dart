@@ -131,8 +131,8 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
         return;
       }
 
-      final eventDoc = await _firestore.collection('events').doc(eventId).get();
-      if (!eventDoc.exists || eventDoc.data() == null) {
+      final event = await ref.read(eventProvider(eventId).future);
+      if (event == null) {
         state = state.copyWith(
           event: null,
           isLoadingByRole: {
@@ -141,15 +141,11 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
           hasMoreByRole: {
             for (final role in EventRole.values) role: false,
           },
-          error: null,
+          error: 'Event not found'
         );
         return;
       }
-
-      final eventData = Map<String, dynamic>.from(eventDoc.data()!);
-      eventData['id'] = eventDoc.id;
-      final event = Event.fromJson(eventData);
-
+      
       final isOwner = event.createdBy == user.uid;
 
       if (!isOwner) {
