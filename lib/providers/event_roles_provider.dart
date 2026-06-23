@@ -43,6 +43,7 @@ class EventRolesState {
   final Map<EventRole, List<UserProfile>> usersByRole;
   final Map<EventRole, bool> isLoadingByRole;
   final Map<EventRole, bool> hasMoreByRole;
+  final Map<EventRole, DocumentSnapshot?> lastDocByRole;
   final Object? error;
 
   const EventRolesState({
@@ -50,14 +51,12 @@ class EventRolesState {
     this.usersByRole = const {},
     this.isLoadingByRole = const {},
     this.hasMoreByRole = const {},
+    this.lastDocByRole = const {}, 
     this.error,
   });
 
-  List<UserProfile> usersForRole(EventRole role) =>
-      usersByRole[role] ?? const [];
-
+  List<UserProfile> usersForRole(EventRole role) => usersByRole[role] ?? const [];
   bool isLoadingRole(EventRole role) => isLoadingByRole[role] ?? false;
-
   bool hasMoreForRole(EventRole role) => hasMoreByRole[role] ?? true;
 
   EventRolesState copyWith({
@@ -65,6 +64,7 @@ class EventRolesState {
     Map<EventRole, List<UserProfile>>? usersByRole,
     Map<EventRole, bool>? isLoadingByRole,
     Map<EventRole, bool>? hasMoreByRole,
+    Map<EventRole, DocumentSnapshot?>? lastDocByRole,
     Object? error,
   }) {
     return EventRolesState(
@@ -72,6 +72,7 @@ class EventRolesState {
       usersByRole: usersByRole ?? this.usersByRole,
       isLoadingByRole: isLoadingByRole ?? this.isLoadingByRole,
       hasMoreByRole: hasMoreByRole ?? this.hasMoreByRole,
+      lastDocByRole: lastDocByRole ?? this.lastDocByRole,
       error: error,
     );
   }
@@ -80,7 +81,7 @@ class EventRolesState {
 class EventRolesNotifier extends Notifier<EventRolesState> {
   EventRolesNotifier(this.eventId);
 
-  static const int pageSize = 20;
+  static const int pageSize = 30;
 
   final String eventId;
 
@@ -90,26 +91,18 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
   EventRolesState build() {
     Future.microtask(refresh);
     return EventRolesState(
-      isLoadingByRole: {
-        for (final role in EventRole.values) role: false,
-      },
-      hasMoreByRole: {
-        for (final role in EventRole.values) role: true,
-      },
+      isLoadingByRole: { for (final role in EventRole.values) role: false },
+      hasMoreByRole: { for (final role in EventRole.values) role: true },
+      lastDocByRole: { for (final role in EventRole.values) role: null }, // <-- Initialize
     );
   }
 
   Future<void> refresh() async {
     state = state.copyWith(
-      usersByRole: {
-        for (final role in EventRole.values) role: const [],
-      },
-      isLoadingByRole: {
-        for (final role in EventRole.values) role: true,
-      },
-      hasMoreByRole: {
-        for (final role in EventRole.values) role: true,
-      },
+      usersByRole: { for (final role in EventRole.values) role: const [] },
+      isLoadingByRole: { for (final role in EventRole.values) role: true },
+      hasMoreByRole: { for (final role in EventRole.values) role: true },
+      lastDocByRole: { for (final role in EventRole.values) role: null }, 
       error: null,
     );
 
@@ -117,12 +110,8 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
       final user = await ref.read(authProvider.future);
       if (user == null) {
         state = state.copyWith(
-          isLoadingByRole: {
-            for (final role in EventRole.values) role: false,
-          },
-          hasMoreByRole: {
-            for (final role in EventRole.values) role: false,
-          },
+          isLoadingByRole: { for (final role in EventRole.values) role: false },
+          hasMoreByRole: { for (final role in EventRole.values) role: false },
           error: 'User not authenticated',
         );
         return;
@@ -132,12 +121,8 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
       if (event == null) {
         state = state.copyWith(
           event: null,
-          isLoadingByRole: {
-            for (final role in EventRole.values) role: false,
-          },
-          hasMoreByRole: {
-            for (final role in EventRole.values) role: false,
-          },
+          isLoadingByRole: { for (final role in EventRole.values) role: false },
+          hasMoreByRole: { for (final role in EventRole.values) role: false },
           error: 'Event not found'
         );
         return;
@@ -149,12 +134,8 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
       if (userRole == null) {
         state = state.copyWith(
           event: event,
-          isLoadingByRole: {
-            for (final role in EventRole.values) role: false,
-          },
-          hasMoreByRole: {
-            for (final role in EventRole.values) role: false,
-          },
+          isLoadingByRole: { for (final role in EventRole.values) role: false },
+          hasMoreByRole: { for (final role in EventRole.values) role: false },
           error: 'User does not have a role in this event',
         );
         return;
@@ -171,12 +152,8 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     } catch (error, stackTrace) {
       debugPrint('EventRolesNotifier error: $error\n$stackTrace');
       state = state.copyWith(
-        isLoadingByRole: {
-          for (final role in EventRole.values) role: false,
-        },
-        hasMoreByRole: {
-          for (final role in EventRole.values) role: false,
-        },
+        isLoadingByRole: { for (final role in EventRole.values) role: false },
+        hasMoreByRole: { for (final role in EventRole.values) role: false },
         error: error,
       );
     }
@@ -195,58 +172,62 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     try {
       final event = state.event;
       if (event == null) {
-        state = state.copyWith(
-          isLoadingByRole: {...state.isLoadingByRole, role: false},
-        );
+        state = state.copyWith(isLoadingByRole: {...state.isLoadingByRole, role: false});
         return;
       }
 
-      final snapshot = await _firestore
+      // 1. Build the query dynamically using the cursor map
+      var query = _firestore
           .collection('events')
           .doc(event.id)
           .collection(role.collectionName)
-          .get();
+          .limit(pageSize);
 
-      final fetchedUsers = <UserProfile>[];
-      for (final doc in snapshot.docs) {
-        final userId = doc.data()['userId'] as String?;
-        if (userId == null || userId.isEmpty) continue;
-
-        final userProfile = await _getUserProfile(userId);
-        if (userProfile == null) continue;
-
-        fetchedUsers.add(userProfile);
+      // If we're appending data and have a saved cursor position, use it!
+      final lastDoc = state.lastDocByRole[role];
+      if (!replace && lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
       }
 
-      fetchedUsers.sort(
-        (firstUser, secondUser) => firstUser.displayName
-            .toLowerCase()
-            .compareTo(secondUser.displayName.toLowerCase()),
-      );
-
-      final existingUsers = replace ? <UserProfile>[] : state.usersForRole(role);
-      final startIndex = replace ? 0 : existingUsers.length;
-
-      if (startIndex >= fetchedUsers.length) {
+      final snapshot = await query.get();
+      
+      if (snapshot.docs.isEmpty) {
         state = state.copyWith(
           hasMoreByRole: {...state.hasMoreByRole, role: false},
           isLoadingByRole: {...state.isLoadingByRole, role: false},
-          error: null,
         );
         return;
       }
 
-      final endIndex = (startIndex + pageSize).clamp(0, fetchedUsers.length);
-      final pageUsers = fetchedUsers.sublist(startIndex, endIndex);
+      // Doc IDs are same as user IDs
+      final userIds = snapshot.docs.map((doc) => doc.id).toList();
 
+      if (userIds.isEmpty) {
+        state = state.copyWith(isLoadingByRole: {...state.isLoadingByRole, role: false});
+        return;
+      }
+
+      final fetchedProfiles = await _fetchProfilesInChunks(userIds);
+
+      fetchedProfiles.sort(
+        (a, b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+      );
+
+      final existingUsers = replace ? <UserProfile>[] : state.usersForRole(role);
+
+      // 2. Commit the updates alongside the new trailing document cursor
       state = state.copyWith(
         usersByRole: {
           ...state.usersByRole,
-          role: replace ? pageUsers : [...existingUsers, ...pageUsers],
+          role: replace ? fetchedProfiles : [...existingUsers, ...fetchedProfiles],
+        },
+        lastDocByRole: {
+          ...state.lastDocByRole,
+          role: snapshot.docs.last, // <-- Save the new boundary snapshot here
         },
         hasMoreByRole: {
-          ...state.hasMoreByRole,
-          role: endIndex < fetchedUsers.length
+          ...state.hasMoreByRole, 
+          role: snapshot.docs.length == pageSize,
         },
         isLoadingByRole: {...state.isLoadingByRole, role: false},
         error: null,
@@ -261,19 +242,34 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
     }
   }
 
-  Future<UserProfile?> _getUserProfile(String userId) async {
-    try {
-      final snapshot = await _firestore.collection('users').doc(userId).get();
-      if (!snapshot.exists || snapshot.data() == null) return null;
+  // Efficient batching helper method
+  Future<List<UserProfile>> _fetchProfilesInChunks(List<String> userIds) async {
+    final List<UserProfile> profiles = [];
+    const int chunkSize = 30; // Firestore whereIn limit
 
-      return UserProfile.fromJson({
-        ...snapshot.data()!,
-        'uid': snapshot.id,
-      });
-    } catch (error, stackTrace) {
-      debugPrint('Error fetching user profile: $error\n$stackTrace');
-      return null;
+    final List<List<String>> chunks = [];
+    for (var i = 0; i < userIds.length; i += chunkSize) {
+      chunks.add(userIds.sublist(i, i + chunkSize > userIds.length ? userIds.length : i + chunkSize));
     }
+
+    // Execute all chunk requests concurrently via Future.wait
+    final futures = chunks.map((chunk) async {
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => UserProfile.fromJson({...doc.data(), 'uid': doc.id}))
+          .toList();
+    });
+
+    final results = await Future.wait(futures);
+    for (final list in results) {
+      profiles.addAll(list);
+    }
+
+    return profiles;
   }
 
   Future<void> addUserToRole({
