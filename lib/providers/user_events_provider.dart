@@ -295,12 +295,6 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
   /// 3. Filter documents to only those matching the current userId
   /// 4. Navigate up: doc.reference.parent.parent gives the event document reference
   /// 5. Extract event IDs and map to their corresponding role
-  ///
-  /// Expected Firestore structure:
-  /// events/{eventId}/owners/{docId} → { userId: "user123" }
-  /// events/{eventId}/admins/{docId} → { userId: "user123" }
-  /// events/{eventId}/guests/{docId} → { userId: "user123" }
-  /// etc.
   Future<Map<String, EventRole>> _getUserEventRoles(String userId) async {
     final eventRoles = <String, EventRole>{};
 
