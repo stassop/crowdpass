@@ -77,12 +77,9 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
         final state = ref.watch(userEventsProvider);
         final notifier = ref.read(userEventsProvider.notifier);
 
-        final earliestDate = state.earliestDate;
-        final latestDate = state.latestDate;
-        final selectedRoles = state.filters.roles;
+        final roles = state.filters.roles;
         final dates = state.filters.dates;
-        final bool anyFilterSelected =
-            selectedRoles.isNotEmpty || dates != null;
+        final bool anyFilterSelected = roles.isNotEmpty || dates != null;
 
         final theme = Theme.of(context);
 
@@ -111,7 +108,7 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
                       for (final role in EventRole.values)
                         FilterChip(
                           label: Text(role.label),
-                          selected: selectedRoles.contains(role),
+                          selected: roles.contains(role),
                           onSelected: (_) => notifier.toggleRoleFilter(role),
                         ),
                     ],
@@ -120,8 +117,6 @@ class _UserEventsScreenState extends ConsumerState<UserEventsScreen> {
                   EditableDateRangeField(
                     isEditable: true,
                     initialValue: dates,
-                    firstDate: earliestDate,
-                    lastDate: latestDate,
                     onChanged: (value) {
                       notifier.setFilters(
                         state.filters.copyWith(dates: value),

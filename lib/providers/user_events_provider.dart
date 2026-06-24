@@ -11,7 +11,7 @@ class UserEventsFilters {
   final DateTimeRange? dates;
   final Set<EventRole> roles; // Multiple roles filter, empty set means all roles
 
-  const UserEventsFilters({
+  UserEventsFilters({
     this.dates,
     Set<EventRole>? roles,
   }) : roles = roles ?? const <EventRole>{...EventRole.values};
@@ -43,29 +43,23 @@ class UserEventsState {
   final List<Event> events;
   final Map<String, EventRole> eventToRole; // Map eventId → user's role in that event
   final UserEventsFilters filters;
-  final DateTime? earliestDate; // Earliest event user ever participated in (across all time)
-  final DateTime? latestDate; // Latest event user ever participated in (across all time)
   final bool isLoading;
   final bool hasMore; // Indicates if more events can be loaded
   final Object? error;
 
-  const UserEventsState({
+  UserEventsState({
     this.events = const [],
     this.eventToRole = const {},
-    this.filters = const UserEventsFilters(),
-    this.earliestDate,
-    this.latestDate,
+    UserEventsFilters? filters, // 1. Made nullable here
     this.isLoading = false,
     this.hasMore = true,
     this.error,
-  });
+  }) : filters = filters ?? UserEventsFilters(); // 2. Initialized here at runtime
 
   UserEventsState copyWith({
     List<Event>? events,
     Map<String, EventRole>? eventToRole,
     UserEventsFilters? filters,
-    DateTime? earliestDate,
-    DateTime? latestDate,
     bool? isLoading,
     bool? hasMore,
     Object? error,
@@ -74,8 +68,6 @@ class UserEventsState {
       events: events ?? this.events,
       eventToRole: eventToRole ?? this.eventToRole,
       filters: filters ?? this.filters,
-      earliestDate: earliestDate ?? this.earliestDate,
-      latestDate: latestDate ?? this.latestDate,
       isLoading: isLoading ?? this.isLoading,
       hasMore: hasMore ?? this.hasMore,
       error: error,
@@ -91,21 +83,7 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
 
   @override
   UserEventsState build() {
-    return const UserEventsState();
-  }
-
-  DateTimeRange _defaultDateRange({
-    DateTime? earliestDate,
-    DateTime? latestDate,
-  }) {
-    final defaultEnd = latestDate ?? DateTime.now();
-    final thirtyDaysBack = defaultEnd.subtract(const Duration(days: 30));
-    final defaultStart = earliestDate != null &&
-            thirtyDaysBack.isBefore(earliestDate)
-        ? earliestDate
-        : thirtyDaysBack;
-
-    return DateTimeRange(start: defaultStart, end: defaultEnd);
+    return UserEventsState();
   }
 
   /// Update filters and refresh events
@@ -128,12 +106,8 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
 
   /// Clear all filters and refresh with defaults
   void resetFilters() {
-    setFilters(UserEventsFilters(
-      dates: _defaultDateRange(
-        earliestDate: state.earliestDate,
-        latestDate: state.latestDate,
-      ),
-    ));
+    state = state.copyWith(filters: UserEventsFilters());
+    Future.microtask(refresh);
   }
 
   /// Refresh: Clear all events and reload from the beginning
@@ -195,18 +169,11 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
         final earliest = await _getEarliestEventDate(userEventIds);
         final latest = await _getLatestEventDate(userEventIds);
 
-        if (earliest != state.earliestDate ||
-            latest != state.latestDate) {
-          state = state.copyWith(
-            filters: filters.copyWith(
-              dates: _defaultDateRange(
-                earliestDate: earliest,
-                latestDate: latest,
-              ),
-            ),
-            earliestDate: earliest,
-            latestDate: latest,
+        if (earliest != null && latest != null) {
+          filters = filters.copyWith(
+            dates: DateTimeRange(start: earliest, end: latest),
           );
+          state = state.copyWith(filters: filters);
         }
       }
 
@@ -225,7 +192,7 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
           isLessThanOrEqualTo: filters.dates!.end.toIso8601String(),
         );
       }
-
+    
       query = query.orderBy('dates.start', descending: false);
 
       if (!replace && state.events.isNotEmpty) {
@@ -318,7 +285,7 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
     try {
       final snapshot = await _firestore
           .collection('events')
-          .where(FieldPath.documentId, whereIn: userEventIds)
+          .where('id', whereIn: userEventIds)
           .orderBy('dates.start', descending: false)
           .limit(1)
           .get();
@@ -326,7 +293,8 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
       if (snapshot.docs.isEmpty) return null;
 
       final data = snapshot.docs.first.data();
-      final startDateStr = data['dates']['start'] as String?;
+      final datesData = data['dates'] as Map<String, dynamic>?;
+      final startDateStr = datesData?['start'] as String?;
       if (startDateStr == null) return null;
 
       return DateTime.tryParse(startDateStr);
@@ -342,7 +310,7 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
     try {
       final snapshot = await _firestore
           .collection('events')
-          .where(FieldPath.documentId, whereIn: userEventIds)
+          .where('id', whereIn: userEventIds)
           .orderBy('dates.start', descending: true)
           .limit(1)
           .get();
@@ -350,7 +318,8 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
       if (snapshot.docs.isEmpty) return null;
 
       final data = snapshot.docs.first.data();
-      final startDateStr = data['dates']['start'] as String?;
+      final datesData = data['dates'] as Map<String, dynamic>?;
+      final startDateStr = datesData?['start'] as String?;
       if (startDateStr == null) return null;
 
       return DateTime.tryParse(startDateStr);
