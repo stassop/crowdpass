@@ -136,7 +136,7 @@ class _DateRangeFieldState extends State<EditableDateRangeField> {
       _syncController(deferIfBuilding: true);
     }
     
-    // Also rebuild if firstDate or lastDate changes (e.g., when earliestEventDate updates)
+    // Also rebuild if firstDate or lastDate changes (e.g., when earliestDate updates)
     if (oldWidget.firstDate != widget.firstDate || 
         oldWidget.lastDate != widget.lastDate) {
       // Trigger a rebuild so the date picker uses the new constraints

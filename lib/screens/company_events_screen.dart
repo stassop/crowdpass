@@ -52,7 +52,7 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
         final state = ref.watch(companyEventsProvider(company.id));
         final notifier = ref.read(companyEventsProvider(company.id).notifier);
 
-        final earliestEventDate = state.earliestEventDate;
+        final earliestDate = state.earliestDate;
         final dates = state.filters.dates;
         final bool anyFilterSelected = dates != null;
 
@@ -92,7 +92,7 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
                   EditableDateRangeField(
                     isEditable: true,
                     initialValue: dates,
-                    firstDate: earliestEventDate,
+                    firstDate: earliestDate,
                     onChanged: (value) =>
                         notifier.setFilters(state.filters.copyWith(dates: value)),
                   ),

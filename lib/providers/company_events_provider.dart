@@ -35,8 +35,8 @@ class CompanyEventsFilters {
 class CompanyEventsState {
   final List<Event> events;
   final CompanyEventsFilters filters;
-  final DateTime? earliestEventDate; // Earliest company event across all time
-  final DateTime? latestEventDate; // Latest company event across all time
+  final DateTime? earliestDate; // Earliest company event across all time
+  final DateTime? latestDate; // Latest company event across all time
   final bool isLoading;
   final bool hasMore;
   final Object? error;
@@ -44,8 +44,8 @@ class CompanyEventsState {
   const CompanyEventsState({
     this.events = const [],
     this.filters = const CompanyEventsFilters(),
-    this.earliestEventDate,
-    this.latestEventDate,
+    this.earliestDate,
+    this.latestDate,
     this.isLoading = false,
     this.hasMore = true,
     this.error,
@@ -54,8 +54,8 @@ class CompanyEventsState {
   CompanyEventsState copyWith({
     List<Event>? events,
     CompanyEventsFilters? filters,
-    DateTime? earliestEventDate,
-    DateTime? latestEventDate,
+    DateTime? earliestDate,
+    DateTime? latestDate,
     bool? isLoading,
     bool? hasMore,
     Object? error,
@@ -63,8 +63,8 @@ class CompanyEventsState {
     return CompanyEventsState(
       events: events ?? this.events,
       filters: filters ?? this.filters,
-      earliestEventDate: earliestEventDate ?? this.earliestEventDate,
-      latestEventDate: latestEventDate ?? this.latestEventDate,
+      earliestDate: earliestDate ?? this.earliestDate,
+      latestDate: latestDate ?? this.latestDate,
       isLoading: isLoading ?? this.isLoading,
       hasMore: hasMore ?? this.hasMore,
       error: error,
@@ -106,7 +106,7 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
 
   /// Clear all filters and refresh with defaults
   void resetFilters() {
-    final latest = state.latestEventDate;
+    final latest = state.latestDate;
     final defaultEnd = latest ?? DateTime.now();
     final defaultStart = defaultEnd.subtract(const Duration(days: 30));
     final defaultRange = DateTimeRange(start: defaultStart, end: defaultEnd);
@@ -142,15 +142,15 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
 
   Future<void> _loadMoreInternal({required bool replace}) async {
     try {
-      DateTime? earliest = state.earliestEventDate;
-      DateTime? latest = state.latestEventDate;
+      DateTime? earliest = state.earliestDate;
+      DateTime? latest = state.latestDate;
 
       if (replace) {
         earliest = await _getEarliestEventDate();
         latest = await _getLatestEventDate();
         state = state.copyWith(
-          earliestEventDate: earliest,
-          latestEventDate: latest,
+          earliestDate: earliest,
+          latestDate: latest,
         );
         resetFilters();
       }

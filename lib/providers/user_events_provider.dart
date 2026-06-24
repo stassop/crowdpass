@@ -13,8 +13,8 @@ class UserEventsFilters {
 
   const UserEventsFilters({
     this.dates,
-    this.roles = const {},
-  });
+    Set<EventRole>? roles,
+  }) : roles = roles ?? const <EventRole>{...EventRole.values};
 
   UserEventsFilters copyWith({
     DateTimeRange? dates,
@@ -31,11 +31,11 @@ class UserEventsFilters {
     return identical(this, other) ||
         (other is UserEventsFilters &&
             other.dates == dates &&
-            other.roles == roles);
+            setEquals(other.roles, roles));
   }
 
   @override
-  int get hashCode => Object.hash(dates, roles);
+  int get hashCode => Object.hash(dates, Object.hashAllUnordered(roles));
 }
 
 /// State for user events with pagination and error handling
@@ -43,8 +43,8 @@ class UserEventsState {
   final List<Event> events;
   final Map<String, EventRole> eventToRole; // Map eventId → user's role in that event
   final UserEventsFilters filters;
-  final DateTime? earliestEventDate; // Earliest event user ever participated in (across all time)
-  final DateTime? latestEventDate; // Latest event user ever participated in (across all time)
+  final DateTime? earliestDate; // Earliest event user ever participated in (across all time)
+  final DateTime? latestDate; // Latest event user ever participated in (across all time)
   final bool isLoading;
   final bool hasMore; // Indicates if more events can be loaded
   final Object? error;
@@ -53,8 +53,8 @@ class UserEventsState {
     this.events = const [],
     this.eventToRole = const {},
     this.filters = const UserEventsFilters(),
-    this.earliestEventDate,
-    this.latestEventDate,
+    this.earliestDate,
+    this.latestDate,
     this.isLoading = false,
     this.hasMore = true,
     this.error,
@@ -64,8 +64,8 @@ class UserEventsState {
     List<Event>? events,
     Map<String, EventRole>? eventToRole,
     UserEventsFilters? filters,
-    DateTime? earliestEventDate,
-    DateTime? latestEventDate,
+    DateTime? earliestDate,
+    DateTime? latestDate,
     bool? isLoading,
     bool? hasMore,
     Object? error,
@@ -74,8 +74,8 @@ class UserEventsState {
       events: events ?? this.events,
       eventToRole: eventToRole ?? this.eventToRole,
       filters: filters ?? this.filters,
-      earliestEventDate: earliestEventDate ?? this.earliestEventDate,
-      latestEventDate: latestEventDate ?? this.latestEventDate,
+      earliestDate: earliestDate ?? this.earliestDate,
+      latestDate: latestDate ?? this.latestDate,
       isLoading: isLoading ?? this.isLoading,
       hasMore: hasMore ?? this.hasMore,
       error: error,
@@ -91,21 +91,21 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
 
   @override
   UserEventsState build() {
-    // Auto-load events on initialization with default settings
-    Future.microtask(() {
-      final now = DateTime.now();
-      final oneMonthLater = now.add(const Duration(days: 30));
-      final defaultRange = DateTimeRange(start: now, end: oneMonthLater);
-      
-      // By default, all roles are selected
-      final defaultFilters = UserEventsFilters(
-        dates: defaultRange,
-        roles: EventRole.values.toSet(),
-      );
-      
-      setFilters(defaultFilters);
-    });
     return const UserEventsState();
+  }
+
+  DateTimeRange _defaultDateRange({
+    DateTime? earliestDate,
+    DateTime? latestDate,
+  }) {
+    final defaultEnd = latestDate ?? DateTime.now();
+    final thirtyDaysBack = defaultEnd.subtract(const Duration(days: 30));
+    final defaultStart = earliestDate != null &&
+            thirtyDaysBack.isBefore(earliestDate)
+        ? earliestDate
+        : thirtyDaysBack;
+
+    return DateTimeRange(start: defaultStart, end: defaultEnd);
   }
 
   /// Update filters and refresh events
@@ -128,43 +128,36 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
 
   /// Clear all filters and refresh with defaults
   void resetFilters() {
-    final latest = state.latestEventDate;
-    // Start with the latest event date minus 1 month as the default end of the date range filter
-    final defaultEnd = latest ?? DateTime.now();
-    final defaultStart = defaultEnd.subtract(const Duration(days: 30));
-    final defaultRange = DateTimeRange(start: defaultStart, end: defaultEnd);
-    final defaultFilters = UserEventsFilters(
-      dates: defaultRange,
-      roles: EventRole.values.toSet(),
-    );
-    setFilters(defaultFilters);
+    setFilters(UserEventsFilters(
+      dates: _defaultDateRange(
+        earliestDate: state.earliestDate,
+        latestDate: state.latestDate,
+      ),
+    ));
   }
 
   /// Refresh: Clear all events and reload from the beginning
   Future<void> refresh() async {
-    state = state.copyWith(
-      events: const [],
-      eventToRole: const {},
-      isLoading: true,
-      hasMore: true,
-      error: null,
-    );
-
-    await _loadMoreInternal(replace: true);
-    state = state.copyWith(isLoading: false);
+    await loadMore(replace: true);
   }
 
-  /// Load more: Append next page of events (pagination)
-  Future<void> loadMore() async {
-    if (state.isLoading || !state.hasMore) return;
+  /// Load events. If replace=true, reload from the beginning.
+  Future<void> loadMore({bool replace = false}) async {
+    if (state.isLoading) return;
+    if (!replace && !state.hasMore) return;
 
-    state = state.copyWith(isLoading: true, error: null);
-    await _loadMoreInternal(replace: false);
-    state = state.copyWith(isLoading: false);
-  }
+    if (replace) {
+      state = state.copyWith(
+        events: const [],
+        eventToRole: const {},
+        isLoading: true,
+        hasMore: true,
+        error: null,
+      );
+    } else {
+      state = state.copyWith(isLoading: true, error: null);
+    }
 
-  /// Internal method: Handles pagination logic (replace=true for refresh, false for loadMore)
-  Future<void> _loadMoreInternal({required bool replace}) async {
     try {
       final user = await ref.read(authProvider.future);
       if (user == null) {
@@ -172,6 +165,7 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
           events: const [],
           eventToRole: const {},
           hasMore: false,
+          isLoading: false,
           error: 'User not authenticated',
         );
         return;
@@ -189,33 +183,38 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
           events: const [],
           eventToRole: const {},
           hasMore: false,
+          isLoading: false,
           error: null,
         );
         return;
       }
 
-      // Compute earliest date immediately on first load, before event fetching
-      DateTime? earliest = state.earliestEventDate;
-      DateTime? latest = state.latestEventDate;
+      var filters = state.filters;
 
       if (replace) {
-        earliest = await _getEarliestEventDate(userEventIds);
-        latest = await _getLatestEventDate(userEventIds);
-        state = state.copyWith(
-          earliestEventDate: earliest,
-          latestEventDate: latest,
-        ); // Update state immediately
-        resetFilters();
+        final earliest = await _getEarliestEventDate(userEventIds);
+        final latest = await _getLatestEventDate(userEventIds);
+
+        if (earliest != state.earliestDate ||
+            latest != state.latestDate) {
+          state = state.copyWith(
+            filters: filters.copyWith(
+              dates: _defaultDateRange(
+                earliestDate: earliest,
+                latestDate: latest,
+              ),
+            ),
+            earliestDate: earliest,
+            latestDate: latest,
+          );
+        }
       }
 
-      final filters = state.filters;
-
-      // Fetch events, filtered by date range
+      // We can't use FieldPath.documentId here because if multiple where query limitation
       Query<Map<String, dynamic>> query = _firestore
           .collection('events')
-          .where('id', whereIn: userEventIds); // <-- Changed from FieldPath.documentId
+          .where('id', whereIn: userEventIds);
 
-      // This inequality filter is now completely legal
       if (filters.dates != null) {
         query = query.where(
           'dates.start',
@@ -227,16 +226,13 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
         );
       }
 
-      // This sort is now completely legal
       query = query.orderBy('dates.start', descending: false);
 
-      // Apply pagination cursor
       if (!replace && state.events.isNotEmpty) {
         final lastEvent = state.events.last;
         query = query.startAfter([lastEvent.dates.start.toIso8601String()]);
       }
 
-      // Limit to page size
       query = query.limit(pageSize);
 
       final snapshot = await query.get();
@@ -253,19 +249,14 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
 
         // Get user's role in this event
         final userRole = userEventRoles[event.id];
-        
+
         // Include event only if user has a role and that role is selected
-        // (empty roles set means all roles are selected)
-        if (userRole != null) {
-          final rolesFilter = filters.roles;
-          if (rolesFilter.isEmpty || rolesFilter.contains(userRole)) {
-            filteredEvents.add(event);
-            filteredEventRoles[event.id] = userRole;
-          }
+        if (userRole != null && filters.roles.contains(userRole)) {
+          filteredEvents.add(event);
+          filteredEventRoles[event.id] = userRole;
         }
       }
 
-      // Step 7: Update state
       final newEvents = replace
           ? filteredEvents
           : [...state.events, ...filteredEvents];
@@ -278,10 +269,16 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
         events: newEvents,
         eventToRole: newRoles,
         hasMore: docs.length == pageSize,
+        isLoading: false,
+        error: null,
       );
     } catch (error, stackTrace) {
       debugPrint('UserEventsNotifier error: $error\n$stackTrace');
-      state = state.copyWith(error: error, hasMore: false);
+      state = state.copyWith(
+        isLoading: false,
+        hasMore: false,
+        error: error,
+      );
     }
   }
 
@@ -343,7 +340,7 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
   /// This queries ALL user events without date filtering
   Future<DateTime?> _getLatestEventDate(List<String> userEventIds) async {
     try {
-      final snapshot = await _firestore          
+      final snapshot = await _firestore
           .collection('events')
           .where(FieldPath.documentId, whereIn: userEventIds)
           .orderBy('dates.start', descending: true)
@@ -351,9 +348,11 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
           .get();
 
       if (snapshot.docs.isEmpty) return null;
+
       final data = snapshot.docs.first.data();
       final startDateStr = data['dates']['start'] as String?;
       if (startDateStr == null) return null;
+
       return DateTime.tryParse(startDateStr);
     } catch (error, stackTrace) {
       debugPrint('Error fetching latest event date: $error\n$stackTrace');
