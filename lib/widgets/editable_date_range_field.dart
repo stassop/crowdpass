@@ -75,12 +75,51 @@ class _DateRangeFieldState extends State<EditableDateRangeField> {
   }
 
   Future<void> _showDateTimeRangePicker() async {
+    DateTime dateOnly(DateTime date) =>
+        DateTime(date.year, date.month, date.day);
+
+    final now = dateOnly(DateTime.now());
+
+    final initialRange = _dateRange == null
+        ? null
+        : DateTimeRange(
+            start: dateOnly(_dateRange!.start),
+            end: dateOnly(_dateRange!.end),
+          );
+
+    final firstDate = dateOnly(
+      widget.firstDate ??
+          (initialRange != null && initialRange.start.isBefore(now)
+              ? initialRange.start
+              : now),
+    );
+
+    final defaultLastDate = now.add(const Duration(days: 365 * 5));
+
+    final lastDate = dateOnly(
+      widget.lastDate ??
+          (initialRange != null && initialRange.end.isAfter(defaultLastDate)
+              ? initialRange.end
+              : defaultLastDate),
+    );
+
+    final safeInitialRange = initialRange == null
+        ? null
+        : DateTimeRange(
+            start: initialRange.start.isBefore(firstDate)
+                ? firstDate
+                : initialRange.start,
+            end: initialRange.end.isAfter(lastDate)
+                ? lastDate
+                : initialRange.end,
+          );
+
     final DateTimeRange? pickedRange = await showDateRangePicker(
       context: context,
-      initialDateRange: _dateRange,
+      initialDateRange: safeInitialRange,
       initialEntryMode: DatePickerEntryMode.calendar,
-      firstDate: widget.firstDate ?? DateTime.now(),
-      lastDate: widget.lastDate ?? DateTime.now().add(const Duration(days: 365 * 5)),
+      firstDate: firstDate,
+      lastDate: lastDate,
       helpText: widget.title,
       builder: (BuildContext context, Widget? child) {
         final animation = CurvedAnimation(
@@ -135,9 +174,9 @@ class _DateRangeFieldState extends State<EditableDateRangeField> {
       _dateRange = widget.initialValue;
       _syncController(deferIfBuilding: true);
     }
-    
+
     // Also rebuild if firstDate or lastDate changes (e.g., when earliestDate updates)
-    if (oldWidget.firstDate != widget.firstDate || 
+    if (oldWidget.firstDate != widget.firstDate ||
         oldWidget.lastDate != widget.lastDate) {
       // Trigger a rebuild so the date picker uses the new constraints
       if (mounted) {

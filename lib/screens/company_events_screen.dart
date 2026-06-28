@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:crowdpass/providers/company_provider.dart';
 import 'package:crowdpass/providers/company_events_provider.dart';
-import 'package:crowdpass/widgets/refreshable_event_list.dart';
+
+import 'package:crowdpass/widgets/refreshable_list.dart';
 import 'package:crowdpass/widgets/error_dialog.dart';
 import 'package:crowdpass/widgets/editable_date_range_field.dart';
+
+import 'package:crowdpass/services/date_time_service.dart';
 
 class CompanyEventsScreen extends ConsumerStatefulWidget {
   const CompanyEventsScreen({super.key});
@@ -52,7 +55,6 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
         final state = ref.watch(companyEventsProvider(company.id));
         final notifier = ref.read(companyEventsProvider(company.id).notifier);
 
-        final earliestDate = state.earliestDate;
         final dates = state.filters.dates;
         final bool anyFilterSelected = dates != null;
 
@@ -86,43 +88,36 @@ class _CompanyEventsScreenState extends ConsumerState<CompanyEventsScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   Text('Filters', style: theme.textTheme.titleLarge),
-
                   const SizedBox(height: 16),
-
                   EditableDateRangeField(
                     isEditable: true,
                     initialValue: dates,
-                    firstDate: earliestDate,
                     onChanged: (value) =>
                         notifier.setFilters(state.filters.copyWith(dates: value)),
                   ),
-
                   const SizedBox(height: 16),
-
                   if (anyFilterSelected)
                     ElevatedButton.icon(
                       icon: const Icon(Icons.refresh),
                       label: const Text('Reset Filters'),
-                      onPressed: () {
-                        notifier.resetFilters();
-                      },
+                      onPressed: notifier.resetFilters,
                     ),
-
                   const SizedBox(height: 16),
                 ],
               ),
             ),
           ),
-          body: RefreshableEventList(
-            events: state.events,
+          body: RefreshableList(
+            items: state.events,
             hasMore: state.hasMore,
             isLoading: state.isLoading,
             onRefresh: notifier.refresh,
             onLoadMore: notifier.loadMore,
-            itemBuilder: (context, event, index) {
+            tileBuilder: (context, event, index) {
               return ListTile(
                 title: Text(event.title),
                 subtitle: Text(event.description),
+                trailing: Text(DateTimeService.formatDateTimeRange(event.dates)),
                 onTap: () =>
                     Navigator.pushNamed(context, '/event/', arguments: event.id),
               );

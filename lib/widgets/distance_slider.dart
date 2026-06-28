@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart' show LengthUnit;
 
-class DistanceUnitValue {
+import 'package:crowdpass/models/unit_value.dart';
+
+import 'package:crowdpass/widgets/unit_menu.dart';
+
+class DistanceUnit extends 
   final LengthUnit unit;
   final double value;
 
@@ -44,13 +49,7 @@ class DistanceSlider extends StatefulWidget {
 class _DistanceSliderState extends State<DistanceSlider> {
   late double _value;
   late LengthUnit _unit;
-
-  final Map<LengthUnit, String> _unitLabels = const {
-    LengthUnit.Meter: 'm',
-    LengthUnit.Kilometer: 'km',
-    LengthUnit.Mile: 'mi',
-  };
-
+  
   @override
   void initState() {
     super.initState();
@@ -87,6 +86,29 @@ class _DistanceSliderState extends State<DistanceSlider> {
           children: [
             Row(
               children: [
+                UnitMenu(
+                  units: _unitLabels.keys.toList(),
+                  onUnitChanged: (newUnit) => _handleUnitChange(newUnit, state),
+                ),
+                DropdownMenu<LengthUnit>(
+                  initialSelection: _unit,
+                  inputDecorationTheme: const InputDecorationTheme(
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero, // Removes extra padding
+                    border: InputBorder.none, // Removes extra border padding
+                  ),
+                  onSelected: (LengthUnit? newUnit) {
+                    if (newUnit != null) {
+                      _handleUnitChange(newUnit, state);
+                    }
+                  },
+                  dropdownMenuEntries: _unitLabels.entries.map((entry) {
+                    return DropdownMenuEntry<LengthUnit>(
+                      value: entry.key,
+                      label: entry.value,
+                    );
+                  }).toList(),
+                ),
                 Expanded(
                   child: Slider(
                     min: widget.min,
@@ -100,19 +122,9 @@ class _DistanceSliderState extends State<DistanceSlider> {
                     },
                   ),
                 ),
-                MenuAnchor(
-                  builder: (context, controller, child) => TextButton(
-                    onPressed: () => controller.isOpen ? controller.close() : controller.open(),
-                    child: Text(
-                      '${_value.toStringAsFixed(1)} ${_unitLabels[_unit]}',
-                    ),
-                  ),
-                  menuChildren: _unitLabels.entries.map((entry) =>
-                    MenuItemButton(
-                      onPressed: () => _handleUnitChange(entry.key, state),
-                      child: Text(entry.value),
-                    )
-                  ).toList(),
+                Text(
+                  '${_value.toStringAsFixed(1)} ${_unitLabels[_unit]}',
+                  style: Theme.of(context).textTheme.bodyLarge,
                 ),
               ],
             ),

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:crowdpass/models/money.dart';
 import 'package:crowdpass/widgets/editable_number_field.dart';
+import 'package:crowdpass/widgets/unit_menu.dart';
 
 class EditableMoneyField extends StatefulWidget {
   const EditableMoneyField({
@@ -162,35 +163,6 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
 
         final currencies = snapshot.data!;
 
-        final currencyMenu = MenuAnchor(
-          builder: (context, controller, child) {
-            return InkWell(
-              onTap: widget.isCurrencyEditable 
-                  ? () => controller.isOpen ? controller.close() : controller.open() 
-                  : null,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16.0, 0, 0, 0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min, // Takes only necessary width
-                  children: [
-                    Text(
-                      _currency.symbol,
-                      style: widget.textStyle ?? Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    const Icon(Icons.arrow_drop_down, size: 20),
-                  ],
-                ),
-              ),
-            );
-          },
-          menuChildren: currencies.map((currency) {
-            return MenuItemButton(
-              onPressed: () => _onCurrencyChanged(currency),
-              child: Text('${currency.name} (${currency.symbol})'),
-            );
-          }).toList(),
-        );
-
         return EditableNumberField(
           isEditable: widget.isEditable,
           hasDecimals: true,
@@ -206,8 +178,15 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
             return widget.validator?.call(_money);
           },
           decoration: (widget.decoration ?? const InputDecoration()).copyWith(
-            prefixIcon:
-                widget.isEditable ? currencyMenu : _getCurrencyIcon(_currency),
+            prefixIcon: widget.isEditable
+                ? UnitMenu<Currency>(
+                    selectedUnit: _currency,
+                    units: currencies,
+                    onUnitChanged: _onCurrencyChanged,
+                    isEditable: widget.isCurrencyEditable,
+                    textStyle: widget.textStyle,
+                  )
+                : _getCurrencyIcon(_currency),
           ),
         );
       },

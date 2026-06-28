@@ -177,7 +177,7 @@ class UserEventsNotifier extends Notifier<UserEventsState> {
         }
       }
 
-      // We can't use FieldPath.documentId here because if multiple where query limitation
+      // We can't use FieldPath.documentId here because of multiple where query limitation
       Query<Map<String, dynamic>> query = _firestore
           .collection('events')
           .where('id', whereIn: userEventIds);

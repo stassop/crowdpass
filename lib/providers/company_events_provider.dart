@@ -9,7 +9,7 @@ import 'package:crowdpass/models/event.dart';
 class CompanyEventsFilters {
   final DateTimeRange? dates;
 
-  const CompanyEventsFilters({
+  CompanyEventsFilters({
     this.dates,
   });
 
@@ -35,27 +35,21 @@ class CompanyEventsFilters {
 class CompanyEventsState {
   final List<Event> events;
   final CompanyEventsFilters filters;
-  final DateTime? earliestDate; // Earliest company event across all time
-  final DateTime? latestDate; // Latest company event across all time
   final bool isLoading;
   final bool hasMore;
   final Object? error;
 
-  const CompanyEventsState({
+  CompanyEventsState({
     this.events = const [],
-    this.filters = const CompanyEventsFilters(),
-    this.earliestDate,
-    this.latestDate,
+    CompanyEventsFilters? filters,
     this.isLoading = false,
     this.hasMore = true,
     this.error,
-  });
+  }) : filters = filters ?? CompanyEventsFilters();
 
   CompanyEventsState copyWith({
     List<Event>? events,
     CompanyEventsFilters? filters,
-    DateTime? earliestDate,
-    DateTime? latestDate,
     bool? isLoading,
     bool? hasMore,
     Object? error,
@@ -63,8 +57,6 @@ class CompanyEventsState {
     return CompanyEventsState(
       events: events ?? this.events,
       filters: filters ?? this.filters,
-      earliestDate: earliestDate ?? this.earliestDate,
-      latestDate: latestDate ?? this.latestDate,
       isLoading: isLoading ?? this.isLoading,
       hasMore: hasMore ?? this.hasMore,
       error: error,
@@ -78,23 +70,11 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
   final String companyId;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  static const int pageSize = 10;
+  static const int pageSize = 30;
 
   @override
   CompanyEventsState build() {
-    Future.microtask(() {
-      final now = DateTime.now();
-      final oneMonthLater = now.add(const Duration(days: 30));
-      final defaultRange = DateTimeRange(start: now, end: oneMonthLater);
-
-      final defaultFilters = CompanyEventsFilters(
-        dates: defaultRange,
-      );
-
-      setFilters(defaultFilters);
-    });
-
-    return const CompanyEventsState();
+    return CompanyEventsState();
   }
 
   /// Update filters and refresh events
@@ -106,56 +86,46 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
 
   /// Clear all filters and refresh with defaults
   void resetFilters() {
-    final latest = state.latestDate;
-    final defaultEnd = latest ?? DateTime.now();
-    final defaultStart = defaultEnd.subtract(const Duration(days: 30));
-    final defaultRange = DateTimeRange(start: defaultStart, end: defaultEnd);
-
-    final defaultFilters = CompanyEventsFilters(
-      dates: defaultRange,
-    );
-
-    setFilters(defaultFilters);
+    state = state.copyWith(filters: CompanyEventsFilters());
+    Future.microtask(refresh);
   }
 
   /// Refresh: Clear all events and reload from the beginning
   Future<void> refresh() async {
-    state = state.copyWith(
-      events: const [],
-      isLoading: true,
-      hasMore: true,
-      error: null,
-    );
-
-    await _loadMoreInternal(replace: true);
-    state = state.copyWith(isLoading: false);
+    await loadMore(replace: true);
   }
 
-  /// Load more: Append next page of events
-  Future<void> loadMore() async {
-    if (state.isLoading || !state.hasMore) return;
+  /// Load events. If replace=true, reload from the beginning.
+  Future<void> loadMore({bool replace = false}) async {
+    if (state.isLoading) return;
+    if (!replace && !state.hasMore) return;
 
-    state = state.copyWith(isLoading: true, error: null);
-    await _loadMoreInternal(replace: false);
-    state = state.copyWith(isLoading: false);
-  }
+    if (replace) {
+      state = state.copyWith(
+        events: const [],
+        isLoading: true,
+        hasMore: true,
+        error: null,
+      );
+    } else {
+      state = state.copyWith(isLoading: true, error: null);
+    }
 
-  Future<void> _loadMoreInternal({required bool replace}) async {
     try {
-      DateTime? earliest = state.earliestDate;
-      DateTime? latest = state.latestDate;
+      var filters = state.filters;
 
       if (replace) {
-        earliest = await _getEarliestEventDate();
-        latest = await _getLatestEventDate();
-        state = state.copyWith(
-          earliestDate: earliest,
-          latestDate: latest,
-        );
-        resetFilters();
-      }
+        final earliest = await _getEarliestEventDate();
+        final latest = await _getLatestEventDate();
 
-      final filters = state.filters;
+        if (earliest != null && latest != null) {
+          filters = filters.copyWith(
+            dates: DateTimeRange(start: earliest, end: latest),
+          );
+        }
+
+        state = state.copyWith(filters: filters);
+      }
 
       Query<Map<String, dynamic>> query = _firestore
           .collection('events')
@@ -197,10 +167,16 @@ class CompanyEventsNotifier extends Notifier<CompanyEventsState> {
       state = state.copyWith(
         events: nextEvents,
         hasMore: docs.length == pageSize,
+        isLoading: false,
+        error: null,
       );
     } catch (error, stackTrace) {
       debugPrint('CompanyEventsNotifier error: $error\n$stackTrace');
-      state = state.copyWith(error: error, hasMore: false);
+      state = state.copyWith(
+        isLoading: false,
+        hasMore: false,
+        error: error,
+      );
     }
   }
 

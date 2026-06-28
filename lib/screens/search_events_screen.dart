@@ -25,38 +25,30 @@ class _SearchEventsScreenState extends ConsumerState<SearchEventsScreen> {
   @override
   void initState() {
     super.initState();
-    Future(() => ref.read(searchEventsProvider.notifier).refresh());
-  }
 
-  // The build method now receives only BuildContext
-  @override
-  Widget build(BuildContext context) {
-    final searchEventsState = ref.watch(searchEventsProvider);
-    final searchEventsNotifier = ref.read(searchEventsProvider.notifier);
+    Future.microtask(() {
+      ref.read(searchEventsProvider.notifier).refresh();
+    });
 
-    final theme = Theme.of(context);
+    ref.listenManual<SearchEventsState>(searchEventsProvider, (previous, next) {
+      if (!mounted) return;
 
-    if (searchEventsState.isLoading && searchEventsState.events.isEmpty) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Search Jobs'),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    // skip frame and check for errors after build to avoid showing a dialog during build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (searchEventsState.error != null) {
+      if (next.error != null && previous?.error != next.error) {
         ErrorDialog.show(
           context,
-          title: 'Error Loading Events',
-          message: searchEventsState.error.toString(),
+          title: 'Error loading events',
+          message: next.error.toString(),
         );
       }
     });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(searchEventsProvider);
+    final notifier = ref.read(searchEventsProvider.notifier);
+
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -78,59 +70,58 @@ class _SearchEventsScreenState extends ConsumerState<SearchEventsScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text('Filters', style: theme.textTheme.titleLarge),
-
                 const SizedBox(height: 16),
-
                 EditableEventTypeField(
                   isMultiple: true,
                   isEditable: true,
-                  decoration: const InputDecoration(labelText: 'Event Type', isDense: true),
-                  initialValue: searchEventsState.filters.eventType,
-                  onChanged: (eventType) => searchEventsNotifier.setFilters(
-                    searchEventsState.filters.copyWith(eventType: eventType),
+                  decoration: const InputDecoration(
+                    labelText: 'Event Type',
+                    isDense: true,
+                  ),
+                  initialValue: state.filters.eventType,
+                  onChanged: (eventType) => notifier.setFilters(
+                    state.filters.copyWith(eventType: eventType),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 EditableLocationField(
                   isEditable: true,
-                  decoration: const InputDecoration(labelText: 'Location', isDense: true),
-                  initialValue: searchEventsState.filters.location,
-                  onChanged: (address) => searchEventsNotifier.setFilters(
-                    searchEventsState.filters.copyWith(location: address),
+                  decoration: const InputDecoration(
+                    labelText: 'Location',
+                    isDense: true,
+                  ),
+                  initialValue: state.filters.location,
+                  onChanged: (address) => notifier.setFilters(
+                    state.filters.copyWith(location: address),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 EditableDateRangeField(
                   isEditable: true,
-                  decoration: const InputDecoration(labelText: 'Date Range', isDense: true),
-                  initialValue: searchEventsState.filters.dates,
-                  onChanged: (dateRange) => searchEventsNotifier.setFilters(
-                    searchEventsState.filters.copyWith(dates: dateRange),
+                  decoration: const InputDecoration(
+                    labelText: 'Date Range',
+                    isDense: true,
+                  ),
+                  initialValue: state.filters.dates,
+                  onChanged: (dateRange) => notifier.setFilters(
+                    state.filters.copyWith(dates: dateRange),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 Text('Distance', style: theme.textTheme.titleMedium),
                 DistanceSlider(
                   min: 0,
                   max: 100,
-                  initialValue: searchEventsState.filters.distance ?? 0,
-                  initialUnit: searchEventsState.filters.distanceUnit,
-                  onUnitChanged: (unit) => searchEventsNotifier.setFilters(
-                    searchEventsState.filters.copyWith(distanceUnit: unit),
+                  initialValue: state.filters.distance ?? 0,
+                  initialUnit: state.filters.distanceUnit,
+                  onUnitChanged: (unit) => notifier.setFilters(
+                    state.filters.copyWith(distanceUnit: unit),
                   ),
-                  onValueChanged: (distance) => searchEventsNotifier.setFilters(
-                    searchEventsState.filters.copyWith(distance: distance),
+                  onValueChanged: (distance) => notifier.setFilters(
+                    state.filters.copyWith(distance: distance),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 Text('Sort By', style: theme.textTheme.titleMedium),
                 SegmentedButton<SearchEventsSortBy>(
                   segments: const [
@@ -147,29 +138,21 @@ class _SearchEventsScreenState extends ConsumerState<SearchEventsScreen> {
                       label: Text('Distance'),
                     ),
                   ],
-                  selected: <SearchEventsSortBy>{searchEventsState.filters.sortBy},
+                  selected: <SearchEventsSortBy>{state.filters.sortBy},
                   onSelectionChanged: (Set<SearchEventsSortBy> selection) {
                     if (selection.isNotEmpty) {
-                      searchEventsNotifier.setFilters(
-                        searchEventsState.filters.copyWith(sortBy: selection.first),
+                      notifier.setFilters(
+                        state.filters.copyWith(sortBy: selection.first),
                       );
                     }
                   },
                   showSelectedIcon: false,
                 ),
-
                 const SizedBox(height: 16),
-
                 ElevatedButton.icon(
                   icon: const Icon(Icons.refresh),
                   label: const Text('Reset Filters'),
-                  onPressed: searchEventsState.isLoading
-                      ? null
-                      : () {
-                          // The resetFilters() method in the notifier already triggers a fetch.
-                          searchEventsNotifier.resetFilters();
-                          Navigator.of(context).maybePop();
-                        },
+                  onPressed: notifier.resetFilters,
                 ),
               ],
             ),
@@ -178,16 +161,17 @@ class _SearchEventsScreenState extends ConsumerState<SearchEventsScreen> {
       ),
       body: SafeArea(
         child: RefreshableList<Event>(
-          onRefresh: () => searchEventsNotifier.refresh(),
-          onLoadMore: () => searchEventsNotifier.loadMore(),
-          isLoading: searchEventsState.isLoading,
-          hasMore: searchEventsState.hasMore,
-          items: searchEventsState.events,
+          onRefresh: notifier.refresh,
+          onLoadMore: notifier.loadMore,
+          isLoading: state.isLoading,
+          hasMore: state.hasMore,
+          items: state.events,
           tileBuilder: (context, event, index) => ListTile(
             title: Text(event.title),
             subtitle: Text(event.description),
             trailing: Text(DateTimeService.formatDateTimeRange(event.dates)),
-            onTap: () => Navigator.pushNamed(context, '/event/', arguments: event.id),
+            onTap: () =>
+                Navigator.pushNamed(context, '/event/', arguments: event.id),
           ),
         ),
       ),
