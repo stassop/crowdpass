@@ -178,15 +178,19 @@ class _EditableMoneyFieldState extends State<EditableMoneyField> {
             return widget.validator?.call(_money);
           },
           decoration: (widget.decoration ?? const InputDecoration()).copyWith(
-            prefixIcon: widget.isEditable
-                ? UnitMenu<Currency>(
-                    selectedUnit: _currency,
-                    units: currencies,
-                    onUnitChanged: _onCurrencyChanged,
-                    isEditable: widget.isCurrencyEditable,
-                    textStyle: widget.textStyle,
-                  )
-                : _getCurrencyIcon(_currency),
+            prefixIcon:
+                widget.isEditable 
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(16.0, 0, 0, 0),
+                      child: UnitMenu<Currency>(
+                        initialUnit: _currency,
+                        units: currencies.toSet(),
+                        onUnitChanged: _onCurrencyChanged,
+                        isEditable: widget.isCurrencyEditable,
+                        textStyle: widget.textStyle,
+                      ),
+                    )
+                  : _getCurrencyIcon(_currency),
           ),
         );
       },

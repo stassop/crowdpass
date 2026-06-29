@@ -7,12 +7,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:crowdpass/models/event.dart';
 import 'package:crowdpass/models/location.dart';
+import 'package:crowdpass/models/distance_unit.dart';
 
 enum SearchEventsSortBy { distance, date, price }
 
 class SearchEventsFilters {
   final double? distance;
-  final LengthUnit distanceUnit;
+  final DistanceUnit distanceUnit;
   final Location? location;
   final Set<EventType>? eventType;
   final DateTimeRange? dates;
@@ -22,7 +23,7 @@ class SearchEventsFilters {
 
   const SearchEventsFilters({
     this.distance,
-    this.distanceUnit = LengthUnit.Kilometer,
+    this.distanceUnit = DistanceUnit.kilometer,
     this.location,
     this.eventType,
     this.dates,
@@ -33,7 +34,7 @@ class SearchEventsFilters {
 
   SearchEventsFilters copyWith({
     double? distance,
-    LengthUnit? distanceUnit,
+    DistanceUnit? distanceUnit,
     Location? location,
     Set<EventType>? eventType,
     DateTimeRange? dates,
@@ -226,7 +227,7 @@ class SearchEventsNotifier extends Notifier<SearchEventsState> {
       if (filters.distance != null && filters.location?.latLng != null) {
         final distanceCalc = Distance();
         final double maxDistanceMeters = distanceCalc.as(
-          filters.distanceUnit,
+          filters.distanceUnit.lengthUnit,
           filters.location!.latLng,
           filters.location!.latLng,
         );
@@ -243,7 +244,7 @@ class SearchEventsNotifier extends Notifier<SearchEventsState> {
       if (filters.location != null && filters.distance != null) {
         final distanceCalc = Distance();
         final double maxDistanceMeters = distanceCalc.as(
-          filters.distanceUnit,
+          filters.distanceUnit.lengthUnit,
           filters.location!.latLng,
           filters.location!.latLng,
         );

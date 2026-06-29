@@ -4,10 +4,10 @@ import 'package:crowdpass/models/unit_value.dart' show Unit;
 
 class UnitMenu<T extends Unit> extends StatelessWidget {
   /// The currently selected unit to display.
-  final T selectedUnit;
+  final T initialUnit;
 
   /// The list of available units to populate the dropdown.
-  final List<T> units;
+  final Set<T> units;
 
   /// Callback fired when a user selects a unit from the menu.
   final ValueChanged<T> onUnitChanged;
@@ -20,7 +20,7 @@ class UnitMenu<T extends Unit> extends StatelessWidget {
 
   const UnitMenu({
     super.key,
-    required this.selectedUnit,
+    required this.initialUnit,
     required this.units,
     required this.onUnitChanged,
     this.isEditable = true,
@@ -36,20 +36,17 @@ class UnitMenu<T extends Unit> extends StatelessWidget {
           onTap: isEditable 
               ? () => controller.isOpen ? controller.close() : controller.open() 
               : null,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 0, 0, 0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min, // Takes only necessary width
-              children: [
-                Text(
-                  selectedUnit.symbol,
-                  style: textStyle ?? Theme.of(context).textTheme.bodyLarge,
-                ),
-                // Optionally hide the arrow if it's not editable to visually indicate state
-                if (isEditable) 
-                  const Icon(Icons.arrow_drop_down, size: 20),
-              ],
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min, // Takes only necessary width
+            children: [
+              Text(
+                initialUnit.symbol,
+                style: textStyle ?? Theme.of(context).textTheme.bodyLarge,
+              ),
+              // Optionally hide the arrow if it's not editable to visually indicate state
+              if (isEditable) 
+                const Icon(Icons.arrow_drop_down)
+            ],
           ),
         );
       },
