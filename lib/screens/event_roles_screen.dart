@@ -247,6 +247,13 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
           ],
         ),
       ),
+      floatingActionButton: hasRole
+          ? FloatingActionButton.extended(
+              onPressed: () => null,
+              label: const Text('Add Role'),
+              icon: const Icon(Icons.add),
+            )
+          : null,
       body: TabBarView(
         controller: _tabController,
         children: [

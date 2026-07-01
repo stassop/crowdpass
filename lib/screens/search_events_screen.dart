@@ -123,30 +123,36 @@ class _SearchEventsScreenState extends ConsumerState<SearchEventsScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text('Sort By', style: theme.textTheme.titleMedium),
-                SegmentedButton<SearchEventsSortBy>(
-                  segments: const [
-                    ButtonSegment(
+                DropdownMenu<SearchEventsSortBy>(
+                  key: ValueKey(state.filters.sortBy),
+                  expandedInsets: EdgeInsets.zero, 
+                  initialSelection: state.filters.sortBy,
+                  inputDecorationTheme: const InputDecorationTheme(
+                    isDense: true,
+                    constraints: BoxConstraints(maxHeight: 48.0),
+                    border: OutlineInputBorder(), 
+                  ),
+                  dropdownMenuEntries: const [
+                    DropdownMenuEntry(
                       value: SearchEventsSortBy.date,
-                      label: Text('Date'),
+                      label: 'Date',
                     ),
-                    ButtonSegment(
+                    DropdownMenuEntry(
                       value: SearchEventsSortBy.price,
-                      label: Text('Price'),
+                      label: 'Price',
                     ),
-                    ButtonSegment(
+                    DropdownMenuEntry(
                       value: SearchEventsSortBy.distance,
-                      label: Text('Distance'),
+                      label: 'Distance',
                     ),
                   ],
-                  selected: <SearchEventsSortBy>{state.filters.sortBy},
-                  onSelectionChanged: (Set<SearchEventsSortBy> selection) {
-                    if (selection.isNotEmpty) {
+                  onSelected: (value) {
+                    if (value != null) {
                       notifier.setFilters(
-                        state.filters.copyWith(sortBy: selection.first),
+                        state.filters.copyWith(sortBy: value),
                       );
                     }
                   },
-                  showSelectedIcon: false,
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
