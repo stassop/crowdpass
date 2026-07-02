@@ -304,6 +304,7 @@ class EventRolesNotifier extends Notifier<EventRolesState> {
       final eventRef = _firestore.collection('events').doc(eventId);
       final batch = _firestore.batch();
 
+      // Remove the user from any existing roles before adding to the new role
       for (final existingRole in EventRole.values) {
         final snapshot = await eventRef
             .collection(existingRole.collectionName)

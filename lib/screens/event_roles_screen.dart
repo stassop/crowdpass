@@ -109,16 +109,19 @@ class _EventRolesScreenState extends ConsumerState<EventRolesScreen>
                         ).pushNamed('/user/', arguments: user.uid),
                       ),
                       const SizedBox(height: 16),
-                      DropdownMenu<EventRole>(
+                      DropdownMenu<EventRole?>(
                         initialSelection: userRole,
                         enabled: canEdit,
                         onSelected: (newRole) {
-                          if (newRole == null) return;
                           setState(() {
                             pendingRole = newRole;
                           });
                         },
                         dropdownMenuEntries: [
+                          DropdownMenuEntry(
+                            value: null,
+                            label: 'No Role',
+                          ),
                           for (final role in EventRole.values)
                             DropdownMenuEntry<EventRole>(
                               value: role,

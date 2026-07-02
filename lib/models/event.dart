@@ -120,13 +120,14 @@ enum EventType {
 }
 
 enum EventRole {
-  owner(label: 'Owner', collectionName: 'owners', collectionLabel: 'Owners'),
   admin(label: 'Admin', collectionName: 'admins', collectionLabel: 'Admins'),
-  staff(label: 'Staff', collectionName: 'staff', collectionLabel: 'Staff'), // 'Staff' is typically its own plural
   guest(label: 'Guest', collectionName: 'guests', collectionLabel: 'Guests'),
-  security(label: 'Security', collectionName: 'security', collectionLabel: 'Security'), // Usually singular/uncountable
+  owner(label: 'Owner', collectionName: 'owners', collectionLabel: 'Owners'),
+  security(label: 'Security', collectionName: 'security', collectionLabel: 'Security'), 
+  staff(label: 'Staff', collectionName: 'staff', collectionLabel: 'Staff'),
   vendor(label: 'Vendor', collectionName: 'vendors', collectionLabel: 'Vendors'),
-  volunteer(label: 'Volunteer', collectionName: 'volunteers', collectionLabel: 'Volunteers');
+  volunteer(label: 'Volunteer', collectionName: 'volunteers', collectionLabel: 'Volunteers'),
+  none(label: 'None', collectionName: 'none', collectionLabel: 'None');
 
   // Fields must be final in an enhanced enum
   final String label;
